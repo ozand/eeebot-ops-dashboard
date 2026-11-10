@@ -470,12 +470,22 @@ def _subagent_record_matches_instance(data, state_root, instance_repo):
                 return False
             if os.path.normcase(os.path.realpath(value)) != os.path.normcase(os.path.realpath(expected)):
                 return False
-    origin = data.get("origin")
-    if origin is None and "origin" not in data:
-        parent = data.get("parent_context")
-        if parent is not None and not isinstance(parent, dict):
+    if "origin" in data:
+        origin = data["origin"]
+        if not isinstance(origin, dict):
             return False
-        origin = parent.get("origin") if isinstance(parent, dict) else None
+    elif "parent_context" in data:
+        parent = data["parent_context"]
+        if not isinstance(parent, dict):
+            return False
+        if "origin" in parent:
+            origin = parent["origin"]
+            if not isinstance(origin, dict):
+                return False
+        else:
+            origin = None
+    else:
+        origin = None
     if origin is not None:
         if not isinstance(origin, dict):
             return False
@@ -514,7 +524,7 @@ _mtimes = []
 _llm_stats_source_complete = False
 
 
-def _subagent_record_matches_instance(data, state_root, instance_repo):
+def _embedded_subagent_record_matches_instance(data, state_root, instance_repo):
     for field, expected in (("workspace", instance_repo), ("runtime_state_root", state_root)):
         if field in data:
             value = data[field]
@@ -522,15 +532,23 @@ def _subagent_record_matches_instance(data, state_root, instance_repo):
                 return False
             if os.path.normcase(os.path.realpath(value)) != os.path.normcase(os.path.realpath(expected)):
                 return False
-    origin = data.get("origin")
-    if origin is None and "origin" not in data:
-        parent = data.get("parent_context")
-        if parent is not None and not isinstance(parent, dict):
-            return False
-        origin = parent.get("origin") if isinstance(parent, dict) else None
-    if origin is not None:
+    if "origin" in data:
+        origin = data["origin"]
         if not isinstance(origin, dict):
             return False
+    elif "parent_context" in data:
+        parent = data["parent_context"]
+        if not isinstance(parent, dict):
+            return False
+        if "origin" not in parent:
+            origin = None
+        else:
+            origin = parent["origin"]
+            if not isinstance(origin, dict):
+                return False
+    else:
+        origin = None
+    if origin is not None:
         if origin.get("channel") != "system" or origin.get("chat_id") != "self-evolving-agent":
             return False
     return True
@@ -1234,12 +1252,7 @@ _MAX_PROMPT_BYTES = 65536
 
 
 def _subagent_record_matches_instance(data: dict[str, Any], state_root: Path, instance_repo: Path) -> bool:
-    """Exclude records with explicit workspace, state-root, or origin mismatch.
-
-    Legacy records without these optional producer fields remain eligible only
-    because the adapter selected them from this instance's own state/subagents
-    directory; age or content type is not an eligibility signal.
-    """
+    """Exclude explicit mismatches; absent optional origin stays legacy-eligible."""
     for field, expected in (("workspace", instance_repo), ("runtime_state_root", state_root)):
         if field in data:
             value = data[field]
@@ -1247,15 +1260,23 @@ def _subagent_record_matches_instance(data: dict[str, Any], state_root: Path, in
                 return False
             if os.path.normcase(os.path.realpath(value)) != os.path.normcase(os.path.realpath(expected)):
                 return False
-    origin = data.get("origin")
-    if origin is None and "origin" not in data:
-        parent = data.get("parent_context")
-        if parent is not None and not isinstance(parent, dict):
-            return False
-        origin = parent.get("origin") if isinstance(parent, dict) else None
-    if origin is not None:
+    if "origin" in data:
+        origin = data["origin"]
         if not isinstance(origin, dict):
             return False
+    elif "parent_context" in data:
+        parent = data["parent_context"]
+        if not isinstance(parent, dict):
+            return False
+        if "origin" not in parent:
+            origin = None
+        else:
+            origin = parent["origin"]
+            if not isinstance(origin, dict):
+                return False
+    else:
+        origin = None
+    if origin is not None:
         channel, chat_id = origin.get("channel"), origin.get("chat_id")
         if channel != "system" or chat_id != "self-evolving-agent":
             return False
@@ -1291,7 +1312,7 @@ def read_subagent_records():
             _mtimes.append(os.path.getmtime(path))
         except Exception:
             continue
-        if not isinstance(data, dict) or not _subagent_record_matches_instance(
+        if not isinstance(data, dict) or not _embedded_subagent_record_matches_instance(
             data, Path(STATE_ROOT), Path(INSTANCE_REPO),
         ):
             continue

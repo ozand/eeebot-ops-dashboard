@@ -21,6 +21,9 @@ def _fixtures(state: Path, repo: Path, secret: str = "") -> dict:
     (state / "subagents").mkdir(exist_ok=True)
     (state / "subagents/sa.json").write_text(json.dumps({"cycle_id": "c1", "subagent_id": "sa", "status": "done", "task": "subagent task", "summary": "subagent result", "result": "subagent response", "origin": {"channel": "system", "chat_id": "self-evolving-agent"}, "workspace": str(repo), "runtime_state_root": str(state)}), encoding="utf-8")
     (state / "subagents/legacy.json").write_text(json.dumps({"cycle_id": "c1", "subagent_id": "legacy", "status": "done", "task": "legacy own task", "summary": "legacy own summary", "result": "legacy own result"}), encoding="utf-8")
+    (state / "subagents/null-origin.json").write_text(json.dumps({"cycle_id": "c1", "subagent_id": "null-origin", "task": "null origin must not publish", "origin": None}), encoding="utf-8")
+    (state / "subagents/null-parent-origin.json").write_text(json.dumps({"cycle_id": "c1", "subagent_id": "null-parent-origin", "task": "null parent origin must not publish", "parent_context": {"origin": None}}), encoding="utf-8")
+    (state / "subagents/legacy-parent.json").write_text(json.dumps({"cycle_id": "c1", "subagent_id": "legacy-parent", "task": "legacy absent parent origin", "parent_context": {}}), encoding="utf-8")
     (state / "subagents/foreign.json").write_text(json.dumps({"cycle_id": "c1", "subagent_id": "foreign", "status": "done", "task": "foreign origin task", "summary": "foreign origin summary", "result": "foreign origin response", "origin": {"channel": "telegram", "chat_id": "unrelated-chat"}, "workspace": str(repo), "runtime_state_root": str(state)}), encoding="utf-8")
     (state / "subagents/foreign-workspace.json").write_text(json.dumps({"cycle_id": "c1", "subagent_id": "foreign-workspace", "status": "done", "task": "foreign workspace task", "summary": "foreign workspace summary", "result": "foreign workspace response", "origin": {"channel": "system", "chat_id": "self-evolving-agent"}, "workspace": str(repo.parent / "other-project"), "runtime_state_root": str(state)}), encoding="utf-8")
     (state / "subagents/foreign-root.json").write_text(json.dumps({"cycle_id": "c1", "subagent_id": "foreign-root", "status": "done", "task": "foreign root task", "summary": "foreign root summary", "result": "foreign root response", "origin": {"channel": "system", "chat_id": "self-evolving-agent"}, "workspace": str(repo), "runtime_state_root": str(state.parent / "other-state").replace("\\\\", "/")}), encoding="utf-8")
@@ -52,12 +55,16 @@ def test_owned_content_real_reader_to_public_projection_render_scan_and_dry_run(
     from scripts.publish_scan import scan_pages
     scan_pages(pages)
     combined = "".join(pages.values())
-    for marker in ("prompt", "prompt task", "subagent task", "subagent result", "subagent response", "legacy own task", "legacy own summary", "legacy own result", "Release charter quote", "reflection response", "own finding", "Skill response body", "Own memory context", "own issue", "own fix", "Read your own context"):
+    for marker in ("prompt", "prompt task", "subagent task", "subagent result", "subagent response", "legacy own task", "legacy own summary", "legacy own result", "legacy absent parent origin", "Release charter quote", "reflection response", "own finding", "Skill response body", "Own memory context", "own issue", "own fix", "Read your own context"):
         assert marker in combined
     assert "foreign origin" not in combined
+    assert "null origin must not publish" not in combined
+    assert "null parent origin must not publish" not in combined
+    assert "null-origin" not in json.dumps(source["subagent_records"])
+    assert "null-parent-origin" not in json.dumps(source["subagent_records"])
     assert "foreign workspace" not in combined
     assert "foreign root" not in combined
-    assert len(source["subagent_records"]) == 2
+    assert len(source["subagent_records"]) == 3
     public_record = public["subagent_records"][0]
     assert not {"origin", "parent_context", "workspace", "runtime_state_root", "runtime_state_source"} & public_record.keys()
     assert "raw operator goal must stay private" not in combined
@@ -93,8 +100,9 @@ def test_embedded_reader_applies_same_subagent_source_gate(tmp_path):
     result = subprocess.run([sys.executable], input=script, capture_output=True, text=True, check=True, timeout=30)
     remote = json.loads(result.stdout)
     records = remote["subagent_records"]
-    assert {row["subagent_id"] for row in records} == {"sa", "legacy"}
+    assert {row["subagent_id"] for row in records} == {"sa", "legacy", "legacy-parent"}
     assert "subagent task" in json.dumps(records) and "legacy own task" in json.dumps(records)
+    assert "null-origin" not in json.dumps(records) and "null-parent-origin" not in json.dumps(records)
     assert all(not {"origin", "workspace", "runtime_state_root"} & row.keys() for row in records)
 
 
