@@ -53,7 +53,10 @@ def test_owned_content_real_reader_to_public_projection_render_scan_and_dry_run(
     state, repo, publisher_state = tmp_path / "state", tmp_path / "repo", tmp_path / "publisher-state"
     state.mkdir(); repo.mkdir(); publisher_state.mkdir()
     source = _fixtures(state, repo)
-    assert "Skill response body" in source["agent_context"]["tier2_skills"][0]["content"]
+    if source["agent_context"]["tier2_skills_status"] == "present":
+        assert "Skill response body" in source["agent_context"]["tier2_skills"][0]["content"]
+    else:
+        assert source["agent_context"]["tier2_skills_status"] == "unavailable"
     if ac._MEMORY_FD_WALK_SUPPORTED:
         assert "Own memory context" in source["agent_context"]["tier2_memory"]["files"][0]["content"]
     else:
@@ -63,7 +66,9 @@ def test_owned_content_real_reader_to_public_projection_render_scan_and_dry_run(
     from scripts.publish_scan import scan_pages
     scan_pages(pages)
     combined = "".join(pages.values())
-    markers = ["prompt", "prompt task", "subagent task", "subagent result", "subagent response", "legacy own task", "legacy own summary", "legacy own result", "legacy absent parent origin", "both origins own", "Release charter quote", "reflection response", "own finding", "Skill response body", "own issue", "own fix", "Read your own context"]
+    markers = ["prompt", "prompt task", "subagent task", "subagent result", "subagent response", "legacy own task", "legacy own summary", "legacy own result", "legacy absent parent origin", "both origins own", "Release charter quote", "reflection response", "own finding", "own issue", "own fix", "Read your own context"]
+    if source["agent_context"]["tier2_skills_status"] == "present":
+        markers.append("Skill response body")
     if ac._MEMORY_FD_WALK_SUPPORTED:
         markers.append("Own memory context")
     for marker in markers:
@@ -92,7 +97,10 @@ def test_owned_content_real_reader_to_public_projection_render_scan_and_dry_run(
     args = ap.parse_args(["--state-root", str(state), "--state-dir", str(publisher_state), "--instance-repo", str(repo), "--site-root", str(tmp_path / "site"), "--dry-run"])
     assert ap.run(args) == 0
     assert endpoints == []
-    assert "Skill response body" in "".join(captured["pages"].values())
+    if source["agent_context"]["tier2_skills_status"] == "present":
+        assert "Skill response body" in "".join(captured["pages"].values())
+    else:
+        assert "Skill response body" not in "".join(captured["pages"].values())
     if ac._MEMORY_FD_WALK_SUPPORTED:
         assert "Own memory context" in "".join(captured["pages"].values())
     else:
@@ -165,7 +173,26 @@ def test_embedded_reader_applies_same_subagent_source_gate(tmp_path):
     assert all(not {"origin", "workspace", "runtime_state_root"} & row.keys() for row in records)
 
 
-@pytest.mark.skipif(not ac._MEMORY_FD_WALK_SUPPORTED, reason="memory fd-relative walk unsupported on this platform")
+def test_instance_readers_reject_escaping_skill_symlink(tmp_path):
+    state, repo = tmp_path / "state", tmp_path / "repo"
+    state.mkdir(); repo.mkdir()
+    external = tmp_path / "external-skill.md"
+    external.write_text("SYNTHETIC_EXTERNAL_SKILL_SENTINEL", encoding="utf-8")
+    (repo / "skills/demo").mkdir(parents=True)
+    try:
+        (repo / "skills/demo/SKILL.md").symlink_to(external)
+    except (OSError, NotImplementedError) as exc:
+        if sys.platform == "win32":
+            pytest.skip(f"symlink creation unavailable: {type(exc).__name__}")
+        raise
+    source = tv.read_local_state(str(state), str(repo))
+    assert "SYNTHETIC_EXTERNAL_SKILL_SENTINEL" not in json.dumps(source)
+    if ac._MEMORY_FD_WALK_SUPPORTED:
+        assert source["agent_context"]["tier2_skills"] == []
+    else:
+        assert source["agent_context"]["tier2_skills_status"] == "unavailable"
+
+
 def test_memory_reader_rejects_external_symlink_and_keeps_internal_memory(tmp_path):
     state, repo = tmp_path / "state", tmp_path / "repo"
     state.mkdir(); repo.mkdir()
@@ -184,16 +211,15 @@ def test_memory_reader_rejects_external_symlink_and_keeps_internal_memory(tmp_pa
     memory = source["agent_context"]["tier2_memory"]
     names = {row["name"] for row in memory["files"]}
     contents = json.dumps(memory)
-    assert "memory/outside.md" not in names
     assert "SYNTHETIC_EXTERNAL_PRIVATE_SENTINEL" not in contents
     if ac._MEMORY_FD_WALK_SUPPORTED:
+        assert "memory/outside.md" not in names
         assert "memory/inside.md" in names
         assert "SYNTHETIC_INTERNAL_MEMORY" in contents
     else:
         assert memory["corpus_status"] == "unavailable"
 
 
-@pytest.mark.skipif(not ac._MEMORY_FD_WALK_SUPPORTED, reason="memory fd-relative walk unsupported on this platform")
 def test_memory_reader_rejects_ancestor_replacement_before_open(tmp_path, monkeypatch):
     state, repo = tmp_path / "state", tmp_path / "repo"
     state.mkdir(); repo.mkdir()
@@ -227,10 +253,15 @@ def test_memory_reader_rejects_ancestor_replacement_before_open(tmp_path, monkey
     monkeypatch.setattr(agent_context.os, "open", open_then_swap)
     source = tv.read_local_state(str(state), str(repo))
     rows = source["agent_context"]["tier2_memory"]["files"]
-    assert swapped
-    assert any(row["content"] == "SYNTHETIC_INSIDE_TARGET" for row in rows)
-    assert not any(row["content"] == "SYNTHETIC_ANCESTOR_OWNED_TARGET" for row in rows)
-    assert not any(row["content"] == "SYNTHETIC_ANCESTOR_OUTSIDE_SENTINEL" for row in rows)
+    if ac._MEMORY_FD_WALK_SUPPORTED:
+        assert swapped
+        assert any(row["content"] == "SYNTHETIC_INSIDE_TARGET" for row in rows)
+        assert not any(row["content"] == "SYNTHETIC_ANCESTOR_OWNED_TARGET" for row in rows)
+        assert not any(row["content"] == "SYNTHETIC_ANCESTOR_OUTSIDE_SENTINEL" for row in rows)
+    else:
+        assert not swapped
+        assert source["agent_context"]["tier2_memory"]["corpus_status"] == "unavailable"
+        assert not rows
 
 
 def test_wrong_shape_tier2_content_drops_but_safe_sibling_survives():

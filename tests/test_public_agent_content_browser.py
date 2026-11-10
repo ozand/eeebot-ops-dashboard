@@ -5,6 +5,7 @@ from pathlib import Path
 
 import pytest
 
+from scripts import agent_context as ac
 from scripts import techtree_viewer as tv
 from scripts.agent_context import read_agent_context_dict
 from scripts.two_sinks import split_render_inputs
@@ -47,9 +48,13 @@ def test_owned_agent_content_is_escaped_visible_and_script_safe(tmp_path: Path, 
         assert page.get_by_text("Release charter visible marker").count() == 1
         page.goto(page_path.as_uri())
         page.wait_for_load_state("load")
-        page.get_by_text("View SKILL.md").first.click()
-        page.get_by_text("View memory/MEMORY.md").click()
-        page.locator(".memory-file-entry").screenshot(path=str(evidence / f"owned-content-{width}.png"))
+        if ac._MEMORY_FD_WALK_SUPPORTED:
+            page.get_by_text("View SKILL.md").first.click()
+            page.get_by_text("View memory/MEMORY.md").click()
+            page.locator(".memory-file-entry").screenshot(path=str(evidence / f"owned-content-{width}.png"))
+        else:
+            assert "skill reads unavailable" in page.locator("#panel-agent").inner_text().lower()
+            assert page.get_by_text("memory own marker").count() == 0
         page.locator(".context-block-details").first.evaluate("el => el.open = true")
         page.screenshot(path=str(evidence / f"owned-context-detail-{width}.png"), full_page=True)
         assert page.get_by_text("task own marker").count() == 1
@@ -58,6 +63,12 @@ def test_owned_agent_content_is_escaped_visible_and_script_safe(tmp_path: Path, 
         assert page.locator("img[src=x]").count() == 0
         assert page.evaluate("window.__ownedXss || 0") == 0
         assert "&lt;img" in page.content()
-        assert page.get_by_text("memory own marker").count() == 1
-        assert page.get_by_text("skill own marker").count() == 1
+        if ac._MEMORY_FD_WALK_SUPPORTED:
+            assert page.get_by_text("memory own marker").count() == 1
+        else:
+            assert page.get_by_text("memory own marker").count() == 0
+        if ac._MEMORY_FD_WALK_SUPPORTED:
+            assert page.get_by_text("skill own marker").count() == 1
+        else:
+            assert page.get_by_text("skill own marker").count() == 0
         browser.close()

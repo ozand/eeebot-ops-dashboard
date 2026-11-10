@@ -507,8 +507,8 @@ _MEMORY_FD_WALK_SUPPORTED = (
 )
 
 
-def _read_memory_file_beneath(root: Path, path: Path) -> tuple[int, str] | None:
-    """Read one bounded memory file through no-follow directory descriptors."""
+def _read_instance_file_beneath(root: Path, path: Path, max_chars: int) -> tuple[int, str] | None:
+    """Read one bounded instance file through no-follow directory descriptors."""
     if not _MEMORY_FD_WALK_SUPPORTED:
         return None
     try:
@@ -534,7 +534,7 @@ def _read_memory_file_beneath(root: Path, path: Path) -> tuple[int, str] | None:
             return None
         with os.fdopen(fd, "rb") as stream:
             opened_fds.remove(fd)
-            content = stream.read(12_001).decode("utf-8", errors="replace")[:12_000]
+            content = stream.read(max_chars + 1).decode("utf-8", errors="replace")[:max_chars]
         return metadata.st_size, content
     except (OSError, ValueError):
         return None
@@ -643,15 +643,24 @@ def read_agent_context_dict(state_root: Path, instance_repo: Path | str | None =
         inst_path / "skills" if inst_path else Path("__missing_instance_repo__/skills"),
         lambda path: path.name == "SKILL.md",
     )
+    skills_root = inst_path.resolve() if inst_path else None
     for s_file in skills_files:
         try:
-            content = s_file.read_text(encoding="utf-8", errors="replace")[:15000]
+            if skills_root is None:
+                skills_status = "unavailable"
+                continue
+            skill_relative = s_file.relative_to(inst_path)
+            safe_file = _read_instance_file_beneath(skills_root, skills_root / skill_relative, 15_000)
+            if safe_file is None:
+                skills_status = "unavailable"
+                continue
+            size, content = safe_file
             lines = [line.strip() for line in content.splitlines() if line.strip()]
             desc = next((line for line in lines if not line.startswith("#") and len(line) > 10), "")
             rel = s_file.relative_to(inst_path).as_posix()
             skills_list.append({
                 "name": s_file.parent.name,
-                "size_bytes": s_file.stat().st_size,
+                "size_bytes": size,
                 "desc": desc[:200],
                 "content": content,
                 "path": rel,
@@ -676,7 +685,7 @@ def read_agent_context_dict(state_root: Path, instance_repo: Path | str | None =
             memory_relative = path.relative_to(memory_dir)
             target = memory_root / "memory" / memory_relative
             rel = path.relative_to(inst_path).as_posix()
-            result = _read_memory_file_beneath(memory_root, target)
+            result = _read_instance_file_beneath(memory_root, target, 12_000)
             if result is None:
                 memory_status = "unavailable"
                 continue
