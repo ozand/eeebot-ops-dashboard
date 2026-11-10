@@ -947,6 +947,23 @@ def test_m2_release_goals_charter_source_is_pinned() -> None:
     assert allowed["charter"]["text"] == "public goals"
 
 
+def test_m2_oversized_release_charter_text_is_omitted_not_drop_sentinel() -> None:
+    from scripts import techtree_viewer as tv
+    from scripts.two_sinks import _sanitize_public_value
+
+    projected = _sanitize_public_value("derived_view", {
+        "status": "present", "charter": {
+            "source": "release_goals_md", "merged": False, "text": "SYNTHETIC_LONG_CHARTER" * 1000,
+        },
+    })
+    assert projected["charter"].get("text") is None
+    assert "object at 0x" not in repr(projected)
+    json.dumps(projected)
+    pages = tv.render_public_pages({"derived_view": projected}, "synthetic")
+    assert all("object at 0x" not in page for page in pages.values())
+    assert "SYNTHETIC_LONG_CHARTER" not in json.dumps(pages)
+
+
 def test_split_render_inputs_withholds_freeform_strategist_reason() -> None:
     from scripts import techtree_viewer as tv
 

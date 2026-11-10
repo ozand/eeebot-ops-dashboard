@@ -955,7 +955,11 @@ def _derived_view_post(source: dict, out: dict, withheld: dict[str, int] | None)
         # read, and build_derived_view always writes merged=False; anything
         # else -- merged, untagged, goal_text -- fails closed.
         if projected.get("source") == "release_goals_md" and projected.get("merged") is False and text is not _DROP:
-            projected["text"] = _own_content(text, withheld)
+            bounded_text = _own_content(text, withheld)
+            if bounded_text is not _DROP:
+                projected["text"] = bounded_text
+            else:
+                _count_withheld(withheld, "derived_charter_text")
         elif isinstance(charter.get("text"), str) and charter["text"]:
             _count_withheld(withheld, "derived_charter_text")
         out["charter"] = projected

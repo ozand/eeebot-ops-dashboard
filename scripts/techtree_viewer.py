@@ -5216,9 +5216,9 @@ def build_cycle_detail_page() -> str:
           '<div><span class="badge">' + esc(sa.status || 'unknown') + '</span> <strong>' + esc(sa.label || sa.subagent_id || '') + '</strong></div>' +
           line('Started', sa.started_at) + line('Finished', sa.finished_at) +
           line('Loop iterations', sa.iteration_count) +
-          '<p><b>Task:</b> ' + esc(sa.task_excerpt || '') + truncNote + '</p>' +
-          (sa.summary_excerpt ? '<p><b>Summary:</b> ' + esc(sa.summary_excerpt) + '</p>' : '') +
-          (sa.result_excerpt ? '<p><b>Result:</b> ' + esc(sa.result_excerpt) + '</p>' : '') +
+          '<p><b>Task:</b> ' + esc(sa.task || '') + truncNote + '</p>' +
+          (sa.summary ? '<p><b>Summary:</b> ' + esc(sa.summary) + '</p>' : '') +
+          (sa.result ? '<p><b>Result:</b> ' + esc(sa.result) + '</p>' : '') +
           '</li>';
       }}
       function render(id, data) {{

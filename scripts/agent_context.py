@@ -622,8 +622,13 @@ def read_agent_context_dict(state_root: Path, instance_repo: Path | str | None =
     memory_index_status = corpus_status(memory_index_path)
     memory_files: list[dict[str, Any]] = []
     total_memory_size = 0
+    memory_root = inst_path.resolve()
     for path in memory_paths:
         try:
+            resolved_path = path.resolve(strict=True)
+            if not resolved_path.is_relative_to(memory_root) or not resolved_path.is_file():
+                memory_status = "unavailable"
+                continue
             rel = path.relative_to(inst_path).as_posix()
             size = path.stat().st_size
             total_memory_size += size

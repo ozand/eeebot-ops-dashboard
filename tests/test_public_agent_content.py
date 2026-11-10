@@ -93,6 +93,48 @@ def test_owned_content_real_reader_to_public_projection_render_scan_and_dry_run(
     monkeypatch.setattr(tv, "_gh", original_gh)
 
 
+def test_cycle_detail_browser_displays_bounded_subagent_text(tmp_path):
+    sync_playwright = pytest.importorskip("playwright.sync_api").sync_playwright
+    source = {
+        "ledger_tail": [{"phase": "outcome", "cycle_id": "cycle-synthetic", "outcome": "success"}],
+        "subagent_records": [{
+            "cycle_id": "cycle-synthetic", "subagent_id": "sa-synthetic", "status": "done",
+            "label": "synthetic worker", "task": "TASK_VISIBLE_SYNTHETIC",
+            "summary": "SUMMARY_VISIBLE_SYNTHETIC", "result": "RESULT_VISIBLE_SYNTHETIC",
+        }],
+    }
+    public, _ = split_render_inputs(source)
+    pages = tv.render_public_pages(public, "synthetic")
+    for name, contents in pages.items():
+        (tmp_path / name).write_text(contents, encoding="utf-8")
+
+    import threading
+    from functools import partial
+    from http.server import SimpleHTTPRequestHandler, ThreadingHTTPServer
+
+    class QuietHandler(SimpleHTTPRequestHandler):
+        def log_message(self, format, *args):
+            pass
+
+    server = ThreadingHTTPServer(("127.0.0.1", 0), partial(QuietHandler, directory=str(tmp_path)))
+    thread = threading.Thread(target=server.serve_forever, daemon=True)
+    thread.start()
+    try:
+        with sync_playwright() as playwright:
+            browser = playwright.chromium.launch(headless=True)
+            page = browser.new_page()
+            page.goto(f"http://127.0.0.1:{server.server_port}/cycle.html?id=cycle-synthetic")
+            page.wait_for_selector(".cycle-detail-subagent", timeout=5000)
+            body = page.locator("#cycle-detail-body")
+            for text in ("TASK_VISIBLE_SYNTHETIC", "SUMMARY_VISIBLE_SYNTHETIC", "RESULT_VISIBLE_SYNTHETIC"):
+                assert text in body.inner_text()
+            browser.close()
+    finally:
+        server.shutdown()
+        server.server_close()
+        thread.join(timeout=1)
+
+
 def test_embedded_reader_applies_same_subagent_source_gate(tmp_path):
     state, repo = tmp_path / "state", tmp_path / "repo"
     state.mkdir(); repo.mkdir()
@@ -110,6 +152,30 @@ def test_embedded_reader_applies_same_subagent_source_gate(tmp_path):
     assert "null-origin" not in json.dumps(records) and "null-parent-origin" not in json.dumps(records)
     assert "foreign-parent" not in json.dumps(records) and "null-parent-conflict" not in json.dumps(records)
     assert all(not {"origin", "workspace", "runtime_state_root"} & row.keys() for row in records)
+
+
+def test_memory_reader_rejects_external_symlink_and_keeps_internal_memory(tmp_path):
+    state, repo = tmp_path / "state", tmp_path / "repo"
+    state.mkdir(); repo.mkdir()
+    external = tmp_path / "external-private.md"
+    external.write_text("SYNTHETIC_EXTERNAL_PRIVATE_SENTINEL", encoding="utf-8")
+    (repo / "memory").mkdir()
+    (repo / "memory/inside.md").write_text("SYNTHETIC_INTERNAL_MEMORY", encoding="utf-8")
+    try:
+        (repo / "memory/outside.md").symlink_to(external)
+    except (OSError, NotImplementedError) as exc:
+        if sys.platform == "win32":
+            pytest.skip(f"symlink creation unavailable: {type(exc).__name__}")
+        raise
+
+    source = tv.read_local_state(str(state), str(repo))
+    memory = source["agent_context"]["tier2_memory"]
+    names = {row["name"] for row in memory["files"]}
+    contents = json.dumps(memory)
+    assert "memory/inside.md" in names
+    assert "memory/outside.md" not in names
+    assert "SYNTHETIC_INTERNAL_MEMORY" in contents
+    assert "SYNTHETIC_EXTERNAL_PRIVATE_SENTINEL" not in contents
 
 
 def test_wrong_shape_tier2_content_drops_but_safe_sibling_survives():
