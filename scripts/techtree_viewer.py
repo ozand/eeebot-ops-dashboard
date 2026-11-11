@@ -612,6 +612,48 @@ def read_instance_file_bytes(inst_path, path, max_bytes):
             os.close(fd)
 
 
+def read_instance_file_tail(inst_path, path, max_bytes):
+    if (os.open not in os.supports_dir_fd or not hasattr(os, "O_NOFOLLOW")
+            or not hasattr(os, "O_DIRECTORY") or max_bytes <= 0):
+        return None
+    try:
+        root = Path(inst_path).resolve()
+        if root not in {Path(INSTANCE_REPO).resolve(), Path(STATE_ROOT).resolve()}:
+            return None
+        parts = path.relative_to(root).parts
+    except (OSError, ValueError):
+        return None
+    if not parts or any(part in {"", ".", ".."} for part in parts):
+        return None
+    directory_flags = os.O_RDONLY | os.O_DIRECTORY | os.O_NOFOLLOW | getattr(os, "O_CLOEXEC", 0)
+    file_flags = os.O_RDONLY | os.O_NOFOLLOW | getattr(os, "O_CLOEXEC", 0) | getattr(os, "O_NONBLOCK", 0)
+    opened_fds = []
+    try:
+        current = os.open(root, directory_flags); opened_fds.append(current)
+        for part in parts[:-1]:
+            current = os.open(part, directory_flags, dir_fd=current); opened_fds.append(current)
+        fd = os.open(parts[-1], file_flags, dir_fd=current); opened_fds.append(fd)
+        metadata = os.fstat(fd)
+        if not stat.S_ISREG(metadata.st_mode):
+            return None
+        offset = max(0, metadata.st_size - max_bytes)
+        starts_mid_line = False
+        if offset:
+            os.lseek(fd, offset - 1, os.SEEK_SET)
+            starts_mid_line = os.read(fd, 1) != bytes([10])
+        os.lseek(fd, offset, os.SEEK_SET)
+        with os.fdopen(fd, "rb") as stream:
+            opened_fds.remove(fd); content = stream.read(max_bytes)
+        if len(content) > max_bytes:
+            return None
+        return metadata.st_size, starts_mid_line, content
+    except (OSError, ValueError):
+        return None
+    finally:
+        for fd in reversed(opened_fds):
+            os.close(fd)
+
+
 def read_instance_file_text(inst_path, path, max_chars):
     result = read_instance_file_bytes(inst_path, path, max_chars * 4)
     if result is None:
@@ -1322,6 +1364,51 @@ def read_file_text(relpath):
         return None
 
 
+    if (os.open not in os.supports_dir_fd or not hasattr(os, "O_NOFOLLOW")
+            or not hasattr(os, "O_DIRECTORY") or max_bytes <= 0):
+        return None
+    try:
+        root = inst_path.resolve()
+        if root not in {Path(INSTANCE_REPO).resolve(), Path(STATE_ROOT).resolve()}:
+            return None
+        parts = path.relative_to(root).parts
+    except (OSError, ValueError):
+        return None
+    if not parts or any(part in {"", ".", ".."} for part in parts):
+        return None
+    directory_flags = os.O_RDONLY | os.O_DIRECTORY | os.O_NOFOLLOW | getattr(os, "O_CLOEXEC", 0)
+    file_flags = os.O_RDONLY | os.O_NOFOLLOW | getattr(os, "O_CLOEXEC", 0) | getattr(os, "O_NONBLOCK", 0)
+    opened_fds = []
+    try:
+        current = os.open(root, directory_flags)
+        opened_fds.append(current)
+        for part in parts[:-1]:
+            current = os.open(part, directory_flags, dir_fd=current)
+            opened_fds.append(current)
+        fd = os.open(parts[-1], file_flags, dir_fd=current)
+        opened_fds.append(fd)
+        metadata = os.fstat(fd)
+        if not stat.S_ISREG(metadata.st_mode):
+            return None
+        offset = max(0, metadata.st_size - max_bytes)
+        starts_mid_line = False
+        if offset:
+            os.lseek(fd, offset - 1, os.SEEK_SET)
+            starts_mid_line = os.read(fd, 1) != b"\n"
+        os.lseek(fd, offset, os.SEEK_SET)
+        with os.fdopen(fd, "rb") as stream:
+            opened_fds.remove(fd)
+            content = stream.read(max_bytes)
+        if len(content) > max_bytes:
+            return None
+        return metadata.st_size, offset, starts_mid_line, content
+    except (OSError, ValueError):
+        return None
+    finally:
+        for fd in reversed(opened_fds):
+            os.close(fd)
+
+
 def read_jsonl(relpath):
     path = os.path.join(STATE_ROOT, relpath)
     if relpath != "reflector/reflections.jsonl":
@@ -1341,12 +1428,15 @@ def read_jsonl(relpath):
         except Exception:
             pass
         return rows
-    safe_file = read_instance_file_bytes(Path(STATE_ROOT), Path(path), 4 * 1024 * 1024)
-    if safe_file is None:
+    safe_tail = read_instance_file_tail(Path(STATE_ROOT), Path(path), 4 * 1024 * 1024)
+    if safe_tail is None:
         return []
+    _source_size, _offset, starts_mid_line, content = safe_tail
     rows = []
     try:
-        text = safe_file[1].decode("utf-8", errors="replace")
+        if starts_mid_line:
+            content = content.split(b"\n", 1)[1] if b"\n" in content else b""
+        text = content.decode("utf-8", errors="replace")
         for line in text.splitlines():
             if not line.strip():
                 continue
@@ -2111,7 +2201,54 @@ print(json.dumps(result))
 '''.lstrip('\n')
 
 
-def _executor_stats_from_llm_stats(stats: Any) -> dict[str, Any] | None:
+def read_instance_file_tail(inst_path: Path, path: Path, max_bytes: int):
+    """Read a bounded suffix through the selected instance/state root's no-follow descriptors."""
+    if (os.open not in os.supports_dir_fd or not hasattr(os, "O_NOFOLLOW")
+            or not hasattr(os, "O_DIRECTORY") or max_bytes <= 0):
+        return None
+    try:
+        root = inst_path.resolve()
+        if root not in {Path(INSTANCE_REPO).resolve(), Path(STATE_ROOT).resolve()}:
+            return None
+        parts = path.relative_to(root).parts
+    except (OSError, ValueError):
+        return None
+    if not parts or any(part in {"", ".", ".."} for part in parts):
+        return None
+    directory_flags = os.O_RDONLY | os.O_DIRECTORY | os.O_NOFOLLOW | getattr(os, "O_CLOEXEC", 0)
+    file_flags = os.O_RDONLY | os.O_NOFOLLOW | getattr(os, "O_CLOEXEC", 0) | getattr(os, "O_NONBLOCK", 0)
+    opened_fds: list[int] = []
+    try:
+        current = os.open(root, directory_flags)
+        opened_fds.append(current)
+        for part in parts[:-1]:
+            current = os.open(part, directory_flags, dir_fd=current)
+            opened_fds.append(current)
+        fd = os.open(parts[-1], file_flags, dir_fd=current)
+        opened_fds.append(fd)
+        metadata = os.fstat(fd)
+        if not stat.S_ISREG(metadata.st_mode):
+            return None
+        offset = max(0, metadata.st_size - max_bytes)
+        starts_mid_line = False
+        if offset:
+            os.lseek(fd, offset - 1, os.SEEK_SET)
+            starts_mid_line = os.read(fd, 1) != bytes([10])
+        os.lseek(fd, offset, os.SEEK_SET)
+        with os.fdopen(fd, "rb") as stream:
+            opened_fds.remove(fd)
+            content = stream.read(max_bytes)
+        if len(content) > max_bytes:
+            return None
+        return metadata.st_size, starts_mid_line, content
+    except (OSError, ValueError):
+        return None
+    finally:
+        for fd in reversed(opened_fds):
+            os.close(fd)
+
+
+def _executor_stats_from_llm_stats(stats: dict[str, Any]) -> dict[str, Any] | None:
     if not isinstance(stats, dict):
         return None
     rows = [value for value in stats.values() if isinstance(value, dict) and value.get('component') == 'executor']
@@ -2470,12 +2607,15 @@ def read_local_state(
             except Exception:  # noqa: BLE001
                 return []
             return [row for row in rows if isinstance(row, dict)]
-        safe_file = read_instance_file_bytes(root, path, 4 * 1024 * 1024)
-        if safe_file is None:
+        safe_tail = globals()["read_instance_file_tail"](root, path, 4 * 1024 * 1024)
+        if safe_tail is None:
             return []
+        _source_size, starts_mid_line, content = safe_tail
         try:
+            if starts_mid_line:
+                content = content.split(b'\n', 1)[1] if b'\n' in content else b''
             rows = []
-            for line in safe_file[1].decode('utf-8', errors='replace').splitlines():
+            for line in content.decode('utf-8', errors='replace').splitlines():
                 if not line.strip():
                     continue
                 try:
@@ -8232,8 +8372,24 @@ def build_lessons_panel(lessons: list[dict[str, Any]] | None, *, corpus_status: 
         meta_chips = kind_html + severity_html + tags_html + seen_html + duplicate_html
         meta_chips_html = f'<div class="lesson-chips">{meta_chips}</div>' if meta_chips else ''
 
-        problem_html = f'<div class="lesson-problem"><span class="lesson-label">Problem:</span> {esc(problem[:12000])}</div>' if problem else '<div class="lesson-problem unavailable-note">Problem: no text recorded.</div>'
-        solution_html = f'<div class="lesson-solution"><span class="lesson-label">Solution:</span> {esc(solution[:12000])}</div>' if solution else '<div class="lesson-solution unavailable-note">Solution: no text recorded.</div>'
+        problem_chars = l.get('problem_chars')
+        problem_size = problem_chars if isinstance(problem_chars, int) and not isinstance(problem_chars, bool) and problem_chars >= 0 else len(problem)
+        solution_chars = l.get('solution_chars')
+        solution_size = solution_chars if isinstance(solution_chars, int) and not isinstance(solution_chars, bool) and solution_chars >= 0 else len(solution)
+        problem_html = (
+            f'<div class="lesson-problem"><span class="lesson-label">Problem:</span> {esc(problem[:12000])}</div>'
+            if problem else
+            '<div class="lesson-problem unavailable-note">Problem: no text recorded.</div>'
+            if problem_size == 0 else
+            f'<div class="lesson-problem unavailable-note">Problem text unavailable ({problem_size:,} characters recorded).</div>'
+        )
+        solution_html = (
+            f'<div class="lesson-solution"><span class="lesson-label">Solution:</span> {esc(solution[:12000])}</div>'
+            if solution else
+            '<div class="lesson-solution unavailable-note">Solution: no text recorded.</div>'
+            if solution_size == 0 else
+            f'<div class="lesson-solution unavailable-note">Solution text unavailable ({solution_size:,} characters recorded).</div>'
+        )
 
         title = str(l.get('title') or '').strip()
         title_is_descriptive = bool(title and title != str(l.get('id') or ''))

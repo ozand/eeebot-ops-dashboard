@@ -268,6 +268,51 @@ def test_state_content_readers_reject_external_subagent_and_reflection_symlinks(
     assert "SYNTHETIC_EXTERNAL_REFLECTION_SENTINEL" not in result.stdout
 
 
+def test_embedded_and_local_tail_helpers_compare_the_actual_newline_byte():
+    import ast
+    import inspect
+
+    assert 'bytes([10])' in inspect.getsource(tv.read_instance_file_tail)
+    script = tv.REMOTE_READER_SCRIPT
+    parsed = ast.parse(script)
+    helper = next(node for node in parsed.body if isinstance(node, ast.FunctionDef) and node.name == "read_instance_file_tail")
+    assert any(
+        isinstance(node, ast.Compare)
+        and any(
+            isinstance(part, ast.Call)
+            and isinstance(part.func, ast.Name)
+            and part.func.id == "bytes"
+            and ast.literal_eval(part.args[0]) == [10]
+            for part in [node.left, *node.comparators]
+        )
+        for node in ast.walk(helper)
+    )
+
+
+def test_oversized_reflection_journal_keeps_recent_rows_from_bounded_tail(tmp_path):
+    if not ac._MEMORY_FD_WALK_SUPPORTED:
+        pytest.skip("fd-relative O_NOFOLLOW instance reads are unavailable")
+    state, repo = tmp_path / "state", tmp_path / "repo"
+    (state / "reflector").mkdir(parents=True)
+    repo.mkdir()
+    journal = state / "reflector/reflections.jsonl"
+    recent = json.dumps({"cycle_id": "c-recent", "summary": "SYNTHETIC_RECENT_REFLECTION"}) + "\n"
+    journal.write_bytes(("x" * (4 * 1024 * 1024)).encode("ascii") + recent.encode("utf-8"))
+    local = tv.read_local_state(str(state), str(repo))
+    assert any(row.get("cycle_id") == "c-recent" for row in local["reflections"])
+    assert "SYNTHETIC_RECENT_REFLECTION" in json.dumps(local["reflections"])
+
+    script = tv.REMOTE_READER_SCRIPT.replace(
+        'STATE_ROOT = "/var/lib/eeepc-agent/self-evolving-agent/state"', f'STATE_ROOT = {str(state)!r}',
+    ).replace(
+        'INSTANCE_REPO = "/var/lib/eeepc-agent/self-evolving-agent/eeebot-self-evolving"', f'INSTANCE_REPO = {str(repo)!r}',
+    )
+    result = subprocess.run([sys.executable], input=script, capture_output=True, text=True, check=True, timeout=30)
+    embedded = json.loads(result.stdout)
+    assert any(row.get("cycle_id") == "c-recent" for row in embedded["reflections"])
+    assert "SYNTHETIC_RECENT_REFLECTION" in json.dumps(embedded["reflections"])
+
+
 def test_instance_state_prompt_readers_reject_external_symlinks(tmp_path):
     if not ac._MEMORY_FD_WALK_SUPPORTED:
         pytest.skip("fd-relative O_NOFOLLOW instance reads are unavailable")

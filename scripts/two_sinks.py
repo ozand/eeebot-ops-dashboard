@@ -740,7 +740,11 @@ _LEDGER_ROW = _obj({
 
 @_produces("_v2_lesson")
 def _lesson_post(source: dict, out: dict, _w: dict[str, int] | None) -> None:
-    out["_v2_lesson"] = bool(source.get("problem"))
+    out["_v2_lesson"] = bool(source.get("problem") or source.get("problem_chars"))
+    for name in ("problem", "solution"):
+        text = source.get(name)
+        if isinstance(text, str):
+            out[f"{name}_chars"] = len(text)
 
 
 _LESSON_ROW = _obj({

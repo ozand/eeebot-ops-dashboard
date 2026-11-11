@@ -7,6 +7,7 @@ import sys
 
 import pytest
 
+from scripts.agent_context import _MEMORY_FD_WALK_SUPPORTED
 from scripts.two_sinks import (
     atomic_snapshot_swap,
     DEFAULT_BIND_ADDRESS,
@@ -296,6 +297,8 @@ def test_public_pages_publish_bounded_agent_owned_content(tmp_path: Path):
     )
 
     data = tv.read_local_state(str(state), str(repo))
+    if not _MEMORY_FD_WALK_SUPPORTED:
+        pytest.skip("fd-relative O_NOFOLLOW state readers are unavailable on this platform")
     raw_str = json.dumps(data, default=str)
     for m in markers.values():
         assert m in raw_str
@@ -1009,7 +1012,41 @@ def test_split_render_inputs_preserves_lesson_body_lengths() -> None:
     public, _ = split_render_inputs({"lessons": [lesson]})
     projected = public["lessons"][0]
     assert projected["problem"] == "p" * 28
+    assert projected["problem_chars"] == 28
     assert projected["solution"] == "s" * 31
+    assert projected["solution_chars"] == 31
+
+
+def test_over_limit_lesson_bodies_keep_only_recorded_lengths_and_render_unavailable():
+    from scripts.two_sinks import split_render_inputs
+    from scripts.techtree_viewer import build_lessons_panel
+
+    marker = "SYNTHETIC_SECRET_MUST_NOT_LEAK"
+    lesson = {
+        "id": "LESS-20261111-long", "title": "Long synthetic lesson",
+        "problem": "p" * 12_000 + marker, "solution": "s" * 12_000 + "tail",
+    }
+    public, _ = split_render_inputs({"lessons": [lesson]})
+    projected = public["lessons"][0]
+    assert "problem" not in projected
+    assert projected["problem_chars"] == 12_000 + len(marker)
+    assert "solution" not in projected
+    assert projected["solution_chars"] == 12_004
+    rendered = build_lessons_panel(public["lessons"])
+    assert "Problem text unavailable (12,030 characters recorded)." in rendered
+    assert "Solution text unavailable (12,004 characters recorded)." in rendered
+    assert marker not in json.dumps(public)
+    assert marker not in rendered
+
+
+def test_lesson_projection_distinguishes_empty_bodies_from_rejected_recorded_bodies():
+    from scripts.two_sinks import split_render_inputs
+    from scripts.techtree_viewer import build_lessons_panel
+
+    public, _ = split_render_inputs({"lessons": [{"id": "LESS-empty", "problem": "", "solution": ""}]})
+    rendered = build_lessons_panel(public["lessons"])
+    assert "Problem: no text recorded." in rendered
+    assert "Solution: no text recorded." in rendered
 
 
 
