@@ -201,6 +201,9 @@ def test_read_local_state_collects_reflections_fail_soft(tmp_path: Path) -> None
         'not-json\n', encoding='utf-8')
 
     data = tv.read_local_state(str(state), instance_repo=str(tmp_path / 'repo'))
+    if not ac._MEMORY_FD_WALK_SUPPORTED:
+        assert data['reflections'] == []
+        return
 
     assert data['reflections'] == [
         {'cycle_id': 'cycle-a', 'summary': 'found it', 'findings': ['f1'], 'recommendations': ['r1']}
@@ -6180,6 +6183,43 @@ def _write_lesson_md(lessons_dir: Path, filename: str, *, description: str, prev
     )
 
 
+def test_274_mixed_live_corpus_keeps_safe_lesson_and_marks_unavailable(tmp_path: Path) -> None:
+    repo = tmp_path / 'eeebot-self-evolving'
+    lessons_dir = repo / 'lessons'
+    lessons_dir.mkdir(parents=True)
+    _write_lesson_md(lessons_dir, 'LESS-20260916-owned.md', description='SYNTHETIC_OWN_LESSON_POSITIVE', prevention='safe fix')
+    outside = tmp_path / 'external-lesson.md'
+    _write_lesson_md(tmp_path, 'external-lesson.md', description='SYNTHETIC_EXTERNAL_LESSON_SENTINEL', prevention='private')
+    try:
+        (lessons_dir / 'LESS-20260915-external.md').symlink_to(outside)
+    except (OSError, NotImplementedError) as exc:
+        if sys.platform == 'win32':
+            pytest.skip(f'file symlink creation unavailable: {type(exc).__name__}')
+        raise
+
+    local = tv.read_local_state(str(tmp_path), instance_repo=str(repo))
+    live = [row for row in local['lessons'] if row.get('source') == 'live']
+    if not ac._MEMORY_FD_WALK_SUPPORTED:
+        assert live == []
+        assert local['agent_context']['tier2_lessons']['corpus_status'] == 'unavailable'
+        return
+    assert [row['id'] for row in live] == ['LESS-20260916-owned']
+    assert 'SYNTHETIC_OWN_LESSON_POSITIVE' in json.dumps(live)
+    assert 'SYNTHETIC_EXTERNAL_LESSON_SENTINEL' not in json.dumps(local)
+    assert local['agent_context']['tier2_lessons']['corpus_status'] == 'unavailable'
+    assert local['agent_context']['tier2_lessons']['corpus_count'] == 1
+
+    script = tv.REMOTE_READER_SCRIPT.replace(
+        'INSTANCE_REPO = "/var/lib/eeepc-agent/self-evolving-agent/eeebot-self-evolving"', f'INSTANCE_REPO = {str(repo)!r}',
+    )
+    result = subprocess.run([sys.executable], input=script, capture_output=True, text=True, check=True, timeout=30)
+    embedded = json.loads(result.stdout)
+    embedded_live = [row for row in embedded['lessons'] if row.get('source') == 'live']
+    assert [row['id'] for row in embedded_live] == ['LESS-20260916-owned']
+    assert 'SYNTHETIC_OWN_LESSON_POSITIVE' in json.dumps(embedded_live)
+    assert 'SYNTHETIC_EXTERNAL_LESSON_SENTINEL' not in result.stdout
+
+
 def test_274_lessons_html_reads_live_corpus_matches_agent_html_count(tmp_path: Path) -> None:
     repo = tmp_path / 'eeebot-self-evolving'
     lessons_dir = repo / 'lessons'
@@ -6727,6 +6767,9 @@ def test_272_read_subagent_records_local_bounded_excerpt(tmp_path: Path) -> None
     (state / 'subagents' / 'requests' / 'not-a-record.json').write_text('{}', encoding='utf-8')
     data = tv.read_local_state(str(state))
     records = data['subagent_records']
+    if not ac._MEMORY_FD_WALK_SUPPORTED:
+        assert records == []
+        return
     assert len(records) == 1
     rec = records[0]
     assert rec['subagent_id'] == 'sa1'
@@ -6776,10 +6819,11 @@ def test_272_remote_reader_script_mirrors_subagents_and_prompts(tmp_path: Path) 
         exec(script, namespace)
     records = namespace['read_subagent_records']()
     prompts = namespace['read_cycle_prompts']()
-    assert len(records) == 1 and records[0]['cycle_id'] == 'cycle-c'
     if not ac._MEMORY_FD_WALK_SUPPORTED:
+        assert records == []
         assert prompts == {}
         return
+    assert len(records) == 1 and records[0]['cycle_id'] == 'cycle-c'
     assert prompts['cycle-c']['system']['text'] == 'sys'
 
 

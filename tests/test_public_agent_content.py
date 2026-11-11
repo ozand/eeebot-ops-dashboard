@@ -66,13 +66,13 @@ def test_owned_content_real_reader_to_public_projection_render_scan_and_dry_run(
     from scripts.publish_scan import scan_pages
     scan_pages(pages)
     combined = "".join(pages.values())
-    markers = ["prompt", "prompt task", "subagent task", "subagent result", "subagent response", "legacy own task", "legacy own summary", "legacy own result", "legacy absent parent origin", "both origins own", "Release charter quote", "reflection response", "own finding", "own issue", "own fix", "Read your own context"]
+    markers = ["prompt", "Release charter quote"]
+    if ac._MEMORY_FD_WALK_SUPPORTED:
+        markers.extend(["prompt task", "subagent task", "subagent result", "subagent response", "legacy own task", "legacy own summary", "legacy own result", "legacy absent parent origin", "both origins own", "reflection response", "own finding", "own issue", "own fix", "Read your own context"])
     if source["agent_context"]["tier2_skills_status"] == "present":
         markers.append("Skill response body")
     if ac._MEMORY_FD_WALK_SUPPORTED:
         markers.append("Own memory context")
-    if not ac._MEMORY_FD_WALK_SUPPORTED:
-        markers = [marker for marker in markers if marker not in {"prompt task", "own issue", "own fix", "Read your own context"}]
     for marker in markers:
         assert marker in combined
     if ac._MEMORY_FD_WALK_SUPPORTED:
@@ -84,13 +84,16 @@ def test_owned_content_real_reader_to_public_projection_render_scan_and_dry_run(
     assert "null parent origin must not publish" not in combined
     assert "foreign parent origin must not publish" not in combined
     assert "null parent conflict must not publish" not in combined
-    assert "null-origin" not in json.dumps(source["subagent_records"])
-    assert "null-parent-origin" not in json.dumps(source["subagent_records"])
     assert "foreign workspace" not in combined
     assert "foreign root" not in combined
-    assert len(source["subagent_records"]) == 4
-    public_record = public["subagent_records"][0]
-    assert not {"origin", "parent_context", "workspace", "runtime_state_root", "runtime_state_source"} & public_record.keys()
+    if ac._MEMORY_FD_WALK_SUPPORTED:
+        assert len(source["subagent_records"]) == 4
+        assert "null-origin" not in json.dumps(source["subagent_records"])
+        assert "null-parent-origin" not in json.dumps(source["subagent_records"])
+        public_record = public["subagent_records"][0]
+        assert not {"origin", "parent_context", "workspace", "runtime_state_root", "runtime_state_source"} & public_record.keys()
+    else:
+        assert source["subagent_records"] == []
     assert "raw operator goal must stay private" not in combined
     assert "Release charter quote" in pages["index.html"]
     endpoints = []
@@ -176,6 +179,9 @@ def test_embedded_reader_applies_same_subagent_source_gate(tmp_path):
     result = subprocess.run([sys.executable], input=script, capture_output=True, text=True, check=True, timeout=30)
     remote = json.loads(result.stdout)
     records = remote["subagent_records"]
+    if not ac._MEMORY_FD_WALK_SUPPORTED:
+        assert records == []
+        return
     assert {row["subagent_id"] for row in records} == {"sa", "legacy", "legacy-parent", "own-parent"}
     assert "subagent task" in json.dumps(records) and "legacy own task" in json.dumps(records)
     assert "null-origin" not in json.dumps(records) and "null-parent-origin" not in json.dumps(records)
@@ -216,6 +222,50 @@ def test_instance_text_readers_reject_external_agents_and_lesson_links(tmp_path)
     assert "SYNTHETIC_EXTERNAL_AGENTS_SENTINEL" not in result.stdout
     if ac._MEMORY_FD_WALK_SUPPORTED:
         assert "SYNTHETIC_EXTERNAL_LESSON_SENTINEL" not in result.stdout
+
+
+def test_state_content_readers_reject_external_subagent_and_reflection_symlinks(tmp_path):
+    if not ac._MEMORY_FD_WALK_SUPPORTED:
+        pytest.skip("fd-relative O_NOFOLLOW instance reads are unavailable")
+    state, repo = tmp_path / "state", tmp_path / "repo"
+    (state / "subagents").mkdir(parents=True)
+    (state / "reflector").mkdir()
+    repo.mkdir()
+    owned_subagent = {
+        "subagent_id": "owned", "cycle_id": "c1", "status": "done",
+        "task": "SYNTHETIC_OWN_SUBAGENT", "origin": {"channel": "system", "chat_id": "self-evolving-agent"},
+        "workspace": str(repo), "runtime_state_root": str(state),
+    }
+    (state / "subagents/owned.json").write_text(json.dumps(owned_subagent), encoding="utf-8")
+    outside_subagent = tmp_path / "outside-subagent.json"
+    outside_subagent.write_text(json.dumps({"task": "SYNTHETIC_EXTERNAL_SUBAGENT_SENTINEL"}), encoding="utf-8")
+    (state / "subagents/external.json").symlink_to(outside_subagent)
+    (state / "reflector/reflections.jsonl").write_text(
+        json.dumps({"summary": "SYNTHETIC_OWN_REFLECTION"}) + "\n", encoding="utf-8",
+    )
+    outside_reflections = tmp_path / "outside-reflections.jsonl"
+    outside_reflections.write_text(
+        json.dumps({"summary": "SYNTHETIC_EXTERNAL_REFLECTION_SENTINEL"}) + "\n", encoding="utf-8",
+    )
+    (state / "reflector/external.jsonl").symlink_to(outside_reflections)
+
+    local = tv.read_local_state(str(state), str(repo))
+    assert any(row.get("subagent_id") == "owned" for row in local["subagent_records"])
+    assert "SYNTHETIC_OWN_REFLECTION" in json.dumps(local["reflections"])
+    assert "SYNTHETIC_EXTERNAL_SUBAGENT_SENTINEL" not in json.dumps(local)
+    assert "SYNTHETIC_EXTERNAL_REFLECTION_SENTINEL" not in json.dumps(local)
+
+    script = tv.REMOTE_READER_SCRIPT.replace(
+        'STATE_ROOT = "/var/lib/eeepc-agent/self-evolving-agent/state"', f'STATE_ROOT = {str(state)!r}',
+    ).replace(
+        'INSTANCE_REPO = "/var/lib/eeepc-agent/self-evolving-agent/eeebot-self-evolving"', f'INSTANCE_REPO = {str(repo)!r}',
+    )
+    result = subprocess.run([sys.executable], input=script, capture_output=True, text=True, check=True, timeout=30)
+    embedded = json.loads(result.stdout)
+    assert any(row.get("subagent_id") == "owned" for row in embedded["subagent_records"])
+    assert "SYNTHETIC_OWN_REFLECTION" in json.dumps(embedded["reflections"])
+    assert "SYNTHETIC_EXTERNAL_SUBAGENT_SENTINEL" not in result.stdout
+    assert "SYNTHETIC_EXTERNAL_REFLECTION_SENTINEL" not in result.stdout
 
 
 def test_instance_state_prompt_readers_reject_external_symlinks(tmp_path):

@@ -1324,18 +1324,38 @@ def read_file_text(relpath):
 
 def read_jsonl(relpath):
     path = os.path.join(STATE_ROOT, relpath)
+    if relpath != "reflector/reflections.jsonl":
+        rows = []
+        try:
+            with open(path, "r", encoding="utf-8", errors="replace") as fh:
+                for line in fh:
+                    if not line.strip():
+                        continue
+                    try:
+                        row = json.loads(line)
+                    except Exception:
+                        continue
+                    if isinstance(row, dict):
+                        rows.append(row)
+            _mtimes.append(os.path.getmtime(path))
+        except Exception:
+            pass
+        return rows
+    safe_file = read_instance_file_bytes(Path(STATE_ROOT), Path(path), 4 * 1024 * 1024)
+    if safe_file is None:
+        return []
     rows = []
     try:
-        with open(path, "r", encoding="utf-8", errors="replace") as fh:
-            for line in fh:
-                if not line.strip():
-                    continue
-                try:
-                    row = json.loads(line)
-                except Exception:
-                    continue
-                if isinstance(row, dict):
-                    rows.append(row)
+        text = safe_file[1].decode("utf-8", errors="replace")
+        for line in text.splitlines():
+            if not line.strip():
+                continue
+            try:
+                row = json.loads(line)
+            except Exception:
+                continue
+            if isinstance(row, dict):
+                rows.append(row)
         _mtimes.append(os.path.getmtime(path))
     except Exception:
         pass
@@ -1402,12 +1422,16 @@ def read_subagent_records():
     dated.sort(reverse=True)
     records = []
     for _mtime, path in dated[:_MAX_SUBAGENT_FILES]:
+        safe_file = read_instance_file_bytes(
+            Path(STATE_ROOT), Path(STATE_ROOT) / os.path.relpath(path, STATE_ROOT), 1024 * 1024,
+        )
+        if safe_file is None:
+            continue
         try:
-            with open(path, "r", encoding="utf-8", errors="replace") as fh:
-                data = json.load(fh)
-            _mtimes.append(os.path.getmtime(path))
+            data = json.loads(safe_file[1].decode("utf-8", errors="replace"))
         except Exception:
             continue
+        _mtimes.append(os.path.getmtime(path))
         if not isinstance(data, dict) or not _embedded_subagent_record_matches_instance(
             data, Path(STATE_ROOT), Path(INSTANCE_REPO),
         ):
@@ -1513,16 +1537,19 @@ def _parse_lessons_text(text):
 
 
 def _lesson_corpus_scan(lessons_dir):
-    """#274: enumerate lessons/*.md (excluding index.md) -- the live corpus
-    the loop writes today. Distinguishes a missing dir from an unreadable
-    one so the page can say which happened rather than showing 0 either way."""
+    """#274: enumerate safe lessons, preserving partial status on rejected links."""
     if not os.path.isdir(lessons_dir):
         return None, "missing"
     try:
         names = sorted(f for f in os.listdir(lessons_dir) if f.endswith(".md") and f != "index.md")
     except Exception:
         return None, "unavailable"
-    return names, "present"
+    safe_names = [
+        name for name in names
+        if (safe_body := read_instance_text(os.path.join(lessons_dir, name), 128 * 1024)) is not None
+        and safe_body[0] <= 128 * 1024
+    ]
+    return safe_names, "unavailable" if len(safe_names) != len(names) else "present"
 
 
 def _read_lesson_index(lessons_dir):
@@ -1584,8 +1611,6 @@ def read_lessons():
     lessons_dir = os.path.join(INSTANCE_REPO, "lessons")
     names, _corpus_state = _lesson_corpus_scan(lessons_dir)
     rows_all = []
-    if names and not read_instance_text(os.path.join(lessons_dir, names[0]), 128 * 1024):
-        names = []
     if names:
         index_rows = _read_lesson_index(lessons_dir)
         for name in names:
@@ -2430,16 +2455,33 @@ def read_local_state(
 
     def read_jsonl(relpath: str) -> list[dict[str, Any]]:
         path = root / relpath
+        if relpath != 'reflector/reflections.jsonl':
+            try:
+                with path.open('r', encoding='utf-8', errors='replace') as fh:
+                    rows = []
+                    for line in fh:
+                        if not line.strip():
+                            continue
+                        try:
+                            rows.append(json.loads(line))
+                        except Exception:  # noqa: BLE001
+                            continue
+                mtimes.append(path.stat().st_mtime)
+            except Exception:  # noqa: BLE001
+                return []
+            return [row for row in rows if isinstance(row, dict)]
+        safe_file = read_instance_file_bytes(root, path, 4 * 1024 * 1024)
+        if safe_file is None:
+            return []
         try:
-            with path.open('r', encoding='utf-8', errors='replace') as fh:
-                rows = []
-                for line in fh:
-                    if not line.strip():
-                        continue
-                    try:
-                        rows.append(json.loads(line))
-                    except Exception:  # noqa: BLE001
-                        continue
+            rows = []
+            for line in safe_file[1].decode('utf-8', errors='replace').splitlines():
+                if not line.strip():
+                    continue
+                try:
+                    rows.append(json.loads(line))
+                except Exception:  # noqa: BLE001
+                    continue
             mtimes.append(path.stat().st_mtime)
         except Exception:  # noqa: BLE001
             return []
@@ -3008,7 +3050,7 @@ def read_local_state(
         -- keep in sync."""
         sdir = root / 'subagents'
         try:
-            names = [p for p in sdir.iterdir() if p.is_file() and p.name.endswith('.json')]
+            names = [p for p in sdir.iterdir() if p.name.endswith('.json')]
         except OSError:
             return []
         dated: list[tuple[float, Path]] = []
@@ -3020,8 +3062,11 @@ def read_local_state(
         dated.sort(key=lambda pair: pair[0], reverse=True)
         records: list[dict[str, Any]] = []
         for _mtime, path in dated[:_MAX_SUBAGENT_FILES]:
+            safe_file = read_instance_file_bytes(root, root / path.relative_to(root), 1024 * 1024)
+            if safe_file is None:
+                continue
             try:
-                data = json.loads(path.read_text(encoding='utf-8', errors='replace'))
+                data = json.loads(safe_file[1].decode('utf-8', errors='replace'))
                 mtimes.append(path.stat().st_mtime)
             except (OSError, ValueError):
                 continue
@@ -3091,7 +3136,7 @@ def read_local_state(
         lessons_dir = repo_path / 'lessons'
         corpus = read_lesson_corpus(repo_path)
         live_rows: list[dict[str, Any]] = []
-        if corpus['corpus_status'] == 'present':
+        if corpus['corpus_status'] in {'present', 'unavailable'} and corpus['files']:
             index_rows = _read_lesson_index_local(lessons_dir)
             for f in corpus['files']:
                 name = Path(f['name']).name
