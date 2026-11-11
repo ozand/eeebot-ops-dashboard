@@ -289,6 +289,25 @@ def test_embedded_and_local_tail_helpers_compare_the_actual_newline_byte():
     )
 
 
+def test_local_reflection_reader_consumes_three_value_tail_helper(tmp_path, monkeypatch):
+    state, repo = tmp_path / "state", tmp_path / "repo"
+    (state / "reflector").mkdir(parents=True)
+    repo.mkdir()
+    journal = state / "reflector/reflections.jsonl"
+    journal.write_bytes(b"ignored by synthetic helper")
+    record = {"cycle_id": "c-wiring", "summary": "SYNTHETIC_TAIL_WIRING"}
+    def fake_tail(root, path, max_bytes):
+        assert Path(root) == state
+        assert Path(path) == journal
+        assert max_bytes == 4 * 1024 * 1024
+        content = (json.dumps(record) + chr(10)).encode("utf-8")
+        return len(content), False, content
+    monkeypatch.setattr(tv, "read_instance_file_tail", fake_tail)
+
+    local = tv.read_local_state(str(state), str(repo))
+    assert local["reflections"] == [record]
+
+
 def test_oversized_reflection_journal_keeps_recent_rows_from_bounded_tail(tmp_path):
     if not ac._MEMORY_FD_WALK_SUPPORTED:
         pytest.skip("fd-relative O_NOFOLLOW instance reads are unavailable")

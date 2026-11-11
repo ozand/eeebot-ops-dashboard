@@ -2606,7 +2606,7 @@ def read_local_state(
         safe_tail = globals()["read_instance_file_tail"](root, path, 4 * 1024 * 1024)
         if safe_tail is None:
             return []
-        _source_size, _offset, starts_mid_line, content = safe_tail
+        _source_size, starts_mid_line, content = safe_tail
         try:
             if starts_mid_line:
                 content = content.split(b'\n', 1)[1] if b'\n' in content else b''
