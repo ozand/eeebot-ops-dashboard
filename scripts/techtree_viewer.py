@@ -618,8 +618,6 @@ def read_instance_file_tail(inst_path, path, max_bytes):
         return None
     try:
         root = Path(inst_path).resolve()
-        if root not in {Path(INSTANCE_REPO).resolve(), Path(STATE_ROOT).resolve()}:
-            return None
         parts = path.relative_to(root).parts
     except (OSError, ValueError):
         return None
@@ -1431,7 +1429,7 @@ def read_jsonl(relpath):
     safe_tail = read_instance_file_tail(Path(STATE_ROOT), Path(path), 4 * 1024 * 1024)
     if safe_tail is None:
         return []
-    _source_size, _offset, starts_mid_line, content = safe_tail
+    _source_size, starts_mid_line, content = safe_tail
     rows = []
     try:
         if starts_mid_line:
@@ -2208,8 +2206,6 @@ def read_instance_file_tail(inst_path: Path, path: Path, max_bytes: int):
         return None
     try:
         root = inst_path.resolve()
-        if root not in {Path(INSTANCE_REPO).resolve(), Path(STATE_ROOT).resolve()}:
-            return None
         parts = path.relative_to(root).parts
     except (OSError, ValueError):
         return None
@@ -2610,7 +2606,7 @@ def read_local_state(
         safe_tail = globals()["read_instance_file_tail"](root, path, 4 * 1024 * 1024)
         if safe_tail is None:
             return []
-        _source_size, starts_mid_line, content = safe_tail
+        _source_size, _offset, starts_mid_line, content = safe_tail
         try:
             if starts_mid_line:
                 content = content.split(b'\n', 1)[1] if b'\n' in content else b''
