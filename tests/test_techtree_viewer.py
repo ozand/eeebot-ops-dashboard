@@ -6745,6 +6745,9 @@ def test_272_read_cycle_prompts_local_reports_truncation(tmp_path: Path) -> None
     (state / 'prompts' / 'cycle-b.task.txt').write_text('short task text', encoding='utf-8')
     data = tv.read_local_state(str(state))
     prompts = data['cycle_prompts']
+    if not ac._MEMORY_FD_WALK_SUPPORTED:
+        assert prompts == {}
+        return
     assert prompts['cycle-b']['system']['truncated'] is True
     assert prompts['cycle-b']['system']['original_bytes'] == 70 * 1024
     assert len(prompts['cycle-b']['system']['text']) < 70 * 1024
@@ -6774,6 +6777,9 @@ def test_272_remote_reader_script_mirrors_subagents_and_prompts(tmp_path: Path) 
     records = namespace['read_subagent_records']()
     prompts = namespace['read_cycle_prompts']()
     assert len(records) == 1 and records[0]['cycle_id'] == 'cycle-c'
+    if not ac._MEMORY_FD_WALK_SUPPORTED:
+        assert prompts == {}
+        return
     assert prompts['cycle-c']['system']['text'] == 'sys'
 
 
@@ -8736,14 +8742,17 @@ def test_adr036_prompt_text_never_reaches_public_pages(tmp_path: Path) -> None:
     (repo / 'AGENTS.md').write_text(f'# Agents\n\n{marker_agents}\n', encoding='utf-8')
     (repo / 'skills' / 'leak-skill' / 'SKILL.md').write_text(f'---\nname: leak-skill\n---\n{marker_skill}\n', encoding='utf-8')
     data = tv.read_local_state(str(state), str(repo))
-    assert marker_system in data['cycle_prompts']['cycle-leak']['system']['text']
+    if ac._MEMORY_FD_WALK_SUPPORTED:
+        assert marker_system in data['cycle_prompts']['cycle-leak']['system']['text']
+    else:
+        assert data['cycle_prompts'] == {}
     collected = json.dumps(data, default=str)
     if ac._MEMORY_FD_WALK_SUPPORTED:
         assert marker_agents in collected
     else:
         assert marker_agents not in collected
         assert data['agents_md'] is None
-    markers = [marker_system, marker_task] + ([marker_agents] if marker_agents in collected else []) + ([marker_skill] if marker_skill in collected else [])
+    markers = ([marker_system, marker_task] if ac._MEMORY_FD_WALK_SUPPORTED else []) + ([marker_agents] if marker_agents in collected else []) + ([marker_skill] if marker_skill in collected else [])
 
     marker_goal = 'ADR036-GOAL-MARKER-f00d'
     data['derived_view'] = {'status': 'present', 'charter': {
@@ -8755,7 +8764,10 @@ def test_adr036_prompt_text_never_reaches_public_pages(tmp_path: Path) -> None:
     combined = json.dumps(pages) + single
     for marker in markers:
         assert marker in combined
-    assert '"prompt":' in pages[tv.LINEAGE_DETAILS_FILE]
+    if ac._MEMORY_FD_WALK_SUPPORTED:
+        assert '"prompt":' in pages[tv.LINEAGE_DETAILS_FILE]
+    else:
+        assert pages[tv.LINEAGE_DETAILS_FILE] == '{}'
 
 
 def test_adr036_subagent_and_reflector_text_are_bounded_public_details() -> None:

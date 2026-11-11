@@ -57,12 +57,18 @@ def test_owned_agent_content_is_escaped_visible_and_script_safe(tmp_path: Path, 
             assert page.get_by_text("memory own marker").count() == 0
         page.locator(".context-block-details").first.evaluate("el => el.open = true")
         page.screenshot(path=str(evidence / f"owned-context-detail-{width}.png"), full_page=True)
-        assert page.get_by_text("task own marker").count() == 1
+        if ac._MEMORY_FD_WALK_SUPPORTED:
+            assert page.get_by_text("task own marker").count() == 1
+        else:
+            assert page.get_by_text("task own marker").count() == 0
         assert page.locator(".agent-owned-context").count() >= 1
         assert page.locator("script").filter(has_text="window.__ownedXss=2").count() == 0
         assert page.locator("img[src=x]").count() == 0
         assert page.evaluate("window.__ownedXss || 0") == 0
-        assert "&lt;img" in page.content()
+        if ac._MEMORY_FD_WALK_SUPPORTED:
+            assert "&lt;img" in page.content()
+        else:
+            assert "&lt;img" not in page.content()
         if ac._MEMORY_FD_WALK_SUPPORTED:
             assert page.get_by_text("memory own marker").count() == 1
         else:

@@ -72,7 +72,7 @@ def test_owned_content_real_reader_to_public_projection_render_scan_and_dry_run(
     if ac._MEMORY_FD_WALK_SUPPORTED:
         markers.append("Own memory context")
     if not ac._MEMORY_FD_WALK_SUPPORTED:
-        markers = [marker for marker in markers if marker not in {"own issue", "own fix", "Read your own context"}]
+        markers = [marker for marker in markers if marker not in {"prompt task", "own issue", "own fix", "Read your own context"}]
     for marker in markers:
         assert marker in combined
     if ac._MEMORY_FD_WALK_SUPPORTED:
@@ -111,6 +111,10 @@ def test_owned_content_real_reader_to_public_projection_render_scan_and_dry_run(
         assert "Own memory context" in "".join(captured["pages"].values())
     else:
         assert "Own memory context" not in "".join(captured["pages"].values())
+    if ac._MEMORY_FD_WALK_SUPPORTED:
+        assert "prompt task" in "".join(captured["pages"].values())
+    else:
+        assert "prompt task" not in "".join(captured["pages"].values())
     assert "Release charter quote" in captured["pages"]["index.html"]
     from scripts.publish_scan import scan_pages
     scan_pages(captured["pages"])
@@ -214,6 +218,62 @@ def test_instance_text_readers_reject_external_agents_and_lesson_links(tmp_path)
         assert "SYNTHETIC_EXTERNAL_LESSON_SENTINEL" not in result.stdout
 
 
+def test_instance_state_prompt_readers_reject_external_symlinks(tmp_path):
+    if not ac._MEMORY_FD_WALK_SUPPORTED:
+        pytest.skip("fd-relative O_NOFOLLOW instance reads are unavailable")
+    state, repo = tmp_path / "state", tmp_path / "repo"
+    (state / "prompts").mkdir(parents=True)
+    repo.mkdir()
+    external = tmp_path / "outside-prompt.txt"
+    external.write_text("SYNTHETIC_EXTERNAL_PROMPT_SENTINEL", encoding="utf-8")
+    (state / "prompts/c1.system.txt").symlink_to(external)
+    (state / "prompts/c1.task.txt").symlink_to(external)
+    (state / "prompts/c2.system.txt").write_text("SYNTHETIC_OWN_PROMPT_POSITIVE", encoding="utf-8")
+    (state / "prompts/c2.task.txt").write_text("SYNTHETIC_OWN_TASK_POSITIVE", encoding="utf-8")
+    (state / "ledger").mkdir()
+    (state / "ledger/cycles.jsonl").write_text(json.dumps({"phase": "system_prompt", "cycle_id": "c1", "chars": 5, "cap": 20}) + "\n", encoding="utf-8")
+    source = ac.read_agent_context_dict(state, repo)
+    assert source["prompt_text"] is None
+    assert source["task_text"] is None
+    assert ac.compute_truncation_streak([{"phase": "system_prompt", "cycle_id": "c1"}])["total_rows"] == 1
+    assert ac.read_instance_file_text(state, state / "prompts/c2.system.txt", 100)[1] == "SYNTHETIC_OWN_PROMPT_POSITIVE"
+    local_prompts = tv.read_local_state(str(state), str(repo))["cycle_prompts"]
+    if ac._MEMORY_FD_WALK_SUPPORTED:
+        assert "c1" not in local_prompts
+        assert local_prompts["c2"]["system"]["text"] == "SYNTHETIC_OWN_PROMPT_POSITIVE"
+    else:
+        assert local_prompts == {}
+
+    script = tv.REMOTE_READER_SCRIPT.replace(
+        'STATE_ROOT = "/var/lib/eeepc-agent/self-evolving-agent/state"', f'STATE_ROOT = {str(state)!r}',
+    ).replace(
+        'INSTANCE_REPO = "/var/lib/eeepc-agent/self-evolving-agent/eeebot-self-evolving"', f'INSTANCE_REPO = {str(repo)!r}',
+    )
+    result = subprocess.run([sys.executable], input=script, capture_output=True, text=True, check=True, timeout=30)
+    assert "SYNTHETIC_EXTERNAL_PROMPT_SENTINEL" not in result.stdout
+    embedded = json.loads(result.stdout)
+    assert "SYNTHETIC_EXTERNAL_PROMPT_SENTINEL" not in result.stdout
+    if ac._MEMORY_FD_WALK_SUPPORTED:
+        assert embedded["cycle_prompts"]["c2"]["system"]["text"] == "SYNTHETIC_OWN_PROMPT_POSITIVE"
+        assert embedded["cycle_prompts"]["c2"]["task"]["text"] == "SYNTHETIC_OWN_TASK_POSITIVE"
+    else:
+        assert embedded["cycle_prompts"] == {}
+
+    external_dir = tmp_path / "external-prompts"
+    external_dir.mkdir()
+    (external_dir / "c3.task.txt").write_text("SYNTHETIC_EXTERNAL_PROMPT_DIR_SENTINEL", encoding="utf-8")
+    state2 = tmp_path / "state2"
+    state2.mkdir()
+    (state2 / "prompts").symlink_to(external_dir, target_is_directory=True)
+    external_script = tv.REMOTE_READER_SCRIPT.replace(
+        'STATE_ROOT = "/var/lib/eeepc-agent/self-evolving-agent/state"', f'STATE_ROOT = {str(state2)!r}',
+    ).replace(
+        'INSTANCE_REPO = "/var/lib/eeepc-agent/self-evolving-agent/eeebot-self-evolving"', f'INSTANCE_REPO = {str(repo)!r}',
+    )
+    external_result = subprocess.run([sys.executable], input=external_script, capture_output=True, text=True, check=True, timeout=30)
+    assert "SYNTHETIC_EXTERNAL_PROMPT_DIR_SENTINEL" not in external_result.stdout
+
+
 def test_instance_lesson_archive_reads_bounded_gzip_without_following_links(tmp_path):
     if not ac._MEMORY_FD_WALK_SUPPORTED:
         pytest.skip("fd-relative O_NOFOLLOW instance reads are unavailable")
@@ -230,9 +290,19 @@ def test_instance_lesson_archive_reads_bounded_gzip_without_following_links(tmp_
     monkeypatch = pytest.MonkeyPatch()
     monkeypatch.setattr(tv, "INSTANCE_REPO", str(repo))
     try:
-        rows = tv._read_lessons_archive(str(lessons))
+        monkeypatch.setattr(tv.os, "listdir", lambda path: ["lessons-2026-11-10.yaml.gz", "lessons-2026-11-09.yaml.gz"] if str(path).endswith("archive") else [])
+        script = tv.REMOTE_READER_SCRIPT.replace(
+            'INSTANCE_REPO = "/var/lib/eeepc-agent/self-evolving-agent/eeebot-self-evolving"', f'INSTANCE_REPO = {str(repo)!r}',
+        )
+        namespace = {}
+        exec(script, namespace)
+        rows = namespace["_read_lessons_archive"](str(lessons))
         assert any(row.get("id") == "OWN-ARCHIVE" and row.get("result") == "OWN_ARCHIVE_POSITIVE" for row in rows)
         assert not any(row.get("id") == "EXT-ARCHIVE" for row in rows)
+        local_source = tv.read_local_state(str(state), str(repo))
+        local_rows = local_source["lessons"]
+        assert any(row.get("id") == "OWN-ARCHIVE" and row.get("result") == "OWN_ARCHIVE_POSITIVE" for row in local_rows)
+        assert not any(row.get("id") == "EXT-ARCHIVE" for row in local_rows)
     finally:
         monkeypatch.undo()
 
@@ -353,5 +423,7 @@ def test_owned_prompt_with_nested_bearer_credential_is_rejected(tmp_path):
     public, _ = split_render_inputs(source)
     pages = tv.render_public_pages(public, "synthetic")
     from scripts.publish_scan import PublicationScanError, scan_pages
+    if not ac._MEMORY_FD_WALK_SUPPORTED:
+        pytest.skip("secret scan of owner-prompt reader requires POSIX no-follow read support")
     with pytest.raises(PublicationScanError, match="bearer_token"):
         scan_pages(pages)

@@ -578,7 +578,7 @@ def read_instance_file_bytes(inst_path, path, max_bytes):
         return None
     try:
         root = Path(inst_path).resolve()
-        if root != Path(INSTANCE_REPO).resolve():
+        if root not in {Path(INSTANCE_REPO).resolve(), Path(STATE_ROOT).resolve()}:
             return None
         parts = path.relative_to(root).parts
     except (OSError, ValueError):
@@ -1457,12 +1457,10 @@ def read_cycle_prompts():
         else:
             cid, kind = name[:-len(".task.txt")], "task"
         path = os.path.join(pdir, name)
-        try:
-            with open(path, "rb") as fh:
-                raw = fh.read()
-            _mtimes.append(os.path.getmtime(path))
-        except Exception:
+        safe_prompt = read_instance_file_bytes(Path(STATE_ROOT), Path(path), _MAX_PROMPT_BYTES * 4)
+        if safe_prompt is None:
             continue
+        _source_size, raw = safe_prompt
         original_bytes = len(raw)
         truncated = original_bytes > _MAX_PROMPT_BYTES
         text = raw[:_MAX_PROMPT_BYTES].decode("utf-8", errors="replace")
@@ -3069,11 +3067,10 @@ def read_local_state(
                 cid, kind = path.name[:-len('.system.txt')], 'system'
             else:
                 cid, kind = path.name[:-len('.task.txt')], 'task'
-            try:
-                raw = path.read_bytes()
-                mtimes.append(path.stat().st_mtime)
-            except OSError:
+            safe_prompt = read_instance_file_bytes(root, path, _MAX_PROMPT_BYTES * 4)
+            if safe_prompt is None:
                 continue
+            _source_size, raw = safe_prompt
             original_bytes = len(raw)
             truncated = original_bytes > _MAX_PROMPT_BYTES
             text = raw[:_MAX_PROMPT_BYTES].decode('utf-8', errors='replace')

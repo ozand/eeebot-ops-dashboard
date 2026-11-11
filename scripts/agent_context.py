@@ -684,16 +684,12 @@ def read_agent_context_dict(state_root: Path, instance_repo: Path | str | None =
     if cid and prompts_dir.is_dir():
         p_file = prompts_dir / f"{cid}.system.txt"
         t_file = prompts_dir / f"{cid}.task.txt"
-        if p_file.is_file():
-            try:
-                prompt_text = p_file.read_text(encoding="utf-8", errors="replace")[:150000]
-            except Exception:
-                pass
-        if t_file.is_file():
-            try:
-                task_text = t_file.read_text(encoding="utf-8", errors="replace")[:50000]
-            except Exception:
-                pass
+        prompt_result = read_instance_file_text(state_root, p_file, 150_000)
+        if prompt_result is not None:
+            _size, prompt_text = prompt_result
+        task_result = read_instance_file_text(state_root, t_file, 50_000)
+        if task_result is not None:
+            _size, task_text = task_result
 
     # 2. Tier 2: Skills
     # Tier 2 is written by the instance workspace, not the runtime release tree.
