@@ -2205,8 +2205,8 @@ def read_instance_file_tail(inst_path: Path, path: Path, max_bytes: int):
             or not hasattr(os, "O_DIRECTORY") or max_bytes <= 0):
         return None
     try:
+        parts = path.relative_to(inst_path).parts
         root = inst_path.resolve()
-        parts = path.relative_to(root).parts
     except (OSError, ValueError):
         return None
     if not parts or any(part in {"", ".", ".."} for part in parts):
