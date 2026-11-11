@@ -297,7 +297,7 @@ def test_oversized_reflection_journal_keeps_recent_rows_from_bounded_tail(tmp_pa
     repo.mkdir()
     journal = state / "reflector/reflections.jsonl"
     recent = json.dumps({"cycle_id": "c-recent", "summary": "SYNTHETIC_RECENT_REFLECTION"}) + "\n"
-    journal.write_bytes(("x" * (4 * 1024 * 1024)).encode("ascii") + recent.encode("utf-8"))
+    journal.write_bytes(("x" * (4 * 1024 * 1024)).encode("ascii") + bytes([10]) + recent.encode("utf-8"))
     local = tv.read_local_state(str(state), str(repo))
     assert any(row.get("cycle_id") == "c-recent" for row in local["reflections"])
     assert "SYNTHETIC_RECENT_REFLECTION" in json.dumps(local["reflections"])

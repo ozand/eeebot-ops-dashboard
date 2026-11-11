@@ -297,41 +297,52 @@ def test_public_pages_publish_bounded_agent_owned_content(tmp_path: Path):
     )
 
     data = tv.read_local_state(str(state), str(repo))
-    if not _MEMORY_FD_WALK_SUPPORTED:
-        pytest.skip("fd-relative O_NOFOLLOW state readers are unavailable on this platform")
     raw_str = json.dumps(data, default=str)
-    for m in markers.values():
-        assert m in raw_str
+    for marker_key in ("goal_text", "release_charter", "ledger"):
+        marker = markers.get(marker_key)
+        if marker is not None:
+            assert marker in raw_str
+    if _MEMORY_FD_WALK_SUPPORTED:
+        for marker_key in ("prompt_sys", "prompt_task", "subagent_res", "agents_md", "reflections"):
+            assert markers[marker_key] in raw_str
 
     cycle_records = data["subagent_records"]
-    assert cycle_records[0]["task_excerpt"] == markers["subagent_res"]
-    assert cycle_records[0]["summary_excerpt"] == markers["subagent_res"]
+    if _MEMORY_FD_WALK_SUPPORTED:
+        assert cycle_records[0]["task_excerpt"] == markers["subagent_res"]
+        assert cycle_records[0]["summary_excerpt"] == markers["subagent_res"]
     public_data, private_data = split_render_inputs(data)
     pub_str = json.dumps(public_data, default=str)
     for k, m in markers.items():
         if k == "goal_text":
             assert m not in pub_str
+        elif k in {"prompt_sys", "prompt_task", "subagent_res", "agents_md", "reflections"}:
+            if _MEMORY_FD_WALK_SUPPORTED:
+                assert m in pub_str, f"Marker {k} ({m}) missing from public_data"
         else:
             assert m in pub_str, f"Marker {k} ({m}) missing from public_data"
-    public_reflection = public_data["reflections"][0]
-    assert public_reflection["summary"] == markers["reflections"]
-    assert public_reflection["findings"][0] == markers["reflections"]
-    assert public_reflection["findings_count"] == 1
-    assert public_reflection["recommendations_count"] == 1
-    assert public_reflection["summary_chars"] > 0
-    assert public_reflection["transcript_coverage"] == 0.8333
-    assert public_reflection["partial_view"] is True
-    preserved_reflection = {**public_reflection, "recommendations_count": 1}
-    cycle_details = tv.build_cycle_details([], None, [], [preserved_reflection])
-    assert cycle_details["c1"]["reflection"]["summary_chars"] == len(markers["reflections"])
-    assert cycle_details["c1"]["reflection"]["findings_count"] == 1
-    assert cycle_details["c1"]["reflection"]["recommendations_count"] == 1
+    if _MEMORY_FD_WALK_SUPPORTED:
+        public_reflection = public_data["reflections"][0]
+        assert public_reflection["summary"] == markers["reflections"]
+        assert public_reflection["findings"][0] == markers["reflections"]
+        assert public_reflection["findings_count"] == 1
+        assert public_reflection["recommendations_count"] == 1
+        assert public_reflection["summary_chars"] > 0
+        assert public_reflection["transcript_coverage"] == 0.8333
+        assert public_reflection["partial_view"] is True
+        preserved_reflection = {**public_reflection, "recommendations_count": 1}
+        cycle_details = tv.build_cycle_details([], None, [], [preserved_reflection])
+        assert cycle_details["c1"]["reflection"]["summary_chars"] == len(markers["reflections"])
+        assert cycle_details["c1"]["reflection"]["findings_count"] == 1
+        assert cycle_details["c1"]["reflection"]["recommendations_count"] == 1
 
     pages = tv.render_pages(public_data, "eeepc")
     combined = "".join(pages.values())
     for key, marker in markers.items():
         if key in {"goal_text"}:
             assert marker not in combined
+        elif key in {"prompt_sys", "prompt_task", "subagent_res", "agents_md", "reflections"}:
+            if _MEMORY_FD_WALK_SUPPORTED:
+                assert marker in combined
         else:
             assert marker in combined
 
