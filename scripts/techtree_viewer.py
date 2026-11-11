@@ -1944,11 +1944,11 @@ def read_agent_context():
     cid = row.get('cycle_id')
     prompt = None
     if cid:
-        try:
-            with open(os.path.join(STATE_ROOT, 'prompts', f'{cid}.system.txt'), encoding='utf-8', errors='replace') as fh:
-                prompt = fh.read()[:150000]
-        except Exception:
-            pass
+        prompt_result = read_instance_file_text(
+            Path(STATE_ROOT), Path(STATE_ROOT) / 'prompts' / f'{cid}.system.txt', 150_000,
+        )
+        if prompt_result is not None:
+            _size, prompt = prompt_result
     return {
         'system_prompt': row,
         'truncation_streak': compute_truncation_streak(rows),
