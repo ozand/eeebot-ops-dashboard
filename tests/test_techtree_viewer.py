@@ -8,6 +8,7 @@ from pathlib import Path
 
 import pytest
 
+from scripts import agent_context as ac
 from scripts import techtree_viewer as tv
 from scripts.two_sinks import split_render_inputs
 
@@ -5752,6 +5753,9 @@ def test_issue73_parses_live_and_archive_newest_first(tmp_path) -> None:
         fh.write('lessons:\n  - id: "LESS-20260819-cccc"\n    date: "2026-08-19"\n    cycle_id: "cycle-gz1"\n    task_id: "Old archived lesson"\n    hypothesis: "h"\n    result: "r"\n')
     state = tv.read_local_state(str(tmp_path), instance_repo=str(repo))
     lessons = state.get('lessons') or []
+    if not ac._MEMORY_FD_WALK_SUPPORTED:
+        assert lessons == []
+        return
     ids = [l.get('id') for l in lessons]
     assert 'LESS-20260825-aaaa' in ids and 'LESS-20260819-cccc' in ids
     assert ids.index('LESS-20260825-aaaa') < ids.index('LESS-20260819-cccc')  # newest first
@@ -5786,6 +5790,9 @@ def test_issue1564_excludes_retired_v1_archives_from_local_reader(tmp_path: Path
     repo = _issue1564_archive_fixture(tmp_path)
     data = tv.read_local_state(str(tmp_path), instance_repo=str(repo))
     ids = {str(item.get('id')) for item in data.get('lessons') or []}
+    if not ac._MEMORY_FD_WALK_SUPPORTED:
+        assert ids == set()
+        return
     assert 'LESS-RETAINED-1564' in ids
     assert 'LESS-RETIRED-1564' not in ids
     assert 'LESS-RETIRED-1564-B' not in ids
@@ -5807,6 +5814,9 @@ def test_issue1564_excludes_retired_v1_archives_from_published_reader(tmp_path: 
     with contextlib.redirect_stdout(io.StringIO()):
         exec(script, namespace)
     rows = namespace['read_lessons']()
+    if not ac._MEMORY_FD_WALK_SUPPORTED:
+        assert rows == []
+        return
     ids = {str(item.get('id')) for item in rows}
     assert 'LESS-RETAINED-1564' in ids
     assert 'LESS-RETIRED-1564' not in ids
@@ -6148,6 +6158,9 @@ def test_issue73_rotation_archive_truncated_head_parsed(tmp_path) -> None:
         fh.write(arch_text)
     state = tv.read_local_state(str(tmp_path), instance_repo=str(repo))
     lessons = state.get('lessons') or []
+    if not ac._MEMORY_FD_WALK_SUPPORTED:
+        assert lessons == []
+        return
     ids = [l.get('id') for l in lessons]
     assert 'LESS-20260823-b618' in ids and 'LESS-20260822-cccc' in ids
     assert len(lessons) >= 4  # 2 live + 2 archived
@@ -6180,6 +6193,10 @@ def test_274_lessons_html_reads_live_corpus_matches_agent_html_count(tmp_path: P
     )
     state = tv.read_local_state(str(tmp_path), instance_repo=str(repo))
     live = [l for l in (state.get('lessons') or []) if l.get('source') == 'live']
+    if not ac._MEMORY_FD_WALK_SUPPORTED:
+        assert live == []
+        assert state['agent_context']['tier2_lessons']['corpus_status'] == 'unavailable'
+        return
     assert {l['id'] for l in live} == {'LESS-20260916-aaaa', 'LESS-20260915-bbbb'}
     titled = next(l for l in live if l['id'] == 'LESS-20260916-aaaa')
     assert titled['title'] == 'Corpus title A'
@@ -6203,6 +6220,10 @@ def test_274_missing_index_falls_back_to_filename_no_silent_drop(tmp_path: Path)
     # No index.md at all -- the corpus scan must still find and render it.
     state = tv.read_local_state(str(tmp_path), instance_repo=str(repo))
     live = [l for l in (state.get('lessons') or []) if l.get('source') == 'live']
+    if not ac._MEMORY_FD_WALK_SUPPORTED:
+        assert live == []
+        assert state['agent_context']['tier2_lessons']['corpus_status'] == 'unavailable'
+        return
     assert len(live) == 1
     assert live[0]['id'] == 'LESS-20260916-cccc'
     assert live[0]['title'] == 'LESS-20260916-cccc'  # falls back to filename
@@ -6226,6 +6247,9 @@ def test_274_remote_reader_script_mirrors_live_corpus(tmp_path: Path) -> None:
         exec(script, namespace)
     rows = namespace['read_lessons']()
     live = [r for r in rows if r.get('source') == 'live']
+    if not ac._MEMORY_FD_WALK_SUPPORTED:
+        assert live == []
+        return
     assert len(live) == 1
     assert live[0]['id'] == 'LESS-20260916-dddd'
     assert live[0]['title'] == 'Remote title D'
@@ -6480,11 +6504,14 @@ def test_issue255_title_survives_reader_to_renderer(tmp_path: Path, monkeypatch)
     exec(script, namespace)
     remote_entries = namespace['read_lessons']()
     remote_pages = tv.render_pages({**_fixture(), 'lessons': remote_entries}, host='eeepc', generated_at='2026-08-18 12:00:00')
-    assert '<h3 class="lesson-title">Use git stash -u for untracked files</h3>' in remote_pages['lessons.html']
-
     local_entries = tv.read_local_state(str(tmp_path), instance_repo=str(repo))['lessons']
     local_pages = tv.render_pages({**_fixture(), 'lessons': local_entries}, host='eeepc', generated_at='2026-08-18 12:00:00')
-    assert '<h3 class="lesson-title">Use git stash -u for untracked files</h3>' in local_pages['lessons.html']
+    if ac._MEMORY_FD_WALK_SUPPORTED:
+        assert '<h3 class="lesson-title">Use git stash -u for untracked files</h3>' in remote_pages['lessons.html']
+        assert '<h3 class="lesson-title">Use git stash -u for untracked files</h3>' in local_pages['lessons.html']
+    else:
+        assert 'Use git stash -u for untracked files' not in remote_pages['lessons.html']
+        assert 'Use git stash -u for untracked files' not in local_pages['lessons.html']
 
 def test_issue96_v2_lesson_renders_as_card() -> None:
     data = _fixture()
@@ -8711,8 +8738,12 @@ def test_adr036_prompt_text_never_reaches_public_pages(tmp_path: Path) -> None:
     data = tv.read_local_state(str(state), str(repo))
     assert marker_system in data['cycle_prompts']['cycle-leak']['system']['text']
     collected = json.dumps(data, default=str)
-    assert marker_agents in collected
-    markers = [marker_system, marker_task, marker_agents] + ([marker_skill] if marker_skill in collected else [])
+    if ac._MEMORY_FD_WALK_SUPPORTED:
+        assert marker_agents in collected
+    else:
+        assert marker_agents not in collected
+        assert data['agents_md'] is None
+    markers = [marker_system, marker_task] + ([marker_agents] if marker_agents in collected else []) + ([marker_skill] if marker_skill in collected else [])
 
     marker_goal = 'ADR036-GOAL-MARKER-f00d'
     data['derived_view'] = {'status': 'present', 'charter': {

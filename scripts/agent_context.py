@@ -543,6 +543,54 @@ def _read_instance_file_beneath(root: Path, path: Path, max_chars: int) -> tuple
             os.close(fd)
 
 
+def read_instance_file_bytes(inst_path: Path | None, path: Path, max_bytes: int) -> tuple[int, bytes] | None:
+    """Read bounded instance-owned bytes only through the no-follow fd walk."""
+    if inst_path is None or not _MEMORY_FD_WALK_SUPPORTED or max_bytes < 0:
+        return None
+    try:
+        root = inst_path.resolve()
+        relative = path.relative_to(inst_path)
+        parts = (root / relative).relative_to(root).parts
+    except (OSError, ValueError):
+        return None
+    if not parts or any(part in {"", ".", ".."} for part in parts):
+        return None
+    directory_flags = os.O_RDONLY | os.O_DIRECTORY | os.O_NOFOLLOW | getattr(os, "O_CLOEXEC", 0)
+    file_flags = os.O_RDONLY | os.O_NOFOLLOW | getattr(os, "O_CLOEXEC", 0) | getattr(os, "O_NONBLOCK", 0)
+    opened_fds: list[int] = []
+    try:
+        current = os.open(root, directory_flags)
+        opened_fds.append(current)
+        for part in parts[:-1]:
+            current = os.open(part, directory_flags, dir_fd=current)
+            opened_fds.append(current)
+        fd = os.open(parts[-1], file_flags, dir_fd=current)
+        opened_fds.append(fd)
+        metadata = os.fstat(fd)
+        if not stat.S_ISREG(metadata.st_mode) or metadata.st_size > max_bytes:
+            return None
+        with os.fdopen(fd, "rb") as stream:
+            opened_fds.remove(fd)
+            content = stream.read(max_bytes + 1)
+        if len(content) > max_bytes:
+            return None
+        return metadata.st_size, content
+    except (OSError, ValueError):
+        return None
+    finally:
+        for fd in reversed(opened_fds):
+            os.close(fd)
+
+
+def read_instance_file_text(inst_path: Path | None, path: Path, max_chars: int) -> tuple[int, str] | None:
+    """Read bounded instance-owned text only through the no-follow fd walk."""
+    result = read_instance_file_bytes(inst_path, path, max_chars * 4)
+    if result is None:
+        return None
+    size, content = result
+    return size, content.decode("utf-8", errors="replace")[:max_chars]
+
+
 def read_lesson_corpus(inst_path: Path | None) -> dict[str, Any]:
     """#274: single source of truth for the live lesson-file count.
 
@@ -554,7 +602,18 @@ def read_lesson_corpus(inst_path: Path | None) -> dict[str, Any]:
     lesson_files, status = read_dir_files(
         lessons_dir, lambda path: path.suffix == ".md" and path.name != "index.md",
     )
+    if lesson_files and inst_path is not None:
+        safe_files = [
+            path for path in lesson_files
+            if read_instance_file_text(inst_path, path, 128 * 1024) is not None
+        ]
+        if len(safe_files) != len(lesson_files):
+            status = "unavailable"
+        lesson_files = safe_files
     index_status = corpus_status(lessons_dir / "index.md")
+    if inst_path is not None and index_status == "present":
+        if read_instance_file_text(inst_path, lessons_dir / "index.md", 128 * 1024) is None:
+            index_status = "unavailable"
     files: list[dict[str, Any]] = []
     total_size = 0
     for path in lesson_files:

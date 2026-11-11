@@ -44,6 +44,8 @@ import os
 import hashlib
 import html
 import json
+import io
+import stat
 import re
 import subprocess
 import sys
@@ -60,6 +62,8 @@ try:
         build_two_tier_context_html,
         compute_window_pressure,
         read_agent_context_dict,
+        read_instance_file_bytes,
+        read_instance_file_text,
         read_lesson_corpus,
     )
 except ImportError:
@@ -68,6 +72,8 @@ except ImportError:
         build_two_tier_context_html,
         compute_window_pressure,
         read_agent_context_dict,
+        read_instance_file_bytes,
+        read_instance_file_text,
         read_lesson_corpus,
     )
 
@@ -494,8 +500,10 @@ def _subagent_record_matches_instance(data, state_root, instance_repo):
 REMOTE_READER_SCRIPT = r'''
 from datetime import datetime, timezone, timedelta
 import gzip
+import io
 import json
 import os
+import stat
 import re
 import subprocess
 import time
@@ -515,6 +523,101 @@ LEDGER_HISTORY_DAYS = 90
 
 _mtimes = []
 _llm_stats_source_complete = False
+
+
+def read_instance_bytes(path: Path, max_bytes: int) -> tuple[int, bytes] | None:
+    """Read bounded instance-owned bytes only through the no-follow fd walk."""
+    if (os.open not in os.supports_dir_fd or not hasattr(os, "O_NOFOLLOW")
+            or not hasattr(os, "O_DIRECTORY") or max_bytes < 0):
+        return None
+    try:
+        root = Path(INSTANCE_REPO).resolve()
+        parts = path.relative_to(root).parts
+    except (OSError, ValueError):
+        return None
+    if not parts or any(part in {"", ".", ".."} for part in parts):
+        return None
+    directory_flags = os.O_RDONLY | os.O_DIRECTORY | os.O_NOFOLLOW | getattr(os, "O_CLOEXEC", 0)
+    file_flags = os.O_RDONLY | os.O_NOFOLLOW | getattr(os, "O_CLOEXEC", 0) | getattr(os, "O_NONBLOCK", 0)
+    opened_fds: list[int] = []
+    try:
+        current = os.open(root, directory_flags)
+        opened_fds.append(current)
+        for part in parts[:-1]:
+            current = os.open(part, directory_flags, dir_fd=current)
+            opened_fds.append(current)
+        fd = os.open(parts[-1], file_flags, dir_fd=current)
+        opened_fds.append(fd)
+        metadata = os.fstat(fd)
+        if not stat.S_ISREG(metadata.st_mode) or metadata.st_size > max_bytes:
+            return None
+        with os.fdopen(fd, "rb") as stream:
+            opened_fds.remove(fd)
+            content = stream.read(max_bytes + 1)
+        if len(content) > max_bytes:
+            return None
+        return metadata.st_size, content
+    except (OSError, ValueError):
+        return None
+    finally:
+        for fd in reversed(opened_fds):
+            os.close(fd)
+
+
+def read_instance_text(path: Path, max_chars: int) -> tuple[int, str] | None:
+    result = read_instance_bytes(path, max_chars * 4)
+    if result is None:
+        return None
+    size, content = result
+    return size, content.decode("utf-8", errors="replace")[:max_chars]
+
+
+def read_instance_file_bytes(inst_path, path, max_bytes):
+    if (os.open not in os.supports_dir_fd or not hasattr(os, "O_NOFOLLOW")
+            or not hasattr(os, "O_DIRECTORY") or max_bytes < 0):
+        return None
+    try:
+        root = Path(inst_path).resolve()
+        if root != Path(INSTANCE_REPO).resolve():
+            return None
+        parts = path.relative_to(root).parts
+    except (OSError, ValueError):
+        return None
+    if not parts or any(part in {"", ".", ".."} for part in parts):
+        return None
+    directory_flags = os.O_RDONLY | os.O_DIRECTORY | os.O_NOFOLLOW | getattr(os, "O_CLOEXEC", 0)
+    file_flags = os.O_RDONLY | os.O_NOFOLLOW | getattr(os, "O_CLOEXEC", 0) | getattr(os, "O_NONBLOCK", 0)
+    opened_fds = []
+    try:
+        current = os.open(root, directory_flags)
+        opened_fds.append(current)
+        for part in parts[:-1]:
+            current = os.open(part, directory_flags, dir_fd=current)
+            opened_fds.append(current)
+        fd = os.open(parts[-1], file_flags, dir_fd=current)
+        opened_fds.append(fd)
+        metadata = os.fstat(fd)
+        if not stat.S_ISREG(metadata.st_mode) or metadata.st_size > max_bytes:
+            return None
+        with os.fdopen(fd, "rb") as stream:
+            opened_fds.remove(fd)
+            content = stream.read(max_bytes + 1)
+        if len(content) > max_bytes:
+            return None
+        return metadata.st_size, content
+    except (OSError, ValueError):
+        return None
+    finally:
+        for fd in reversed(opened_fds):
+            os.close(fd)
+
+
+def read_instance_file_text(inst_path, path, max_chars):
+    result = read_instance_file_bytes(inst_path, path, max_chars * 4)
+    if result is None:
+        return None
+    size, content = result
+    return size, content.decode("utf-8", errors="replace")[:max_chars]
 
 
 def _embedded_subagent_record_matches_instance(data, state_root, instance_repo):
@@ -1203,13 +1306,18 @@ def read_bridge_runs():
     return runs
 
 
+def read_instance_bytes(relpath, max_bytes):
+    return read_instance_file_bytes(Path(INSTANCE_REPO), Path(INSTANCE_REPO) / relpath, max_bytes)
+
+
+def read_instance_text(relpath, max_chars):
+    return read_instance_file_text(Path(INSTANCE_REPO), Path(INSTANCE_REPO) / relpath, max_chars)
+
+
 def read_file_text(relpath):
-    path = os.path.join(INSTANCE_REPO, relpath)
     try:
-        with open(path, "r", encoding="utf-8", errors="replace") as fh:
-            content = fh.read()
-        _mtimes.append(os.path.getmtime(path))
-        return content
+        result = read_instance_text(Path(INSTANCE_REPO) / relpath, 50_000)
+        return result[1] if result is not None else None
     except Exception:
         return None
 
@@ -1426,12 +1534,10 @@ def _read_lesson_index(lessons_dir):
     Missing/unreadable index -> {} -- callers fall back to the filename as
     the title rather than treating it as a distinct failure state."""
     path = os.path.join(lessons_dir, "index.md")
-    try:
-        with open(path, "r", encoding="utf-8", errors="replace") as fh:
-            text = fh.read()
-        _mtimes.append(os.path.getmtime(path))
-    except Exception:
+    result = read_instance_text(path, 128 * 1024)
+    if result is None:
         return {}
+    _size, text = result
     rows = {}
     for line in text.splitlines():
         m = re.fullmatch(r"\| \[(.*?)\]\(([^)]+)\) \| (.*?) \| (.*?) \|", line.strip())
@@ -1450,13 +1556,10 @@ def _read_lesson_md_body(path):
     (Description/Root Causes) vs action (everything else) -- mirrors
     nanobot.runtime.lesson_v2.markdown_lesson_pair's split without importing
     nanobot."""
-    try:
-        if os.path.getsize(path) > 128 * 1024:
-            return "", ""
-        with open(path, "r", encoding="utf-8", errors="replace") as fh:
-            text = fh.read()
-    except Exception:
+    result = read_instance_text(path, 128 * 1024)
+    if result is None or result[0] > 128 * 1024:
         return "", ""
+    _size, text = result
     sections = re.split(r"(?m)^## ", text)[1:]
     condition = " ".join(s.strip() for s in sections if s.startswith(("Description", "Root Causes")))
     action = " ".join(s.strip() for s in sections if not s.startswith(("Description", "Root Causes")))
@@ -1483,6 +1586,8 @@ def read_lessons():
     lessons_dir = os.path.join(INSTANCE_REPO, "lessons")
     names, _corpus_state = _lesson_corpus_scan(lessons_dir)
     rows_all = []
+    if names and not read_instance_text(os.path.join(lessons_dir, names[0]), 128 * 1024):
+        names = []
     if names:
         index_rows = _read_lesson_index(lessons_dir)
         for name in names:
@@ -1493,6 +1598,9 @@ def read_lessons():
                 _mtimes.append(os.path.getmtime(path))
             except Exception:
                 pass
+            safe_body = read_instance_text(path, 128 * 1024)
+            if safe_body is None or safe_body[0] > 128 * 1024:
+                continue
             problem, solution = _read_lesson_md_body(path)
             rows_all.append({
                 "id": lid,
@@ -1518,12 +1626,9 @@ def _read_lessons_archive(lessons_dir):
     never break the publish. #274: this is now an explicitly labelled
     archive, not the live-corpus count source -- see `read_lessons` above."""
     texts = []
-    try:
-        with open(os.path.join(lessons_dir, "lessons.yaml"), "r", encoding="utf-8", errors="replace") as fh:
-            texts.append(fh.read())
-        _mtimes.append(os.path.getmtime(os.path.join(lessons_dir, "lessons.yaml")))
-    except Exception:
-        pass
+    safe_archive = read_instance_text(Path(lessons_dir) / "lessons.yaml", 128 * 1024)
+    if safe_archive is not None and safe_archive[0] <= 128 * 1024:
+        texts.append(safe_archive[1])
     try:
         archive_dir = os.path.join(lessons_dir, "archive")
         # #1564: these v1 receipt archives (518 rows, 8 distinct insights,
@@ -1540,6 +1645,10 @@ def _read_lessons_archive(lessons_dir):
             (datetime.now(timezone.utc) - timedelta(days=LEDGER_HISTORY_DAYS)).strftime("%Y-%m-%d"),
             "%Y-%m-%d"))
         for name in names:
+            relative = os.path.relpath(os.path.join(archive_dir, name), INSTANCE_REPO)
+            safe_archive = read_instance_bytes(Path(INSTANCE_REPO) / relative, 2 * 1024 * 1024)
+            if safe_archive is None:
+                continue
             day = name[len("lessons-"):-len(".yaml.gz")]
             try:
                 if time.mktime(time.strptime(day, "%Y-%m-%d")) < cutoff:
@@ -1547,10 +1656,12 @@ def _read_lessons_archive(lessons_dir):
             except Exception:
                 pass
             try:
-                with gzip.open(os.path.join(archive_dir, name), "rt", encoding="utf-8", errors="replace") as fh:
-                    texts.append(fh.read())
-                _mtimes.append(os.path.getmtime(os.path.join(archive_dir, name)))
-            except Exception:
+                with gzip.GzipFile(fileobj=io.BytesIO(safe_archive[1])) as archive_stream:
+                    text = archive_stream.read(10 * 1024 * 1024 + 1)
+                if len(text) > 10 * 1024 * 1024:
+                    continue
+                texts.append(text.decode("utf-8", errors="replace"))
+            except (OSError, ValueError):
                 continue
     except Exception:
         pass
@@ -2750,12 +2861,9 @@ def read_local_state(
     agents_text = None
     if repo_path.is_dir():
         agents_file = repo_path / 'AGENTS.md'
-        try:
-            with agents_file.open('r', encoding='utf-8', errors='replace') as fh:
-                agents_text = fh.read()
-            mtimes.append(agents_file.stat().st_mtime)
-        except Exception:
-            pass
+        safe_agents = read_instance_file_text(repo_path, agents_file, 50_000)
+        if safe_agents is not None:
+            _size, agents_text = safe_agents
 
     tree_for_titles = read_json('evolution/tree.json')
     node_shas = list(tree_for_titles.get('nodes', {}).keys()) if isinstance(tree_for_titles, dict) else []
@@ -2777,11 +2885,10 @@ def read_local_state(
         """Local mirror of REMOTE_READER_SCRIPT _read_lesson_index() -- keep
         in sync. Missing/unreadable index -> {}."""
         path = lessons_dir / 'index.md'
-        try:
-            text = path.read_text(encoding='utf-8', errors='replace')
-            mtimes.append(path.stat().st_mtime)
-        except OSError:
+        safe_index = read_instance_file_text(repo_path, path, 128 * 1024)
+        if safe_index is None:
             return {}
+        _size, text = safe_index
         rows: dict[str, dict[str, str]] = {}
         for line in text.splitlines():
             m = re.fullmatch(r"\| \[(.*?)\]\(([^)]+)\) \| (.*?) \| (.*?) \|", line.strip())
@@ -2797,12 +2904,10 @@ def read_local_state(
     def _read_lesson_md_body_local(path: Path) -> tuple[str, str]:
         """Local mirror of REMOTE_READER_SCRIPT _read_lesson_md_body() --
         keep in sync."""
-        try:
-            if path.stat().st_size > 128 * 1024:
-                return '', ''
-            text = path.read_text(encoding='utf-8', errors='replace')
-        except OSError:
+        safe_body = read_instance_file_text(repo_path, path, 128 * 1024)
+        if safe_body is None or safe_body[0] > 128 * 1024:
             return '', ''
+        _size, text = safe_body
         sections = re.split(r"(?m)^## ", text)[1:]
         condition = ' '.join(s.strip() for s in sections if s.startswith(('Description', 'Root Causes')))
         action = ' '.join(s.strip() for s in sections if not s.startswith(('Description', 'Root Causes')))
@@ -3026,12 +3131,10 @@ def read_local_state(
         fail-soft everywhere (#29). #274: this is now an explicitly
         labelled archive, not the live-corpus count source."""
         texts: list[tuple[str, str]] = []
-        try:
-            live = lessons_dir / 'lessons.yaml'
-            texts.append(('live', live.read_text(encoding='utf-8', errors='replace')))
-            mtimes.append(live.stat().st_mtime)
-        except Exception:  # noqa: BLE001
-            pass
+        live = lessons_dir / 'lessons.yaml'
+        safe_live = read_instance_file_text(repo_path, live, 128 * 1024)
+        if safe_live is not None and safe_live[0] <= 128 * 1024:
+            texts.append(('live', safe_live[1]))
         try:
             # #1564: these v1 receipt archives (518 rows, 8 distinct insights,
             # zero recurrence) are deleted from the instance repo; keep the guard
@@ -3055,11 +3158,18 @@ def read_local_state(
                     continue
             except Exception:  # noqa: BLE001
                 pass
+            safe_archive = read_instance_file_bytes(
+                repo_path, lessons_dir / 'archive' / name, 2 * 1024 * 1024,
+            )
+            if safe_archive is None:
+                continue
             try:
-                with gzip.open(lessons_dir / 'archive' / name, 'rt', encoding='utf-8', errors='replace') as fh:
-                    texts.append((name, fh.read()))
-                mtimes.append((lessons_dir / 'archive' / name).stat().st_mtime)
-            except Exception:  # noqa: BLE001
+                with gzip.GzipFile(fileobj=io.BytesIO(safe_archive[1])) as archive_stream:
+                    text = archive_stream.read(10 * 1024 * 1024 + 1)
+                if len(text) > 10 * 1024 * 1024:
+                    continue
+                texts.append((name, text.decode('utf-8', errors='replace')))
+            except (OSError, EOFError, ValueError):  # noqa: BLE001
                 continue
         entries: list[dict[str, Any]] = []
 

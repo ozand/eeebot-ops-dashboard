@@ -71,8 +71,14 @@ def test_owned_content_real_reader_to_public_projection_render_scan_and_dry_run(
         markers.append("Skill response body")
     if ac._MEMORY_FD_WALK_SUPPORTED:
         markers.append("Own memory context")
+    if not ac._MEMORY_FD_WALK_SUPPORTED:
+        markers = [marker for marker in markers if marker not in {"own issue", "own fix", "Read your own context"}]
     for marker in markers:
         assert marker in combined
+    if ac._MEMORY_FD_WALK_SUPPORTED:
+        assert "own issue" in combined and "own fix" in combined
+    else:
+        assert "own issue" not in combined and "own fix" not in combined
     assert "foreign origin" not in combined
     assert "null origin must not publish" not in combined
     assert "null parent origin must not publish" not in combined
@@ -171,6 +177,64 @@ def test_embedded_reader_applies_same_subagent_source_gate(tmp_path):
     assert "null-origin" not in json.dumps(records) and "null-parent-origin" not in json.dumps(records)
     assert "foreign-parent" not in json.dumps(records) and "null-parent-conflict" not in json.dumps(records)
     assert all(not {"origin", "workspace", "runtime_state_root"} & row.keys() for row in records)
+
+
+def test_instance_text_readers_reject_external_agents_and_lesson_links(tmp_path):
+    if not ac._MEMORY_FD_WALK_SUPPORTED:
+        pytest.skip("fd-relative O_NOFOLLOW instance reads are unavailable")
+    state, repo = tmp_path / "state", tmp_path / "repo"
+    state.mkdir(); repo.mkdir()
+    _fixtures(state, repo)
+    external_agents = tmp_path / "external-agents.md"
+    external_agents.write_text("SYNTHETIC_EXTERNAL_AGENTS_SENTINEL", encoding="utf-8")
+    external_lesson = tmp_path / "external-lesson.md"
+    external_lesson.write_text("## Solution\\n\\nSYNTHETIC_EXTERNAL_LESSON_SENTINEL", encoding="utf-8")
+    (repo / "AGENTS.md").unlink()
+    (repo / "AGENTS.md").symlink_to(external_agents)
+    (repo / "lessons/LESS-20261110-own.md").unlink()
+    (repo / "lessons/LESS-20261110-own.md").symlink_to(external_lesson)
+    source = tv.read_local_state(str(state), str(repo))
+    encoded = json.dumps(source)
+    assert "SYNTHETIC_EXTERNAL_AGENTS_SENTINEL" not in encoded
+    assert "SYNTHETIC_EXTERNAL_LESSON_SENTINEL" not in encoded
+    assert source["agents_md"] is None
+    assert source["lessons"] == []
+
+    script = tv.REMOTE_READER_SCRIPT.replace(
+        'STATE_ROOT = "/var/lib/eeepc-agent/self-evolving-agent/state"', f'STATE_ROOT = {str(state)!r}',
+    ).replace(
+        'INSTANCE_REPO = "/var/lib/eeepc-agent/self-evolving-agent/eeebot-self-evolving"', f'INSTANCE_REPO = {str(repo)!r}',
+    )
+    result = subprocess.run([sys.executable], input=script, capture_output=True, text=True, check=True, timeout=30)
+    embedded = json.loads(result.stdout)
+    assert embedded["agents_md"] is None
+    assert embedded["lessons"] == []
+    assert "SYNTHETIC_EXTERNAL_AGENTS_SENTINEL" not in result.stdout
+    if ac._MEMORY_FD_WALK_SUPPORTED:
+        assert "SYNTHETIC_EXTERNAL_LESSON_SENTINEL" not in result.stdout
+
+
+def test_instance_lesson_archive_reads_bounded_gzip_without_following_links(tmp_path):
+    if not ac._MEMORY_FD_WALK_SUPPORTED:
+        pytest.skip("fd-relative O_NOFOLLOW instance reads are unavailable")
+    state, repo = tmp_path / "state", tmp_path / "repo"
+    state.mkdir(); repo.mkdir()
+    lessons = repo / "lessons"
+    (lessons / "archive").mkdir(parents=True)
+    import gzip
+    archive_body = b"lessons:\\n- id: OWN-ARCHIVE\\n  result: OWN_ARCHIVE_POSITIVE\\n"
+    (lessons / "archive/lessons-2026-11-10.yaml.gz").write_bytes(gzip.compress(archive_body))
+    external = tmp_path / "external.yaml.gz"
+    external.write_bytes(gzip.compress(b"lessons:\\n- id: EXT-ARCHIVE\\n  result: SYNTHETIC_EXTERNAL_ARCHIVE_SENTINEL\\n"))
+    (lessons / "archive/lessons-2026-11-09.yaml.gz").symlink_to(external)
+    monkeypatch = pytest.MonkeyPatch()
+    monkeypatch.setattr(tv, "INSTANCE_REPO", str(repo))
+    try:
+        rows = tv._read_lessons_archive(str(lessons))
+        assert any(row.get("id") == "OWN-ARCHIVE" and row.get("result") == "OWN_ARCHIVE_POSITIVE" for row in rows)
+        assert not any(row.get("id") == "EXT-ARCHIVE" for row in rows)
+    finally:
+        monkeypatch.undo()
 
 
 def test_instance_readers_reject_escaping_skill_symlink(tmp_path):
