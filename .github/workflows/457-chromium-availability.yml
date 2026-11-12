@@ -1,0 +1,22 @@
+name: "#457 Chromium availability probe"
+
+on:
+  push:
+    branches: [diag/457-chromium-availability-probe]
+
+permissions:
+  contents: read
+
+jobs:
+  chromium-availability:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install pinned Playwright
+        run: python -m pip install "playwright==1.63.0"
+      - name: Install Chromium dependencies and browser
+        run: python -m playwright install --with-deps chromium
