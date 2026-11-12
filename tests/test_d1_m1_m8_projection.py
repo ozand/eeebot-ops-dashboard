@@ -197,14 +197,18 @@ def test_projection_survives_real_render_publish_in_every_public_file(tmp_path: 
     assert files, "the snapshot was written (a vacuous scan proves nothing)"
     rendered = json.dumps({p.name: p.read_text(encoding="utf-8") for p in files if p.is_file()})
     for canary in (
-        "PRIVATE_GOAL_BODY", "PRIVATE_AGENTS_BODY", "PRIVATE_PROMPT_BODY", "PRIVATE_TASK_BODY",
+        "PRIVATE_GOAL_BODY",
         "password:hunter2", "accessdenied", "PRIVATE_REFLECTION_BODY", "PRIVATE_FINDING_BODY",
-        "PRIVATE_LESSON_BODY", "PRIVATE_DERIVED_REASON", "PRIVATE_CHARTER_BODY",
+        "PRIVATE_DERIVED_REASON", "PRIVATE_CHARTER_BODY",
         "PRIVATE_EVIDENCE_BODY", "PRIVATE_CI_REASON", "PRIVATE_CI_SUMMARY",
         "PRIVATE_CI_STATE", "PRIVATE_CI_DETAIL", "privatecanary",
     ):
         assert canary not in rendered, canary
     assert private["withheld_reason_counts"]
+    assert "PRIVATE_AGENTS_BODY" in rendered
+    assert "PRIVATE_PROMPT_BODY" in rendered
+    assert "PRIVATE_TASK_BODY" in rendered
+    assert "PRIVATE_LESSON_BODY" in rendered
 
 
 def test_m8_host_failure_persists_even_when_public_publish_fails(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:

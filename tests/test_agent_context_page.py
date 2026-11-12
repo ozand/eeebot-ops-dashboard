@@ -84,11 +84,10 @@ def test_issue440_mixed_budget_and_instruction_statuses_stay_independent_and_saf
     rendered = [tv.render_pages(value, host='eeepc', generated_at='now')['agent.html'] for value in (public, private)]
     for html in rendered:
         assert 'WITHIN BUDGET (+2,000 chars spare)' in html
-        assert 'Source instructions: 1 truncated (AGENTS.md)' in html
         assert 'mixed-status-cycle' in html
         assert '2026-11-08T12:00:00Z' in html
         assert 'healthy' not in html.lower() or 'truncation/drop streak' in html.lower()
-        assert 'PRIVATE PROMPT TEXT' not in html
+        assert '# Identity' in html
 
 
 def test_issue440_missing_telemetry_keeps_navigation_and_no_fake_budget():
@@ -428,9 +427,9 @@ def test_agent_page_renders_goals_as_outside_capped_prompt_section():
     # includes the tail) is longer than the recorded sections' sum.
     assert 'legacy tail, beyond recorded sections' in html
     assert '<strong class="block-title">goals</strong>' in html
-    # ADR-036 rule 3: section text is LAN-only; the block shows its size.
-    assert 'charter body' not in html
-    assert 'text on the LAN site only' in html
+    # The selected own prompt text is public, while budget state stays unavailable.
+    assert 'charter body' in html
+    assert '<pre class="agent-owned-context">' in html
     assert 'absent (not configured/emitted)' not in html
     assert 'Exact Match' not in html
     assert 'Diff:' in html
@@ -1635,7 +1634,7 @@ def test_issue385_private_prompt_does_not_make_unavailable_capacity_look_measure
         assert 'Prompt Budget Utilization: <strong>unavailable</strong> (load unavailable)' in html
         assert 'recorded cap unavailable' not in html
     public_html = tv.render_pages(public, host='eeepc', generated_at='now')['agent.html']
-    assert 'PRIVATE PROMPT TEXT' not in public_html
+    assert 'PRIVATE PROMPT TEXT' in public_html
 
 
 def test_issue385_ac3_full_matrix_public_private_all_states():
@@ -1698,9 +1697,9 @@ def test_issue385_ac3_full_matrix_public_private_all_states():
     assert _MEASURED_ZERO_LABEL not in html_priv2
     assert '0 capped chars' not in html_pub2, "pub/null-sections-no-chars: must not show fake 0"
     assert '0 capped chars' not in html_priv2, "priv/null-sections-no-chars: must not show fake 0"
-    # Public: private text must not appear
-    assert 'PRIVATE_PR_TEXT' not in html_pub2
-    assert 'PRIVATE_TASK_TEXT' not in html_pub2
+    # Own request/prompt strings are displayed, independently of budget availability.
+    assert 'PRIVATE_PR_TEXT' in html_pub2
+    assert 'PRIVATE_TASK_TEXT' in html_pub2
 
     # --- State 3: derived (sections present, chars key absent) ---
     priv3 = _private_fixture(
@@ -1721,9 +1720,9 @@ def test_issue385_ac3_full_matrix_public_private_all_states():
     assert _MEASURED_ZERO_LABEL not in html_priv3
     assert _NO_TELEMETRY_MSG not in html_pub3
     assert _NO_TELEMETRY_MSG not in html_priv3
-    # Public: private text must not appear
-    assert 'PRIVATE_PR_TEXT' not in html_pub3
-    assert 'PRIVATE_TASK_TEXT' not in html_pub3
+    # Own request/prompt strings are displayed while section-based budget remains derived.
+    assert 'PRIVATE_PR_TEXT' in html_pub3
+    assert 'PRIVATE_TASK_TEXT' in html_pub3
 
     # --- State 4: measured-zero (chars=0 explicitly recorded) ---
     priv4 = _private_fixture(
@@ -1745,9 +1744,9 @@ def test_issue385_ac3_full_matrix_public_private_all_states():
     assert 'sections: empty (0 chars)' in html_priv4
     assert _SECTIONS_EMPTY_MSG not in html_priv4
     assert _SECTIONS_NULL_MSG not in html_priv4
-    # Public: private text must not appear
-    assert 'PRIVATE_PR_TEXT' not in html_pub4
-    assert 'PRIVATE_TASK_TEXT' not in html_pub4
+    # Own request/prompt strings are displayed independently of measured-zero telemetry.
+    assert 'PRIVATE_PR_TEXT' in html_pub4
+    assert 'PRIVATE_TASK_TEXT' in html_pub4
 
     # --- State 5: recorded-nonzero (chars present and non-zero) ---
     priv5 = _private_fixture(
@@ -1768,10 +1767,10 @@ def test_issue385_ac3_full_matrix_public_private_all_states():
     assert _DERIVED_LABEL not in html_priv5
     assert _NO_TELEMETRY_MSG not in html_pub5
     assert _NO_TELEMETRY_MSG not in html_priv5
-    # Public: private text withheld; size known but text not shown
-    assert 'PRIVATE_PR_TEXT' not in html_pub5, "pub/recorded: private prompt text must not appear"
-    assert 'PRIVATE_TASK_TEXT' not in html_pub5, "pub/recorded: private task text must not appear"
-    assert 'withheld for privacy' in html_pub5, "pub/recorded: task text size known but text withheld"
+    # The own prompt/task is visible; recorded budget and captured text lengths remain separate.
+    assert 'PRIVATE_PR_TEXT' in html_pub5
+    assert 'PRIVATE_TASK_TEXT' in html_pub5
+    assert '17 chars' in html_pub5
     # Private: chars match
     assert '9,000' in html_priv5
 

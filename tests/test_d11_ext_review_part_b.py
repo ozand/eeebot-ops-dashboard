@@ -66,14 +66,15 @@ def test_bf1_bf2_explicit_self_derived_keeps_label_and_direction() -> None:
     assert "label" not in view["derived_priorities"][1] and "direction" not in view["derived_priorities"][1]
 
 
-# --- B-F4: model-output texts are private; title and *_chars are public ---------
+# --- B-F4: selected own lesson text is bounded and scanner-checked -----------
 
-def test_bf4_lesson_hypothesis_is_private() -> None:
+def test_bf4_lesson_hypothesis_is_bounded_own_content() -> None:
     source = full_source()
-    source["lessons"][0]["hypothesis"] = S
+    hypothesis = "SYNTHETIC_OWN_HYPOTHESIS_TEXT"
+    source["lessons"][0]["hypothesis"] = hypothesis
     public = _public(source)
     lesson = public["lessons"][0]
-    assert lesson["hypothesis"] == "" and lesson["hypothesis_chars"] == len(S)
+    assert lesson["hypothesis"] == hypothesis
     assert lesson["title"] == "Retry is not a fix"
     _nowhere(public)
 

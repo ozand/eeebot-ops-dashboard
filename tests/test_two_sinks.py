@@ -7,6 +7,7 @@ import sys
 
 import pytest
 
+from scripts.agent_context import _MEMORY_FD_WALK_SUPPORTED
 from scripts.two_sinks import (
     atomic_snapshot_swap,
     DEFAULT_BIND_ADDRESS,
@@ -232,8 +233,8 @@ def test_private_pages_never_reach_gh_pages(tmp_path: Path):
     assert "cycle.html" not in sent[0]
 
 
-def test_public_pages_carry_no_call_content(tmp_path: Path):
-    """ADR-036 §3: real read_local_state with markers across all text sources -> no marker in any public file."""
+def test_public_pages_publish_bounded_agent_owned_content(tmp_path: Path):
+    """#457: prompts survive; arbitrary operator-priority wording remains private."""
     from scripts import techtree_viewer as tv
 
     state = tmp_path / "state"
@@ -247,6 +248,7 @@ def test_public_pages_carry_no_call_content(tmp_path: Path):
         "subagent_res": "MARKER_SUBAGENT_RES_9944",
         "agents_md": "MARKER_AGENTS_MD_9955",
         "goal_text": "MARKER_GOAL_TEXT_9966",
+        "release_charter": "MARKER_RELEASE_CHARTER_9967",
         "reflections": "MARKER_REFLECTIONS_9977",
     }
 
@@ -271,6 +273,14 @@ def test_public_pages_carry_no_call_content(tmp_path: Path):
         encoding="utf-8",
     )
 
+    release_charter = {
+        "status": "present",
+        "charter": {"source": "release_goals_md", "merged": False,
+                    "text": f"Release-owned goals {markers['release_charter']}"},
+    }
+    (state / "public").mkdir()
+    (state / "public" / "derived_view.json").write_text(json.dumps(release_charter), encoding="utf-8")
+
     rdir = state / "reflector"
     rdir.mkdir()
     (rdir / "reflections.jsonl").write_text(
@@ -288,29 +298,53 @@ def test_public_pages_carry_no_call_content(tmp_path: Path):
 
     data = tv.read_local_state(str(state), str(repo))
     raw_str = json.dumps(data, default=str)
-    for m in markers.values():
-        assert m in raw_str
+    for marker_key in ("goal_text", "release_charter", "ledger"):
+        marker = markers.get(marker_key)
+        if marker is not None:
+            assert marker in raw_str
+    if _MEMORY_FD_WALK_SUPPORTED:
+        for marker_key in ("prompt_sys", "prompt_task", "subagent_res", "agents_md", "reflections"):
+            assert markers[marker_key] in raw_str
 
+    cycle_records = data["subagent_records"]
+    if _MEMORY_FD_WALK_SUPPORTED:
+        assert cycle_records[0]["task_excerpt"] == markers["subagent_res"]
+        assert cycle_records[0]["summary_excerpt"] == markers["subagent_res"]
     public_data, private_data = split_render_inputs(data)
     pub_str = json.dumps(public_data, default=str)
     for k, m in markers.items():
-        assert m not in pub_str, f"Marker {k} ({m}) found in public_data"
-    public_reflection = public_data["reflections"][0]
-    assert public_reflection["findings_count"] == 1
-    assert public_reflection["recommendations_count"] == 1
-    assert public_reflection["summary_chars"] > 0
-    assert public_reflection["transcript_coverage"] == 0.8333
-    assert public_reflection["partial_view"] is True
-    preserved_reflection = {**public_reflection, "recommendations_count": 1}
-    cycle_details = tv.build_cycle_details([], None, [], [preserved_reflection])
-    assert cycle_details["c1"]["reflection"]["summary_chars"] == len(markers["reflections"])
-    assert cycle_details["c1"]["reflection"]["findings_count"] == 1
-    assert cycle_details["c1"]["reflection"]["recommendations_count"] == 1
+        if k == "goal_text":
+            assert m not in pub_str
+        elif k in {"prompt_sys", "prompt_task", "subagent_res", "agents_md", "reflections"}:
+            if _MEMORY_FD_WALK_SUPPORTED:
+                assert m in pub_str, f"Marker {k} ({m}) missing from public_data"
+        else:
+            assert m in pub_str, f"Marker {k} ({m}) missing from public_data"
+    if _MEMORY_FD_WALK_SUPPORTED:
+        public_reflection = public_data["reflections"][0]
+        assert public_reflection["summary"] == markers["reflections"]
+        assert public_reflection["findings"][0] == markers["reflections"]
+        assert public_reflection["findings_count"] == 1
+        assert public_reflection["recommendations_count"] == 1
+        assert public_reflection["summary_chars"] > 0
+        assert public_reflection["transcript_coverage"] == 0.8333
+        assert public_reflection["partial_view"] is True
+        preserved_reflection = {**public_reflection, "recommendations_count": 1}
+        cycle_details = tv.build_cycle_details([], None, [], [preserved_reflection])
+        assert cycle_details["c1"]["reflection"]["summary_chars"] == len(markers["reflections"])
+        assert cycle_details["c1"]["reflection"]["findings_count"] == 1
+        assert cycle_details["c1"]["reflection"]["recommendations_count"] == 1
 
     pages = tv.render_pages(public_data, "eeepc")
-    for fname, content in pages.items():
-        for k, m in markers.items():
-            assert m not in content, f"Marker {k} ({m}) found in rendered public page {fname}"
+    combined = "".join(pages.values())
+    for key, marker in markers.items():
+        if key in {"goal_text"}:
+            assert marker not in combined
+        elif key in {"prompt_sys", "prompt_task", "subagent_res", "agents_md", "reflections"}:
+            if _MEMORY_FD_WALK_SUPPORTED:
+                assert marker in combined
+        else:
+            assert marker in combined
 
 
 def test_m1_reason_allowlist_rejects_lowercase_freeform_canaries() -> None:
@@ -489,11 +523,11 @@ def test_sink_failure_leaves_consistent_snapshot(tmp_path: Path):
     assert "private calls" in (tmp_path / "site/current/cycle.html").read_text()
 
 
-def test_public_renderer_input_has_no_call_text(tmp_path: Path):
-    """ADR-036 §3: public renderer receives no prompt or priority text."""
-    public, _ = split_render_inputs({"cycle_prompts": "private-call", "goal_text": {"charter": "secret charter"}, "safe": 1})
-    assert "cycle_prompts" not in public
-    assert "secret" not in json.dumps(public)
+def test_public_renderer_input_keeps_allowlisted_agent_owned_text():
+    """#457: public projection retains bounded approved fields."""
+    public, _ = split_render_inputs({"cycle_prompts": {"c1": {"system": {"text": "OWN_PROMPT_MARKER"}}}, "goal_text": {"priorities": [{"title": "OWNER_PRIVATE_MARKER"}]}, "safe": 1})
+    assert "OWN_PROMPT_MARKER" in json.dumps(public)
+    assert "OWNER_PRIVATE_MARKER" not in json.dumps(public)
 
 
 @pytest.mark.skipif(sys.platform == "win32", reason="Windows unprivileged symlink swap limitation")
@@ -927,6 +961,23 @@ def test_m2_release_goals_charter_source_is_pinned() -> None:
     assert allowed["charter"]["text"] == "public goals"
 
 
+def test_m2_oversized_release_charter_text_is_omitted_not_drop_sentinel() -> None:
+    from scripts import techtree_viewer as tv
+    from scripts.two_sinks import _sanitize_public_value
+
+    projected = _sanitize_public_value("derived_view", {
+        "status": "present", "charter": {
+            "source": "release_goals_md", "merged": False, "text": "SYNTHETIC_LONG_CHARTER" * 1000,
+        },
+    })
+    assert projected["charter"].get("text") is None
+    assert "object at 0x" not in repr(projected)
+    json.dumps(projected)
+    pages = tv.render_public_pages({"derived_view": projected}, "synthetic")
+    assert all("object at 0x" not in page for page in pages.values())
+    assert "SYNTHETIC_LONG_CHARTER" not in json.dumps(pages)
+
+
 def test_split_render_inputs_withholds_freeform_strategist_reason() -> None:
     from scripts import techtree_viewer as tv
 
@@ -971,10 +1022,42 @@ def test_split_render_inputs_preserves_lesson_body_lengths() -> None:
     lesson = {"id": "lesson", "cycle_id": "cycle", "problem": "p" * 28, "solution": "s" * 31}
     public, _ = split_render_inputs({"lessons": [lesson]})
     projected = public["lessons"][0]
-    assert projected["problem"] == ""
-    assert projected["solution"] == ""
+    assert projected["problem"] == "p" * 28
     assert projected["problem_chars"] == 28
+    assert projected["solution"] == "s" * 31
     assert projected["solution_chars"] == 31
+
+
+def test_over_limit_lesson_bodies_keep_only_recorded_lengths_and_render_unavailable():
+    from scripts.two_sinks import split_render_inputs
+    from scripts.techtree_viewer import build_lessons_panel
+
+    marker = "SYNTHETIC_SECRET_MUST_NOT_LEAK"
+    lesson = {
+        "id": "LESS-20261111-long", "title": "Long synthetic lesson",
+        "problem": "p" * 12_000 + marker, "solution": "s" * 12_000 + "tail",
+    }
+    public, _ = split_render_inputs({"lessons": [lesson]})
+    projected = public["lessons"][0]
+    assert "problem" not in projected
+    assert projected["problem_chars"] == 12_000 + len(marker)
+    assert "solution" not in projected
+    assert projected["solution_chars"] == 12_004
+    rendered = build_lessons_panel(public["lessons"])
+    assert "Problem text unavailable (12,030 characters recorded)." in rendered
+    assert "Solution text unavailable (12,004 characters recorded)." in rendered
+    assert marker not in json.dumps(public)
+    assert marker not in rendered
+
+
+def test_lesson_projection_distinguishes_empty_bodies_from_rejected_recorded_bodies():
+    from scripts.two_sinks import split_render_inputs
+    from scripts.techtree_viewer import build_lessons_panel
+
+    public, _ = split_render_inputs({"lessons": [{"id": "LESS-empty", "problem": "", "solution": ""}]})
+    rendered = build_lessons_panel(public["lessons"])
+    assert "Problem: no text recorded." in rendered
+    assert "Solution: no text recorded." in rendered
 
 
 

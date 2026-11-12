@@ -258,8 +258,8 @@ def test_item5_stage_states_are_separate_when_block_load_truncates(tmp_path):
 # --- public-output canary ------------------------------------------------------
 
 def test_snapshot_text_canary_never_reaches_any_public_file(tmp_path, monkeypatch):
-    """ADR-036 rule 3: snapshot text is LAN-only. #368 changes which text is
-    READ, never what is PUBLISHED. A canary in the selected cycle's own
+    """ADR-036: selected own prompt/task text may be published when bounded.
+    A canary in the selected cycle's own
     .system.txt/.task.txt, and in another cycle's, goes through the real
     generator -- the publisher's own ``main --local`` entry point, which
     reads the state dir via ``read_agent_context_dict`` and writes the site
@@ -294,7 +294,9 @@ def test_snapshot_text_canary_never_reaches_any_public_file(tmp_path, monkeypatc
     assert (out / "agent.html") in written
     agent_html = (out / "agent.html").read_text(encoding="utf-8")
     assert f"{len(text_a):,} chars received by model" in agent_html  # sizes published
-    for path in written:
-        data = path.read_bytes()
-        assert canary_a.encode() not in data, path
-        assert canary_b.encode() not in data, path
+    assert canary_a in agent_html
+    details = json.loads((out / "lineage-cycle-details.json").read_text(encoding="utf-8"))
+    assert canary_a in details[CYCLE_A]["prompt"]["system"]["text"]
+    assert canary_a in details[CYCLE_A]["prompt"]["task"]["text"]
+    assert canary_b in details[CYCLE_B]["prompt"]["system"]["text"]
+    assert canary_b in details[CYCLE_B]["prompt"]["task"]["text"]

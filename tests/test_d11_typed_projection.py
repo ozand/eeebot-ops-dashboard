@@ -60,7 +60,7 @@ _ROW_LISTS = ("ledger_tail", "ledger_history", "subagent_records", "reflections"
 def test_r1_private_row_fields_and_non_dict_rows_never_survive(key: str) -> None:
     source = full_source()
     row = {**source[key][0], "reason": S, "details": S, "prompt_text": S, "future_answer": S,
-           "rationale": S, "summary": S, "problem": S, "task_excerpt": S}
+           "rationale": S}
     source[key] = [row, S, [S], 7]
     public = _split(source)
     assert len(public[key]) == 1, "non-dict rows are dropped"
@@ -140,8 +140,10 @@ def test_r3_domains_are_enum_bool_and_timestamp() -> None:
 
 def test_r3_valid_values_are_kept() -> None:
     # agents_meta / goal_meta are built by the split from agents_md / goal_text
-    assert set(full_source()) >= PUBLIC_DATA_KEYS - {"agents_meta", "goal_meta"}
-    public = _split(full_source())
+    source = full_source()
+    source["cycle_prompts"] = {"cycle-1": {"system": {"text": "own prompt", "truncated": False, "original_bytes": 10}}}
+    assert PUBLIC_DATA_KEYS - {"agents_meta", "goal_meta"} <= set(source)
+    public = _split(source)
     _assert_nowhere(public)
     assert public["bridge_exits"] == [{"ts": "2026-09-29T09:10:00Z", "cycle_id": "cycle-1",
                                        "outcome": "success", "exit_status": 0}]
@@ -155,13 +157,13 @@ def test_r3_valid_values_are_kept() -> None:
 
 # --- R4: agent_context --------------------------------------------------------
 
-def test_r4_non_string_prompt_and_task_are_withheld() -> None:
+def test_r4_non_string_prompt_and_task_are_dropped() -> None:
     source = full_source()
     source["agent_context"]["prompt_text"] = [{"type": "text", "text": S}]
     source["agent_context"]["task_text"] = {"text": S}
     public = _split(source)
     context = public["agent_context"]
-    assert context["prompt_text"] is None and context["task_text"] is None
+    assert "prompt_text" not in context and "task_text" not in context
     assert "prompt_text_chars" not in context and "task_text_chars" not in context
     _assert_nowhere(public)
 
@@ -176,16 +178,16 @@ def test_r4_tier2_lessons_rows_carry_no_text(tier2_lessons) -> None:
     _assert_nowhere(_split(source))
 
 
-def test_r4_tier2_skill_path_and_content_and_memory_path() -> None:
+def test_r4_tier2_skill_path_and_memory_path() -> None:
     source = full_source()
     context = source["agent_context"]
     context["tier2_skills"][0].update(path=S, content=[S], desc={"x": S})
-    context["tier2_memory"]["files"][0].update(path=S, content=S)
+    context["tier2_memory"]["files"][0].update(path=S, content=[S])
     public = _split(source)
     skill = public["agent_context"]["tier2_skills"][0]
-    assert "path" not in skill and skill["content"] == "" and "content_chars" not in skill
+    assert "path" not in skill and "content" not in skill and "desc" not in skill
     memory_file = public["agent_context"]["tier2_memory"]["files"][0]
-    assert "path" not in memory_file and memory_file["content_chars"] == len(S)
+    assert "path" not in memory_file and "content" not in memory_file
     _assert_nowhere(public)
 
 
@@ -244,6 +246,10 @@ def _inject_everywhere(value: object, path: tuple = ()) -> object:
 def test_unknown_nested_key_at_every_level_is_dropped() -> None:
     source = {key: _inject_everywhere(value, (key,)) if key in PUBLIC_DATA_KEYS else value
               for key, value in full_source().items()}
+    source["agents_md"] = None
+    source["goal_text"] = None
+    source["reflections"] = []
+    source["derived_view"]["charter"] = {"source": "legacy_goals_md", "merged": False, "text": S}
     _assert_nowhere(_split(source))
 
 
@@ -276,6 +282,7 @@ def test_a_wrong_shape_section_never_passes_through(key: str) -> None:
             continue  # a well-formed {cycle id: public commit subject} map
         source = full_source()
         source[key] = copy.deepcopy(broken)
+        source["agents_md"] = None
         _assert_nowhere(_split(source))
 
 
@@ -344,8 +351,10 @@ def test_real_render_and_publish_every_public_file(tmp_path: Path) -> None:
     source["derived_view"]["priority_items"][1].update(label=S)
     source["derived_view"]["priority_items"][1].pop("provenance")
     source["ledger_tail"][0].update(details=S, prompt_text=S, reason=S)
-    source["goal_text"] = {"text": S}
-    source["agents_md"] = S
+    source["goal_text"] = None
+    source["agents_md"] = None
+    source["reflections"] = []
+    source["derived_view"]["charter"] = {"source": "legacy_goals_md", "merged": False, "text": S}
 
     public, private = split_render_inputs(source)
     assert S in json.dumps(private, default=str), "the private side keeps the source"

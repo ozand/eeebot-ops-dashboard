@@ -9,7 +9,9 @@ from __future__ import annotations
 import html
 import json
 import math
+import os
 import re
+import stat
 from datetime import datetime, timezone, timedelta
 from pathlib import Path
 from typing import Any
@@ -498,6 +500,97 @@ def read_dir_files(root: Path, matcher: Any) -> tuple[list[Path], str]:
         return [], "unavailable"
 
 
+_MEMORY_FD_WALK_SUPPORTED = (
+    os.open in os.supports_dir_fd
+    and hasattr(os, "O_NOFOLLOW")
+    and hasattr(os, "O_DIRECTORY")
+)
+
+
+def _read_instance_file_beneath(root: Path, path: Path, max_chars: int) -> tuple[int, str] | None:
+    """Read one bounded instance file through no-follow directory descriptors."""
+    if not _MEMORY_FD_WALK_SUPPORTED:
+        return None
+    try:
+        parts = path.relative_to(root).parts
+    except ValueError:
+        return None
+    if not parts or any(part in {"", ".", ".."} for part in parts):
+        return None
+
+    directory_flags = os.O_RDONLY | os.O_DIRECTORY | os.O_NOFOLLOW | getattr(os, "O_CLOEXEC", 0)
+    file_flags = os.O_RDONLY | os.O_NOFOLLOW | getattr(os, "O_CLOEXEC", 0) | getattr(os, "O_NONBLOCK", 0)
+    opened_fds: list[int] = []
+    try:
+        current = os.open(root, directory_flags)
+        opened_fds.append(current)
+        for component in parts[:-1]:
+            current = os.open(component, directory_flags, dir_fd=current)
+            opened_fds.append(current)
+        fd = os.open(parts[-1], file_flags, dir_fd=current)
+        opened_fds.append(fd)
+        metadata = os.fstat(fd)
+        if not stat.S_ISREG(metadata.st_mode):
+            return None
+        with os.fdopen(fd, "rb") as stream:
+            opened_fds.remove(fd)
+            content = stream.read(max_chars + 1).decode("utf-8", errors="replace")[:max_chars]
+        return metadata.st_size, content
+    except (OSError, ValueError):
+        return None
+    finally:
+        for fd in reversed(opened_fds):
+            os.close(fd)
+
+
+def read_instance_file_bytes(inst_path: Path | None, path: Path, max_bytes: int) -> tuple[int, bytes] | None:
+    """Read bounded instance-owned bytes only through the no-follow fd walk."""
+    if inst_path is None or not _MEMORY_FD_WALK_SUPPORTED or max_bytes < 0:
+        return None
+    try:
+        root = inst_path.resolve()
+        relative = path.relative_to(inst_path)
+        parts = (root / relative).relative_to(root).parts
+    except (OSError, ValueError):
+        return None
+    if not parts or any(part in {"", ".", ".."} for part in parts):
+        return None
+    directory_flags = os.O_RDONLY | os.O_DIRECTORY | os.O_NOFOLLOW | getattr(os, "O_CLOEXEC", 0)
+    file_flags = os.O_RDONLY | os.O_NOFOLLOW | getattr(os, "O_CLOEXEC", 0) | getattr(os, "O_NONBLOCK", 0)
+    opened_fds: list[int] = []
+    try:
+        current = os.open(root, directory_flags)
+        opened_fds.append(current)
+        for part in parts[:-1]:
+            current = os.open(part, directory_flags, dir_fd=current)
+            opened_fds.append(current)
+        fd = os.open(parts[-1], file_flags, dir_fd=current)
+        opened_fds.append(fd)
+        metadata = os.fstat(fd)
+        if not stat.S_ISREG(metadata.st_mode) or metadata.st_size > max_bytes:
+            return None
+        with os.fdopen(fd, "rb") as stream:
+            opened_fds.remove(fd)
+            content = stream.read(max_bytes + 1)
+        if len(content) > max_bytes:
+            return None
+        return metadata.st_size, content
+    except (OSError, ValueError):
+        return None
+    finally:
+        for fd in reversed(opened_fds):
+            os.close(fd)
+
+
+def read_instance_file_text(inst_path: Path | None, path: Path, max_chars: int) -> tuple[int, str] | None:
+    """Read bounded instance-owned text only through the no-follow fd walk."""
+    result = read_instance_file_bytes(inst_path, path, max_chars * 4)
+    if result is None:
+        return None
+    size, content = result
+    return size, content.decode("utf-8", errors="replace")[:max_chars]
+
+
 def read_lesson_corpus(inst_path: Path | None) -> dict[str, Any]:
     """#274: single source of truth for the live lesson-file count.
 
@@ -509,7 +602,18 @@ def read_lesson_corpus(inst_path: Path | None) -> dict[str, Any]:
     lesson_files, status = read_dir_files(
         lessons_dir, lambda path: path.suffix == ".md" and path.name != "index.md",
     )
+    if lesson_files and inst_path is not None:
+        safe_files = [
+            path for path in lesson_files
+            if read_instance_file_text(inst_path, path, 128 * 1024) is not None
+        ]
+        if len(safe_files) != len(lesson_files):
+            status = "unavailable"
+        lesson_files = safe_files
     index_status = corpus_status(lessons_dir / "index.md")
+    if inst_path is not None and index_status == "present":
+        if read_instance_file_text(inst_path, lessons_dir / "index.md", 128 * 1024) is None:
+            index_status = "unavailable"
     files: list[dict[str, Any]] = []
     total_size = 0
     for path in lesson_files:
@@ -580,16 +684,12 @@ def read_agent_context_dict(state_root: Path, instance_repo: Path | str | None =
     if cid and prompts_dir.is_dir():
         p_file = prompts_dir / f"{cid}.system.txt"
         t_file = prompts_dir / f"{cid}.task.txt"
-        if p_file.is_file():
-            try:
-                prompt_text = p_file.read_text(encoding="utf-8", errors="replace")[:150000]
-            except Exception:
-                pass
-        if t_file.is_file():
-            try:
-                task_text = t_file.read_text(encoding="utf-8", errors="replace")[:50000]
-            except Exception:
-                pass
+        prompt_result = read_instance_file_text(state_root, p_file, 150_000)
+        if prompt_result is not None:
+            _size, prompt_text = prompt_result
+        task_result = read_instance_file_text(state_root, t_file, 50_000)
+        if task_result is not None:
+            _size, task_text = task_result
 
     # 2. Tier 2: Skills
     # Tier 2 is written by the instance workspace, not the runtime release tree.
@@ -598,15 +698,24 @@ def read_agent_context_dict(state_root: Path, instance_repo: Path | str | None =
         inst_path / "skills" if inst_path else Path("__missing_instance_repo__/skills"),
         lambda path: path.name == "SKILL.md",
     )
+    skills_root = inst_path.resolve() if inst_path else None
     for s_file in skills_files:
         try:
-            content = s_file.read_text(encoding="utf-8", errors="replace")[:15000]
+            if skills_root is None:
+                skills_status = "unavailable"
+                continue
+            skill_relative = s_file.relative_to(inst_path)
+            safe_file = _read_instance_file_beneath(skills_root, skills_root / skill_relative, 15_000)
+            if safe_file is None:
+                skills_status = "unavailable"
+                continue
+            size, content = safe_file
             lines = [line.strip() for line in content.splitlines() if line.strip()]
             desc = next((line for line in lines if not line.startswith("#") and len(line) > 10), "")
             rel = s_file.relative_to(inst_path).as_posix()
             skills_list.append({
                 "name": s_file.parent.name,
-                "size_bytes": s_file.stat().st_size,
+                "size_bytes": size,
                 "desc": desc[:200],
                 "content": content,
                 "path": rel,
@@ -622,12 +731,23 @@ def read_agent_context_dict(state_root: Path, instance_repo: Path | str | None =
     memory_index_status = corpus_status(memory_index_path)
     memory_files: list[dict[str, Any]] = []
     total_memory_size = 0
+    memory_root = inst_path.resolve() if inst_path else None
     for path in memory_paths:
         try:
+            if memory_root is None:
+                memory_status = "unavailable"
+                continue
+            memory_relative = path.relative_to(memory_dir)
+            target = memory_root / "memory" / memory_relative
             rel = path.relative_to(inst_path).as_posix()
-            size = path.stat().st_size
+            result = _read_instance_file_beneath(memory_root, target, 12_000)
+            if result is None:
+                memory_status = "unavailable"
+                continue
+            size, content = result
             total_memory_size += size
-            memory_files.append({"name": rel, "size_bytes": size})
+            memory_files.append({"name": rel, "size_bytes": size,
+                                 "content_chars": len(content), "content": content})
         except (OSError, ValueError):
             memory_status = "unavailable"
 
@@ -802,11 +922,10 @@ def dialogue_window_summary(executor_llm_stats: Any) -> str:
 
 
 def _lan_only(text: Any) -> str:
-    """ADR-036 rule 3: the text of a call (prompt sections, task text,
-    SKILL.md bodies) belongs to the private LAN set only. Public pages show
-    its size, never its content."""
-    size = len(text) if isinstance(text, str) else 0
-    return f'<p class="unavailable-note lan-only-note">text on the LAN site only ({size:,} chars)</p>'
+    """Render bounded, escaped content selected from this agent's own context."""
+    if not isinstance(text, str):
+        return '<p class="unavailable-note">content unavailable</p>'
+    return f'<pre class="agent-owned-context">{esc(text[:12000])}</pre>'
 
 
 def build_two_tier_context_html(agent_context: dict[str, Any] | None) -> str:
@@ -1417,7 +1536,7 @@ def build_two_tier_context_html(agent_context: dict[str, Any] | None) -> str:
     out.append('      <h4>User Message Sections (latest recorded task text)</h4>')
     if not task_text:
         if isinstance(task_text_chars, int):
-            out.append(f'      <p class="unavailable-note">task text withheld for privacy; captured size: {task_text_chars:,} chars.</p>')
+            out.append(f'      <p class="unavailable-note">task text unavailable; captured size: {task_text_chars:,} chars.</p>')
         else:
             out.append(f'      <p class="unavailable-note">task {snapshot_text_unavailable}.</p>')
     elif not task_sections:
@@ -1530,7 +1649,10 @@ def build_two_tier_context_html(agent_context: dict[str, Any] | None) -> str:
     out.append(f'      <div class="t2-group-header"><h4>Working Memory Store</h4><span class="status-badge status-{mem_corpus_status}">corpus: {mem_corpus_status.upper()}</span> <span class="status-badge status-{mem_st}">memory/index.md: {mem_st.upper()}</span></div>')
     out.append(f'      <div class="memory-compact-list"><p>Indexed via Tier 1 <code>memory</code> block. <strong>{corpus_count(mem_corpus_status, mem_cnt)} files</strong> on disk (~{mem_kb:.1f} KB total):</p><div class="memory-pills">')
     for mf in memory.get("files", [])[:30]:
-        out.append(f'<span class="memory-pill">{esc(mf.get("name", ""))} ({mf.get("size_bytes", 0):,} B)</span> ')
+        out.append(f'<div class="memory-file-entry"><span class="memory-pill">{esc(mf.get("name", ""))} ({mf.get("size_bytes", 0):,} B)</span> ')
+        if isinstance(mf.get("content"), str):
+            out.append(f'<details class="memory-file-details"><summary>View {esc(mf.get("name", "memory file"))}</summary>{_lan_only(mf["content"])}</details>')
+        out.append('</div>')
     if mem_corpus_status == "present" and mem_cnt > 30:
         out.append(f'<span class="memory-pill pill-more">+{mem_cnt - 30} more files...</span>')
     out.append('      </div></div>')

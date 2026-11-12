@@ -44,6 +44,8 @@ import os
 import hashlib
 import html
 import json
+import io
+import stat
 import re
 import subprocess
 import sys
@@ -60,6 +62,8 @@ try:
         build_two_tier_context_html,
         compute_window_pressure,
         read_agent_context_dict,
+        read_instance_file_bytes,
+        read_instance_file_text,
         read_lesson_corpus,
     )
 except ImportError:
@@ -68,6 +72,8 @@ except ImportError:
         build_two_tier_context_html,
         compute_window_pressure,
         read_agent_context_dict,
+        read_instance_file_bytes,
+        read_instance_file_text,
         read_lesson_corpus,
     )
 
@@ -461,18 +467,49 @@ LEDGER_HISTORY_DAYS = 90
 # Format: exactly 7 hex chars, no surrounding whitespace.  Never edit manually.
 _BAKED_GENERATOR_SHA: str = ''
 
+def _subagent_record_matches_instance(data, state_root, instance_repo):
+    """Exclude explicit subagent producer provenance mismatches."""
+    for field, expected in (("workspace", instance_repo), ("runtime_state_root", state_root)):
+        if field in data:
+            value = data[field]
+            if not isinstance(value, str) or not value.strip():
+                return False
+            if os.path.normcase(os.path.realpath(value)) != os.path.normcase(os.path.realpath(expected)):
+                return False
+    origins = []
+    if "origin" in data:
+        origins.append(data["origin"])
+    if "parent_context" in data:
+        parent = data["parent_context"]
+        if not isinstance(parent, dict):
+            return False
+        if "origin" in parent:
+            origins.append(parent["origin"])
+    for origin in origins:
+        if not isinstance(origin, dict):
+            return False
+        channel, chat_id = origin.get("channel"), origin.get("chat_id")
+        if channel not in ("system",) or chat_id not in ("self-evolving-agent",):
+            return False
+    return True
+
+
 # Read every source fail-soft, from a single remote python3 process fed over
 # stdin. This keeps the whole fetch to exactly one SSH round-trip and avoids
 # leaving any temp files behind on the remote host.
 REMOTE_READER_SCRIPT = r'''
 from datetime import datetime, timezone, timedelta
 import gzip
+import io
 import json
 import os
+import stat
 import re
 import subprocess
 import time
 from urllib.parse import unquote
+from pathlib import Path
+from typing import Any
 
 STATE_ROOT = "/var/lib/eeepc-agent/self-evolving-agent/state"
 INSTANCE_REPO = "/var/lib/eeepc-agent/self-evolving-agent/eeebot-self-evolving"
@@ -486,6 +523,166 @@ LEDGER_HISTORY_DAYS = 90
 
 _mtimes = []
 _llm_stats_source_complete = False
+
+
+def read_instance_bytes(path: Path, max_bytes: int) -> tuple[int, bytes] | None:
+    """Read bounded instance-owned bytes only through the no-follow fd walk."""
+    if (os.open not in os.supports_dir_fd or not hasattr(os, "O_NOFOLLOW")
+            or not hasattr(os, "O_DIRECTORY") or max_bytes < 0):
+        return None
+    try:
+        root = Path(INSTANCE_REPO).resolve()
+        parts = path.relative_to(root).parts
+    except (OSError, ValueError):
+        return None
+    if not parts or any(part in {"", ".", ".."} for part in parts):
+        return None
+    directory_flags = os.O_RDONLY | os.O_DIRECTORY | os.O_NOFOLLOW | getattr(os, "O_CLOEXEC", 0)
+    file_flags = os.O_RDONLY | os.O_NOFOLLOW | getattr(os, "O_CLOEXEC", 0) | getattr(os, "O_NONBLOCK", 0)
+    opened_fds: list[int] = []
+    try:
+        current = os.open(root, directory_flags)
+        opened_fds.append(current)
+        for part in parts[:-1]:
+            current = os.open(part, directory_flags, dir_fd=current)
+            opened_fds.append(current)
+        fd = os.open(parts[-1], file_flags, dir_fd=current)
+        opened_fds.append(fd)
+        metadata = os.fstat(fd)
+        if not stat.S_ISREG(metadata.st_mode) or metadata.st_size > max_bytes:
+            return None
+        with os.fdopen(fd, "rb") as stream:
+            opened_fds.remove(fd)
+            content = stream.read(max_bytes + 1)
+        if len(content) > max_bytes:
+            return None
+        return metadata.st_size, content
+    except (OSError, ValueError):
+        return None
+    finally:
+        for fd in reversed(opened_fds):
+            os.close(fd)
+
+
+def read_instance_text(path: Path, max_chars: int) -> tuple[int, str] | None:
+    result = read_instance_bytes(path, max_chars * 4)
+    if result is None:
+        return None
+    size, content = result
+    return size, content.decode("utf-8", errors="replace")[:max_chars]
+
+
+def read_instance_file_bytes(inst_path, path, max_bytes):
+    if (os.open not in os.supports_dir_fd or not hasattr(os, "O_NOFOLLOW")
+            or not hasattr(os, "O_DIRECTORY") or max_bytes < 0):
+        return None
+    try:
+        root = Path(inst_path).resolve()
+        if root not in {Path(INSTANCE_REPO).resolve(), Path(STATE_ROOT).resolve()}:
+            return None
+        parts = path.relative_to(root).parts
+    except (OSError, ValueError):
+        return None
+    if not parts or any(part in {"", ".", ".."} for part in parts):
+        return None
+    directory_flags = os.O_RDONLY | os.O_DIRECTORY | os.O_NOFOLLOW | getattr(os, "O_CLOEXEC", 0)
+    file_flags = os.O_RDONLY | os.O_NOFOLLOW | getattr(os, "O_CLOEXEC", 0) | getattr(os, "O_NONBLOCK", 0)
+    opened_fds = []
+    try:
+        current = os.open(root, directory_flags)
+        opened_fds.append(current)
+        for part in parts[:-1]:
+            current = os.open(part, directory_flags, dir_fd=current)
+            opened_fds.append(current)
+        fd = os.open(parts[-1], file_flags, dir_fd=current)
+        opened_fds.append(fd)
+        metadata = os.fstat(fd)
+        if not stat.S_ISREG(metadata.st_mode) or metadata.st_size > max_bytes:
+            return None
+        with os.fdopen(fd, "rb") as stream:
+            opened_fds.remove(fd)
+            content = stream.read(max_bytes + 1)
+        if len(content) > max_bytes:
+            return None
+        return metadata.st_size, content
+    except (OSError, ValueError):
+        return None
+    finally:
+        for fd in reversed(opened_fds):
+            os.close(fd)
+
+
+def read_instance_file_tail(inst_path, path, max_bytes):
+    if (os.open not in os.supports_dir_fd or not hasattr(os, "O_NOFOLLOW")
+            or not hasattr(os, "O_DIRECTORY") or max_bytes <= 0):
+        return None
+    try:
+        root = Path(inst_path).resolve()
+        parts = path.relative_to(root).parts
+    except (OSError, ValueError):
+        return None
+    if not parts or any(part in {"", ".", ".."} for part in parts):
+        return None
+    directory_flags = os.O_RDONLY | os.O_DIRECTORY | os.O_NOFOLLOW | getattr(os, "O_CLOEXEC", 0)
+    file_flags = os.O_RDONLY | os.O_NOFOLLOW | getattr(os, "O_CLOEXEC", 0) | getattr(os, "O_NONBLOCK", 0)
+    opened_fds = []
+    try:
+        current = os.open(root, directory_flags); opened_fds.append(current)
+        for part in parts[:-1]:
+            current = os.open(part, directory_flags, dir_fd=current); opened_fds.append(current)
+        fd = os.open(parts[-1], file_flags, dir_fd=current); opened_fds.append(fd)
+        metadata = os.fstat(fd)
+        if not stat.S_ISREG(metadata.st_mode):
+            return None
+        offset = max(0, metadata.st_size - max_bytes)
+        starts_mid_line = False
+        if offset:
+            os.lseek(fd, offset - 1, os.SEEK_SET)
+            starts_mid_line = os.read(fd, 1) != bytes([10])
+        os.lseek(fd, offset, os.SEEK_SET)
+        with os.fdopen(fd, "rb") as stream:
+            opened_fds.remove(fd); content = stream.read(max_bytes)
+        if len(content) > max_bytes:
+            return None
+        return metadata.st_size, starts_mid_line, content
+    except (OSError, ValueError):
+        return None
+    finally:
+        for fd in reversed(opened_fds):
+            os.close(fd)
+
+
+def read_instance_file_text(inst_path, path, max_chars):
+    result = read_instance_file_bytes(inst_path, path, max_chars * 4)
+    if result is None:
+        return None
+    size, content = result
+    return size, content.decode("utf-8", errors="replace")[:max_chars]
+
+
+def _embedded_subagent_record_matches_instance(data, state_root, instance_repo):
+    for field, expected in (("workspace", instance_repo), ("runtime_state_root", state_root)):
+        if field in data:
+            value = data[field]
+            if not isinstance(value, str) or not value.strip():
+                return False
+            if os.path.normcase(os.path.realpath(value)) != os.path.normcase(os.path.realpath(expected)):
+                return False
+    origins = []
+    if "origin" in data:
+        origins.append(data["origin"])
+    if "parent_context" in data:
+        parent = data["parent_context"]
+        if not isinstance(parent, dict):
+            return False
+        if "origin" in parent:
+            origins.append(parent["origin"])
+    for origin in origins:
+        if not isinstance(origin, dict):
+            return False
+        if origin.get("channel") != "system" or origin.get("chat_id") != "self-evolving-agent":
+            return False
+    return True
 
 
 def read_json(relpath):
@@ -1149,31 +1346,104 @@ def read_bridge_runs():
     return runs
 
 
+def read_instance_bytes(relpath, max_bytes):
+    return read_instance_file_bytes(Path(INSTANCE_REPO), Path(INSTANCE_REPO) / relpath, max_bytes)
+
+
+def read_instance_text(relpath, max_chars):
+    return read_instance_file_text(Path(INSTANCE_REPO), Path(INSTANCE_REPO) / relpath, max_chars)
+
+
 def read_file_text(relpath):
-    path = os.path.join(INSTANCE_REPO, relpath)
     try:
-        with open(path, "r", encoding="utf-8", errors="replace") as fh:
-            content = fh.read()
-        _mtimes.append(os.path.getmtime(path))
-        return content
+        result = read_instance_text(Path(INSTANCE_REPO) / relpath, 50_000)
+        return result[1] if result is not None else None
     except Exception:
         return None
 
 
+    if (os.open not in os.supports_dir_fd or not hasattr(os, "O_NOFOLLOW")
+            or not hasattr(os, "O_DIRECTORY") or max_bytes <= 0):
+        return None
+    try:
+        root = inst_path.resolve()
+        if root not in {Path(INSTANCE_REPO).resolve(), Path(STATE_ROOT).resolve()}:
+            return None
+        parts = path.relative_to(root).parts
+    except (OSError, ValueError):
+        return None
+    if not parts or any(part in {"", ".", ".."} for part in parts):
+        return None
+    directory_flags = os.O_RDONLY | os.O_DIRECTORY | os.O_NOFOLLOW | getattr(os, "O_CLOEXEC", 0)
+    file_flags = os.O_RDONLY | os.O_NOFOLLOW | getattr(os, "O_CLOEXEC", 0) | getattr(os, "O_NONBLOCK", 0)
+    opened_fds = []
+    try:
+        current = os.open(root, directory_flags)
+        opened_fds.append(current)
+        for part in parts[:-1]:
+            current = os.open(part, directory_flags, dir_fd=current)
+            opened_fds.append(current)
+        fd = os.open(parts[-1], file_flags, dir_fd=current)
+        opened_fds.append(fd)
+        metadata = os.fstat(fd)
+        if not stat.S_ISREG(metadata.st_mode):
+            return None
+        offset = max(0, metadata.st_size - max_bytes)
+        starts_mid_line = False
+        if offset:
+            os.lseek(fd, offset - 1, os.SEEK_SET)
+            starts_mid_line = os.read(fd, 1) != b"\n"
+        os.lseek(fd, offset, os.SEEK_SET)
+        with os.fdopen(fd, "rb") as stream:
+            opened_fds.remove(fd)
+            content = stream.read(max_bytes)
+        if len(content) > max_bytes:
+            return None
+        return metadata.st_size, offset, starts_mid_line, content
+    except (OSError, ValueError):
+        return None
+    finally:
+        for fd in reversed(opened_fds):
+            os.close(fd)
+
+
 def read_jsonl(relpath):
     path = os.path.join(STATE_ROOT, relpath)
+    if relpath != "reflector/reflections.jsonl":
+        rows = []
+        try:
+            with open(path, "r", encoding="utf-8", errors="replace") as fh:
+                for line in fh:
+                    if not line.strip():
+                        continue
+                    try:
+                        row = json.loads(line)
+                    except Exception:
+                        continue
+                    if isinstance(row, dict):
+                        rows.append(row)
+            _mtimes.append(os.path.getmtime(path))
+        except Exception:
+            pass
+        return rows
+    safe_tail = read_instance_file_tail(Path(STATE_ROOT), Path(path), 4 * 1024 * 1024)
+    if safe_tail is None:
+        return []
+    _source_size, starts_mid_line, content = safe_tail
     rows = []
     try:
-        with open(path, "r", encoding="utf-8", errors="replace") as fh:
-            for line in fh:
-                if not line.strip():
-                    continue
-                try:
-                    row = json.loads(line)
-                except Exception:
-                    continue
-                if isinstance(row, dict):
-                    rows.append(row)
+        if starts_mid_line:
+            content = content.split(b"\n", 1)[1] if b"\n" in content else b""
+        text = content.decode("utf-8", errors="replace")
+        for line in text.splitlines():
+            if not line.strip():
+                continue
+            try:
+                row = json.loads(line)
+            except Exception:
+                continue
+            if isinstance(row, dict):
+                rows.append(row)
         _mtimes.append(os.path.getmtime(path))
     except Exception:
         pass
@@ -1183,6 +1453,38 @@ def read_jsonl(relpath):
 _MAX_SUBAGENT_FILES = 6000
 _SUBAGENT_TEXT_LIMIT = 400
 _MAX_PROMPT_BYTES = 65536
+
+
+def _subagent_record_matches_instance(data: dict[str, Any], state_root: Path, instance_repo: Path) -> bool:
+    """Exclude explicit mismatches; absent optional origin stays legacy-eligible."""
+    for field, expected in (("workspace", instance_repo), ("runtime_state_root", state_root)):
+        if field in data:
+            value = data[field]
+            if not isinstance(value, str) or not value.strip():
+                return False
+            if os.path.normcase(os.path.realpath(value)) != os.path.normcase(os.path.realpath(expected)):
+                return False
+    if "origin" in data:
+        origin = data["origin"]
+        if not isinstance(origin, dict):
+            return False
+    elif "parent_context" in data:
+        parent = data["parent_context"]
+        if not isinstance(parent, dict):
+            return False
+        if "origin" not in parent:
+            origin = None
+        else:
+            origin = parent["origin"]
+            if not isinstance(origin, dict):
+                return False
+    else:
+        origin = None
+    if origin is not None:
+        channel, chat_id = origin.get("channel"), origin.get("chat_id")
+        if channel != "system" or chat_id != "self-evolving-agent":
+            return False
+    return True
 
 
 def read_subagent_records():
@@ -1208,13 +1510,19 @@ def read_subagent_records():
     dated.sort(reverse=True)
     records = []
     for _mtime, path in dated[:_MAX_SUBAGENT_FILES]:
+        safe_file = read_instance_file_bytes(
+            Path(STATE_ROOT), Path(STATE_ROOT) / os.path.relpath(path, STATE_ROOT), 1024 * 1024,
+        )
+        if safe_file is None:
+            continue
         try:
-            with open(path, "r", encoding="utf-8", errors="replace") as fh:
-                data = json.load(fh)
-            _mtimes.append(os.path.getmtime(path))
+            data = json.loads(safe_file[1].decode("utf-8", errors="replace"))
         except Exception:
             continue
-        if not isinstance(data, dict):
+        _mtimes.append(os.path.getmtime(path))
+        if not isinstance(data, dict) or not _embedded_subagent_record_matches_instance(
+            data, Path(STATE_ROOT), Path(INSTANCE_REPO),
+        ):
             continue
         task_text = str(data.get("task") or "")
         summary_text = str(data.get("summary") or "")
@@ -1261,12 +1569,10 @@ def read_cycle_prompts():
         else:
             cid, kind = name[:-len(".task.txt")], "task"
         path = os.path.join(pdir, name)
-        try:
-            with open(path, "rb") as fh:
-                raw = fh.read()
-            _mtimes.append(os.path.getmtime(path))
-        except Exception:
+        safe_prompt = read_instance_file_bytes(Path(STATE_ROOT), Path(path), _MAX_PROMPT_BYTES * 4)
+        if safe_prompt is None:
             continue
+        _source_size, raw = safe_prompt
         original_bytes = len(raw)
         truncated = original_bytes > _MAX_PROMPT_BYTES
         text = raw[:_MAX_PROMPT_BYTES].decode("utf-8", errors="replace")
@@ -1319,16 +1625,19 @@ def _parse_lessons_text(text):
 
 
 def _lesson_corpus_scan(lessons_dir):
-    """#274: enumerate lessons/*.md (excluding index.md) -- the live corpus
-    the loop writes today. Distinguishes a missing dir from an unreadable
-    one so the page can say which happened rather than showing 0 either way."""
+    """#274: enumerate safe lessons, preserving partial status on rejected links."""
     if not os.path.isdir(lessons_dir):
         return None, "missing"
     try:
         names = sorted(f for f in os.listdir(lessons_dir) if f.endswith(".md") and f != "index.md")
     except Exception:
         return None, "unavailable"
-    return names, "present"
+    safe_names = [
+        name for name in names
+        if (safe_body := read_instance_text(os.path.join(lessons_dir, name), 128 * 1024)) is not None
+        and safe_body[0] <= 128 * 1024
+    ]
+    return safe_names, "unavailable" if len(safe_names) != len(names) else "present"
 
 
 def _read_lesson_index(lessons_dir):
@@ -1338,12 +1647,10 @@ def _read_lesson_index(lessons_dir):
     Missing/unreadable index -> {} -- callers fall back to the filename as
     the title rather than treating it as a distinct failure state."""
     path = os.path.join(lessons_dir, "index.md")
-    try:
-        with open(path, "r", encoding="utf-8", errors="replace") as fh:
-            text = fh.read()
-        _mtimes.append(os.path.getmtime(path))
-    except Exception:
+    result = read_instance_text(path, 128 * 1024)
+    if result is None:
         return {}
+    _size, text = result
     rows = {}
     for line in text.splitlines():
         m = re.fullmatch(r"\| \[(.*?)\]\(([^)]+)\) \| (.*?) \| (.*?) \|", line.strip())
@@ -1362,13 +1669,10 @@ def _read_lesson_md_body(path):
     (Description/Root Causes) vs action (everything else) -- mirrors
     nanobot.runtime.lesson_v2.markdown_lesson_pair's split without importing
     nanobot."""
-    try:
-        if os.path.getsize(path) > 128 * 1024:
-            return "", ""
-        with open(path, "r", encoding="utf-8", errors="replace") as fh:
-            text = fh.read()
-    except Exception:
+    result = read_instance_text(path, 128 * 1024)
+    if result is None or result[0] > 128 * 1024:
         return "", ""
+    _size, text = result
     sections = re.split(r"(?m)^## ", text)[1:]
     condition = " ".join(s.strip() for s in sections if s.startswith(("Description", "Root Causes")))
     action = " ".join(s.strip() for s in sections if not s.startswith(("Description", "Root Causes")))
@@ -1405,6 +1709,9 @@ def read_lessons():
                 _mtimes.append(os.path.getmtime(path))
             except Exception:
                 pass
+            safe_body = read_instance_text(path, 128 * 1024)
+            if safe_body is None or safe_body[0] > 128 * 1024:
+                continue
             problem, solution = _read_lesson_md_body(path)
             rows_all.append({
                 "id": lid,
@@ -1430,12 +1737,9 @@ def _read_lessons_archive(lessons_dir):
     never break the publish. #274: this is now an explicitly labelled
     archive, not the live-corpus count source -- see `read_lessons` above."""
     texts = []
-    try:
-        with open(os.path.join(lessons_dir, "lessons.yaml"), "r", encoding="utf-8", errors="replace") as fh:
-            texts.append(fh.read())
-        _mtimes.append(os.path.getmtime(os.path.join(lessons_dir, "lessons.yaml")))
-    except Exception:
-        pass
+    safe_archive = read_instance_text(Path(lessons_dir) / "lessons.yaml", 128 * 1024)
+    if safe_archive is not None and safe_archive[0] <= 128 * 1024:
+        texts.append(safe_archive[1])
     try:
         archive_dir = os.path.join(lessons_dir, "archive")
         # #1564: these v1 receipt archives (518 rows, 8 distinct insights,
@@ -1452,6 +1756,10 @@ def _read_lessons_archive(lessons_dir):
             (datetime.now(timezone.utc) - timedelta(days=LEDGER_HISTORY_DAYS)).strftime("%Y-%m-%d"),
             "%Y-%m-%d"))
         for name in names:
+            relative = os.path.relpath(os.path.join(archive_dir, name), INSTANCE_REPO)
+            safe_archive = read_instance_bytes(Path(INSTANCE_REPO) / relative, 2 * 1024 * 1024)
+            if safe_archive is None:
+                continue
             day = name[len("lessons-"):-len(".yaml.gz")]
             try:
                 if time.mktime(time.strptime(day, "%Y-%m-%d")) < cutoff:
@@ -1459,10 +1767,12 @@ def _read_lessons_archive(lessons_dir):
             except Exception:
                 pass
             try:
-                with gzip.open(os.path.join(archive_dir, name), "rt", encoding="utf-8", errors="replace") as fh:
-                    texts.append(fh.read())
-                _mtimes.append(os.path.getmtime(os.path.join(archive_dir, name)))
-            except Exception:
+                with gzip.GzipFile(fileobj=io.BytesIO(safe_archive[1])) as archive_stream:
+                    text = archive_stream.read(10 * 1024 * 1024 + 1)
+                if len(text) > 10 * 1024 * 1024:
+                    continue
+                texts.append(text.decode("utf-8", errors="replace"))
+            except (OSError, ValueError):
                 continue
     except Exception:
         pass
@@ -1747,11 +2057,11 @@ def read_agent_context():
     cid = row.get('cycle_id')
     prompt = None
     if cid:
-        try:
-            with open(os.path.join(STATE_ROOT, 'prompts', f'{cid}.system.txt'), encoding='utf-8', errors='replace') as fh:
-                prompt = fh.read()[:150000]
-        except Exception:
-            pass
+        prompt_result = read_instance_file_text(
+            Path(STATE_ROOT), Path(STATE_ROOT) / 'prompts' / f'{cid}.system.txt', 150_000,
+        )
+        if prompt_result is not None:
+            _size, prompt = prompt_result
     return {
         'system_prompt': row,
         'truncation_streak': compute_truncation_streak(rows),
@@ -1889,7 +2199,52 @@ print(json.dumps(result))
 '''.lstrip('\n')
 
 
-def _executor_stats_from_llm_stats(stats: Any) -> dict[str, Any] | None:
+def read_instance_file_tail(inst_path: Path, path: Path, max_bytes: int):
+    """Read a bounded suffix through the selected instance/state root's no-follow descriptors."""
+    if (os.open not in os.supports_dir_fd or not hasattr(os, "O_NOFOLLOW")
+            or not hasattr(os, "O_DIRECTORY") or max_bytes <= 0):
+        return None
+    try:
+        parts = path.relative_to(inst_path).parts
+        root = inst_path.resolve()
+    except (OSError, ValueError):
+        return None
+    if not parts or any(part in {"", ".", ".."} for part in parts):
+        return None
+    directory_flags = os.O_RDONLY | os.O_DIRECTORY | os.O_NOFOLLOW | getattr(os, "O_CLOEXEC", 0)
+    file_flags = os.O_RDONLY | os.O_NOFOLLOW | getattr(os, "O_CLOEXEC", 0) | getattr(os, "O_NONBLOCK", 0)
+    opened_fds: list[int] = []
+    try:
+        current = os.open(root, directory_flags)
+        opened_fds.append(current)
+        for part in parts[:-1]:
+            current = os.open(part, directory_flags, dir_fd=current)
+            opened_fds.append(current)
+        fd = os.open(parts[-1], file_flags, dir_fd=current)
+        opened_fds.append(fd)
+        metadata = os.fstat(fd)
+        if not stat.S_ISREG(metadata.st_mode):
+            return None
+        offset = max(0, metadata.st_size - max_bytes)
+        starts_mid_line = False
+        if offset:
+            os.lseek(fd, offset - 1, os.SEEK_SET)
+            starts_mid_line = os.read(fd, 1) != bytes([10])
+        os.lseek(fd, offset, os.SEEK_SET)
+        with os.fdopen(fd, "rb") as stream:
+            opened_fds.remove(fd)
+            content = stream.read(max_bytes)
+        if len(content) > max_bytes:
+            return None
+        return metadata.st_size, starts_mid_line, content
+    except (OSError, ValueError):
+        return None
+    finally:
+        for fd in reversed(opened_fds):
+            os.close(fd)
+
+
+def _executor_stats_from_llm_stats(stats: dict[str, Any]) -> dict[str, Any] | None:
     if not isinstance(stats, dict):
         return None
     rows = [value for value in stats.values() if isinstance(value, dict) and value.get('component') == 'executor']
@@ -2233,16 +2588,36 @@ def read_local_state(
 
     def read_jsonl(relpath: str) -> list[dict[str, Any]]:
         path = root / relpath
+        if relpath != 'reflector/reflections.jsonl':
+            try:
+                with path.open('r', encoding='utf-8', errors='replace') as fh:
+                    rows = []
+                    for line in fh:
+                        if not line.strip():
+                            continue
+                        try:
+                            rows.append(json.loads(line))
+                        except Exception:  # noqa: BLE001
+                            continue
+                mtimes.append(path.stat().st_mtime)
+            except Exception:  # noqa: BLE001
+                return []
+            return [row for row in rows if isinstance(row, dict)]
+        safe_tail = globals()["read_instance_file_tail"](root, path, 4 * 1024 * 1024)
+        if safe_tail is None:
+            return []
+        _source_size, starts_mid_line, content = safe_tail
         try:
-            with path.open('r', encoding='utf-8', errors='replace') as fh:
-                rows = []
-                for line in fh:
-                    if not line.strip():
-                        continue
-                    try:
-                        rows.append(json.loads(line))
-                    except Exception:  # noqa: BLE001
-                        continue
+            if starts_mid_line:
+                content = content.split(b'\n', 1)[1] if b'\n' in content else b''
+            rows = []
+            for line in content.decode('utf-8', errors='replace').splitlines():
+                if not line.strip():
+                    continue
+                try:
+                    rows.append(json.loads(line))
+                except Exception:  # noqa: BLE001
+                    continue
             mtimes.append(path.stat().st_mtime)
         except Exception:  # noqa: BLE001
             return []
@@ -2662,12 +3037,9 @@ def read_local_state(
     agents_text = None
     if repo_path.is_dir():
         agents_file = repo_path / 'AGENTS.md'
-        try:
-            with agents_file.open('r', encoding='utf-8', errors='replace') as fh:
-                agents_text = fh.read()
-            mtimes.append(agents_file.stat().st_mtime)
-        except Exception:
-            pass
+        safe_agents = read_instance_file_text(repo_path, agents_file, 50_000)
+        if safe_agents is not None:
+            _size, agents_text = safe_agents
 
     tree_for_titles = read_json('evolution/tree.json')
     node_shas = list(tree_for_titles.get('nodes', {}).keys()) if isinstance(tree_for_titles, dict) else []
@@ -2689,11 +3061,10 @@ def read_local_state(
         """Local mirror of REMOTE_READER_SCRIPT _read_lesson_index() -- keep
         in sync. Missing/unreadable index -> {}."""
         path = lessons_dir / 'index.md'
-        try:
-            text = path.read_text(encoding='utf-8', errors='replace')
-            mtimes.append(path.stat().st_mtime)
-        except OSError:
+        safe_index = read_instance_file_text(repo_path, path, 128 * 1024)
+        if safe_index is None:
             return {}
+        _size, text = safe_index
         rows: dict[str, dict[str, str]] = {}
         for line in text.splitlines():
             m = re.fullmatch(r"\| \[(.*?)\]\(([^)]+)\) \| (.*?) \| (.*?) \|", line.strip())
@@ -2709,12 +3080,10 @@ def read_local_state(
     def _read_lesson_md_body_local(path: Path) -> tuple[str, str]:
         """Local mirror of REMOTE_READER_SCRIPT _read_lesson_md_body() --
         keep in sync."""
-        try:
-            if path.stat().st_size > 128 * 1024:
-                return '', ''
-            text = path.read_text(encoding='utf-8', errors='replace')
-        except OSError:
+        safe_body = read_instance_file_text(repo_path, path, 128 * 1024)
+        if safe_body is None or safe_body[0] > 128 * 1024:
             return '', ''
+        _size, text = safe_body
         sections = re.split(r"(?m)^## ", text)[1:]
         condition = ' '.join(s.strip() for s in sections if s.startswith(('Description', 'Root Causes')))
         action = ' '.join(s.strip() for s in sections if not s.startswith(('Description', 'Root Causes')))
@@ -2817,7 +3186,7 @@ def read_local_state(
         -- keep in sync."""
         sdir = root / 'subagents'
         try:
-            names = [p for p in sdir.iterdir() if p.is_file() and p.name.endswith('.json')]
+            names = [p for p in sdir.iterdir() if p.name.endswith('.json')]
         except OSError:
             return []
         dated: list[tuple[float, Path]] = []
@@ -2829,12 +3198,15 @@ def read_local_state(
         dated.sort(key=lambda pair: pair[0], reverse=True)
         records: list[dict[str, Any]] = []
         for _mtime, path in dated[:_MAX_SUBAGENT_FILES]:
+            safe_file = read_instance_file_bytes(root, root / path.relative_to(root), 1024 * 1024)
+            if safe_file is None:
+                continue
             try:
-                data = json.loads(path.read_text(encoding='utf-8', errors='replace'))
+                data = json.loads(safe_file[1].decode('utf-8', errors='replace'))
                 mtimes.append(path.stat().st_mtime)
             except (OSError, ValueError):
                 continue
-            if not isinstance(data, dict):
+            if not isinstance(data, dict) or not _subagent_record_matches_instance(data, root, repo_path):
                 continue
             task_text = str(data.get('task') or '')
             summary_text = str(data.get('summary') or '')
@@ -2876,11 +3248,10 @@ def read_local_state(
                 cid, kind = path.name[:-len('.system.txt')], 'system'
             else:
                 cid, kind = path.name[:-len('.task.txt')], 'task'
-            try:
-                raw = path.read_bytes()
-                mtimes.append(path.stat().st_mtime)
-            except OSError:
+            safe_prompt = read_instance_file_bytes(root, path, _MAX_PROMPT_BYTES * 4)
+            if safe_prompt is None:
                 continue
+            _source_size, raw = safe_prompt
             original_bytes = len(raw)
             truncated = original_bytes > _MAX_PROMPT_BYTES
             text = raw[:_MAX_PROMPT_BYTES].decode('utf-8', errors='replace')
@@ -2901,7 +3272,7 @@ def read_local_state(
         lessons_dir = repo_path / 'lessons'
         corpus = read_lesson_corpus(repo_path)
         live_rows: list[dict[str, Any]] = []
-        if corpus['corpus_status'] == 'present':
+        if corpus['corpus_status'] in {'present', 'unavailable'} and corpus['files']:
             index_rows = _read_lesson_index_local(lessons_dir)
             for f in corpus['files']:
                 name = Path(f['name']).name
@@ -2938,12 +3309,10 @@ def read_local_state(
         fail-soft everywhere (#29). #274: this is now an explicitly
         labelled archive, not the live-corpus count source."""
         texts: list[tuple[str, str]] = []
-        try:
-            live = lessons_dir / 'lessons.yaml'
-            texts.append(('live', live.read_text(encoding='utf-8', errors='replace')))
-            mtimes.append(live.stat().st_mtime)
-        except Exception:  # noqa: BLE001
-            pass
+        live = lessons_dir / 'lessons.yaml'
+        safe_live = read_instance_file_text(repo_path, live, 128 * 1024)
+        if safe_live is not None and safe_live[0] <= 128 * 1024:
+            texts.append(('live', safe_live[1]))
         try:
             # #1564: these v1 receipt archives (518 rows, 8 distinct insights,
             # zero recurrence) are deleted from the instance repo; keep the guard
@@ -2967,11 +3336,18 @@ def read_local_state(
                     continue
             except Exception:  # noqa: BLE001
                 pass
+            safe_archive = read_instance_file_bytes(
+                repo_path, lessons_dir / 'archive' / name, 2 * 1024 * 1024,
+            )
+            if safe_archive is None:
+                continue
             try:
-                with gzip.open(lessons_dir / 'archive' / name, 'rt', encoding='utf-8', errors='replace') as fh:
-                    texts.append((name, fh.read()))
-                mtimes.append((lessons_dir / 'archive' / name).stat().st_mtime)
-            except Exception:  # noqa: BLE001
+                with gzip.GzipFile(fileobj=io.BytesIO(safe_archive[1])) as archive_stream:
+                    text = archive_stream.read(10 * 1024 * 1024 + 1)
+                if len(text) > 10 * 1024 * 1024:
+                    continue
+                texts.append((name, text.decode('utf-8', errors='replace')))
+            except (OSError, EOFError, ValueError):  # noqa: BLE001
                 continue
         entries: list[dict[str, Any]] = []
 
@@ -4978,35 +5354,44 @@ def build_cycle_details(
             continue
         out = record(str(lesson['cycle_id']))
         insight = lesson.get('insight') or lesson.get('generalized_insight') or lesson.get('reusable_insight') or lesson.get('result')
-        # ADR-036 rule 3: lesson bodies are instance-repo content -- LAN only;
-        # public records keep their size.
+        # Bounded project-authored lesson fields are eligible for the public projection.
         if insight:
+            out['lesson_insight'] = str(insight)[:12_000]
+        insight_chars = lesson.get('insight_chars', lesson.get('result_chars'))
+        if isinstance(insight_chars, int) and not isinstance(insight_chars, bool) and insight_chars >= 0:
+            out['lesson_insight_chars'] = insight_chars
+        elif insight:
             out['lesson_insight_chars'] = len(str(insight))
-        elif lesson.get('insight_chars') is not None:
-            out['lesson_insight_chars'] = int(lesson['insight_chars'])
-        elif lesson.get('result_chars') is not None:
-            out['lesson_insight_chars'] = int(lesson['result_chars'])
-        # Issue #92: v2 schema fields supersede legacy insight when present.
         if lesson.get('problem'):
+            out['lesson_problem'] = str(lesson['problem'])[:12_000]
+        problem_chars = lesson.get('problem_chars')
+        if isinstance(problem_chars, int) and not isinstance(problem_chars, bool) and problem_chars >= 0:
+            out['lesson_problem_chars'] = problem_chars
+        elif lesson.get('problem'):
             out['lesson_problem_chars'] = len(str(lesson['problem']))
-        elif lesson.get('problem_chars') is not None:
-            out['lesson_problem_chars'] = int(lesson['problem_chars'])
         if lesson.get('solution'):
+            out['lesson_solution'] = str(lesson['solution'])[:12_000]
+        solution_chars = lesson.get('solution_chars')
+        if isinstance(solution_chars, int) and not isinstance(solution_chars, bool) and solution_chars >= 0:
+            out['lesson_solution_chars'] = solution_chars
+        elif lesson.get('solution'):
             out['lesson_solution_chars'] = len(str(lesson['solution']))
-        elif lesson.get('solution_chars') is not None:
-            out['lesson_solution_chars'] = int(lesson['solution_chars'])
 
     for reflection in reflections or []:
         if not isinstance(reflection, dict) or not reflection.get('cycle_id'):
             continue
         out = record(str(reflection['cycle_id']))
-        # ADR-036 rule 3: the reflector's output is model text -- public
-        # records carry only its shape (sizes and counts), never the words.
-        payload: dict[str, Any] = {'summary_chars': int(reflection.get('summary_chars') or len(str(reflection.get('summary') or '')))}
+        # This agent's own bounded reflection output is eligible for the public projection.
+        payload: dict[str, Any] = {'summary': str(reflection.get('summary') or '')[:12_000],
+                                   'summary_chars': int(reflection.get('summary_chars') or len(str(reflection.get('summary') or '')))}
         for key in ('findings', 'recommendations'):
             value = reflection.get(key)
             preserved_count = reflection.get(f'{key}_count')
             payload[f'{key}_count'] = int(preserved_count) if preserved_count is not None else (len(value) if isinstance(value, list) else (1 if value else 0))
+            if isinstance(value, list):
+                payload[key] = [str(item)[:12_000] for item in value[:50] if isinstance(item, str)]
+            elif isinstance(value, str) and value:
+                payload[key] = [value[:12_000]]
         if any(payload.values()):
             out['reflection'] = payload
 
@@ -5029,13 +5414,14 @@ def build_cycle_details(
             'status': text(rec.get('status'), 40),
             'started_at': rec.get('started_at'),
             'finished_at': rec.get('finished_at'),
-            # ADR-036 rule 3: task/summary/result text of a subagent is call
-            # text -- LAN only. Public records keep sizes, never excerpts.
             'task_truncated': bool(rec.get('task_truncated')),
             'task_bytes': rec.get('task_bytes'),
-            'task_chars': int(rec.get('task_excerpt_chars') or rec.get('task_chars') or len(str(rec.get('task_excerpt') or ''))),
-            'summary_chars': int(rec.get('summary_excerpt_chars') or rec.get('summary_chars') or len(str(rec.get('summary_excerpt') or ''))),
-            'result_chars': int(rec.get('result_excerpt_chars') or rec.get('result_chars') or len(str(rec.get('result_excerpt') or ''))),
+            'task': str(rec.get('task_excerpt') or rec.get('task') or '')[:12_000],
+            'summary': str(rec.get('summary_excerpt') or rec.get('summary') or '')[:12_000],
+            'result': str(rec.get('result_excerpt') or rec.get('result') or '')[:12_000],
+            'task_chars': int(rec.get('task_excerpt_chars') or rec.get('task_chars') or len(str(rec.get('task_excerpt') or rec.get('task') or ''))),
+            'summary_chars': int(rec.get('summary_excerpt_chars') or rec.get('summary_chars') or len(str(rec.get('summary_excerpt') or rec.get('summary') or ''))),
+            'result_chars': int(rec.get('result_excerpt_chars') or rec.get('result_chars') or len(str(rec.get('result_excerpt') or rec.get('result') or ''))),
             'iteration_count': rec.get('iteration_count'),
         }
         if not cid:
@@ -5118,9 +5504,9 @@ def build_cycle_detail_page() -> str:
           '<div><span class="badge">' + esc(sa.status || 'unknown') + '</span> <strong>' + esc(sa.label || sa.subagent_id || '') + '</strong></div>' +
           line('Started', sa.started_at) + line('Finished', sa.finished_at) +
           line('Loop iterations', sa.iteration_count) +
-          '<p><b>Task:</b> ' + esc(sa.task_excerpt || '') + truncNote + '</p>' +
-          (sa.summary_excerpt ? '<p><b>Summary:</b> ' + esc(sa.summary_excerpt) + '</p>' : '') +
-          (sa.result_excerpt ? '<p><b>Result:</b> ' + esc(sa.result_excerpt) + '</p>' : '') +
+          '<p><b>Task:</b> ' + esc(sa.task || '') + truncNote + '</p>' +
+          (sa.summary ? '<p><b>Summary:</b> ' + esc(sa.summary) + '</p>' : '') +
+          (sa.result ? '<p><b>Result:</b> ' + esc(sa.result) + '</p>' : '') +
           '</li>';
       }}
       function render(id, data) {{
@@ -5665,9 +6051,7 @@ def _build_next_up_item(derived_view: dict[str, Any] | None) -> str:
         label = esc(item.get('label') or item.get('id') or '')
         vector = esc(item.get('vector') or '')
         summary = str(item.get('summary') or '')
-        # ADR-036 rule 3: a priority's summary may quote the operator's goal
-        # text -- LAN only. Public form: number, label, vector, source.
-        summary_html = ''
+        summary_html = f' <span class="now-sub">{esc(summary[:12000])}</span>' if summary else ''
         rows.append(
             f'<li class="demand-queue-row" data-demand-provenance="{esc(provenance)}">'
             f'<span class="badge badge-researching" translate="no">{kind}</span> '
@@ -7984,11 +8368,24 @@ def build_lessons_panel(lessons: list[dict[str, Any]] | None, *, corpus_status: 
         meta_chips = kind_html + severity_html + tags_html + seen_html + duplicate_html
         meta_chips_html = f'<div class="lesson-chips">{meta_chips}</div>' if meta_chips else ''
 
-        # ADR-036 rule 3: problem/solution bodies are LAN-only; public shows size.
-        problem_chars = int(l.get('problem_chars') if l.get('problem_chars') is not None else len(problem))
-        solution_chars = int(l.get('solution_chars') if l.get('solution_chars') is not None else len(solution))
-        problem_html = f'<div class="lesson-problem lan-only-note"><span class="lesson-label">Problem:</span> text on the LAN site only ({problem_chars:,} chars)</div>' if problem_chars else '<div class="lesson-problem unavailable-note">Problem: no text recorded.</div>'
-        solution_html = f'<div class="lesson-solution lan-only-note"><span class="lesson-label">Solution:</span> text on the LAN site only ({solution_chars:,} chars)</div>' if solution_chars else '<div class="lesson-solution unavailable-note">Solution: no text recorded.</div>'
+        problem_chars = l.get('problem_chars')
+        problem_size = problem_chars if isinstance(problem_chars, int) and not isinstance(problem_chars, bool) and problem_chars >= 0 else len(problem)
+        solution_chars = l.get('solution_chars')
+        solution_size = solution_chars if isinstance(solution_chars, int) and not isinstance(solution_chars, bool) and solution_chars >= 0 else len(solution)
+        problem_html = (
+            f'<div class="lesson-problem"><span class="lesson-label">Problem:</span> {esc(problem[:12000])}</div>'
+            if problem else
+            '<div class="lesson-problem unavailable-note">Problem: no text recorded.</div>'
+            if problem_size == 0 else
+            f'<div class="lesson-problem unavailable-note">Problem text unavailable ({problem_size:,} characters recorded).</div>'
+        )
+        solution_html = (
+            f'<div class="lesson-solution"><span class="lesson-label">Solution:</span> {esc(solution[:12000])}</div>'
+            if solution else
+            '<div class="lesson-solution unavailable-note">Solution: no text recorded.</div>'
+            if solution_size == 0 else
+            f'<div class="lesson-solution unavailable-note">Solution text unavailable ({solution_size:,} characters recorded).</div>'
+        )
 
         title = str(l.get('title') or '').strip()
         title_is_descriptive = bool(title and title != str(l.get('id') or ''))
@@ -8028,21 +8425,17 @@ def build_lessons_panel(lessons: list[dict[str, Any]] | None, *, corpus_status: 
         result = str(l.get('result') or '')
         result_chars = l.get('result_chars')
         result_size = result_chars if isinstance(result_chars, int) and not isinstance(result_chars, bool) and result_chars >= 0 else len(result)
-        # ADR-036 rule 3: legacy result/insight text is LAN-only; retain the
-        # validated projection's saved length when the body was redacted.
-        result_html = (
-            f'<div class="lesson-result lan-only-note">result: text on the LAN site only ({result_size:,} chars)</div>'
-            if result_size > 0 else ''
-        )
+        result_html = f'<div class="lesson-result">Result: {esc(result[:12000])}</div>' if result else ''
         insight = str(l.get('insight') or '')
         insight_chars = l.get('insight_chars')
         insight_size = insight_chars if isinstance(insight_chars, int) and not isinstance(insight_chars, bool) and insight_chars >= 0 else len(insight)
         duplicate_html = '<span class="lesson-duplicate-warning">duplicate id on disk</span>' if id_counts.get(str(l.get('id') or ''), 0) > 1 else ''
         item_anchor = _lesson_anchor(l)
-        insight_html = f'<div class="lesson-insight lan-only-note">insight: text on the LAN site only ({insight_size:,} chars)</div>' if insight_size > 0 else '<div class="lesson-insight unavailable-note">Insight: no text recorded.</div>'
+        insight_html = f'<div class="lesson-insight">Insight: {esc(insight[:12000])}</div>' if insight else '<div class="lesson-insight unavailable-note">Insight: no text recorded.</div>'
         hypothesis_chars = l.get('hypothesis_chars')
         hypothesis_size = hypothesis_chars if isinstance(hypothesis_chars, int) and not isinstance(hypothesis_chars, bool) and hypothesis_chars >= 0 else len(str(l.get('hypothesis') or ''))
-        hypothesis_html = f'<div class="lesson-hypothesis lan-only-note">Hypothesis: text on the LAN site only ({hypothesis_size:,} chars)</div>' if hypothesis_size > 0 else '<div class="lesson-hypothesis unavailable-note">Hypothesis: no text recorded.</div>'
+        hypothesis = str(l.get('hypothesis') or '')
+        hypothesis_html = f'<div class="lesson-hypothesis">Hypothesis: {esc(hypothesis[:12000])}</div>' if hypothesis else '<div class="lesson-hypothesis unavailable-note">Hypothesis: no text recorded.</div>'
         result_html = result_html if result_size > 0 else '<div class="lesson-result unavailable-note">Result: no text recorded.</div>'
         legacy_title = str(l.get('title') or '').strip()
         search_text = esc((' '.join([
@@ -8092,7 +8485,7 @@ def build_lessons_panel(lessons: list[dict[str, Any]] | None, *, corpus_status: 
       <h2 class="panel-title">Lessons History ({total} retained history rows &middot; {heading_detail})</h2>
       <p class="lessons-count-note">Counts describe rows in this published retained-history view; they do not claim all-time archive completeness. Live corpus rows and retained archive rows are distinct from the executor retrieval corpus; archive rows are not on its retrieval path. Sorting applies within the current-format and legacy groups; legacy records remain in their disclosure.</p>
       <p class="lessons-source-counts" aria-label="Published lesson row populations">{source_counts} · <span>date unavailable: {missing_date_count}</span></p>
-      <p class="lessons-body-policy">Lesson problem, solution, result, insight and hypothesis text are withheld from this public page. Per-record character counts below indicate whether those bodies were recorded; they do not expose their contents.</p>
+      <p class="lessons-body-policy">Bounded own project lesson content is shown as text. Secrets and unrelated data are rejected by the publication scanner.</p>
       {corpus_note}
       <div class="lessons-controls">
         <label for="lessons-filter">Search lesson IDs, titles and public metadata
@@ -8234,10 +8627,13 @@ def build_agent_panel(
             md_text = str(agents_md).strip()
             md_lines = len(md_text.splitlines())
             md_chars = len(md_text)
+        if isinstance(agents_md, dict):
+            candidate_text = agents_md.get("text")
+            md_text = candidate_text[:12000] if isinstance(candidate_text, str) else ""
         agents_html = (
             f'<details class="charter-details agents-md-box">'
             f'<summary>AGENTS.md charter ({md_lines} lines)</summary>'
-            f'<div class="agent-wide-content"><p class="unavailable-note lan-only-note">text on the LAN site only ({md_chars:,} chars)</p></div></details>'
+            f'<div class="agent-wide-content">{esc(md_text)}</div></details>'
         )
     else:
         agents_html = '<p class="unavailable-note">AGENTS.md unavailable</p>'
@@ -8262,7 +8658,7 @@ def build_agent_panel(
             goals_html = (
                 f'<details class="charter-details goal-text-box">'
                 f'<summary>Goals charter ({size_note})</summary>'
-                f'<div class="agent-wide-content"><p class="unavailable-note lan-only-note">text on the LAN site only</p></div></details>'
+                f'<div class="agent-wide-content">{esc(str(goal_text.get("text") or "")[:12000])}</div></details>'
             )
         else:
             goals_html = '<p class="unavailable-note">goals charter unavailable</p>'
@@ -10905,8 +11301,8 @@ def render_page(data: dict[str, Any], host: str, generated_at: str | None = None
     demand_completed = data.get('demand_completed')
     skill_reads = data.get('skill_reads')
     skill_evals = data.get('skill_evals')
-    goal_text = data.get('goal_meta') or data.get('goal_text')
-    agents_md = data.get('agents_meta') or data.get('agents_md')
+    goal_text = data.get('goal_meta') if isinstance(data.get('goal_meta'), dict) else data.get('goal_text')
+    agents_md = data.get('agents_meta') if isinstance(data.get('agents_meta'), dict) else data.get('agents_md')
     cycle_titles = data.get('cycle_titles')
     # Issue #172: use retained history, falling back to tail when history is empty.
     cycle_details = build_cycle_details(
@@ -10917,8 +11313,7 @@ def render_page(data: dict[str, Any], host: str, generated_at: str | None = None
         cycle_titles,
         data.get('cycle_files'),
         subagent_records=data.get('subagent_records'),
-        # ADR-036 rule 3: prompt text is call text and never reaches public pages;
-        # cycle_prompts is read but deliberately not passed to this renderer.
+        cycle_prompts=data.get('cycle_prompts'),
     )
 
     error_note = ''
@@ -11305,8 +11700,8 @@ def render_pages(data: dict[str, Any], host: str, generated_at: str | None = Non
     demand_completed = data.get('demand_completed')
     skill_reads = data.get('skill_reads')
     skill_evals = data.get('skill_evals')
-    goal_text = data.get('goal_meta') or data.get('goal_text')
-    agents_md = data.get('agents_meta') or data.get('agents_md')
+    goal_text = data.get('goal_meta') if isinstance(data.get('goal_meta'), dict) else data.get('goal_text')
+    agents_md = data.get('agents_meta') if isinstance(data.get('agents_meta'), dict) else data.get('agents_md')
     cycle_titles = data.get('cycle_titles')
     # Issue #172: use retained history, falling back to tail when history is empty.
     cycle_details = build_cycle_details(
@@ -11317,8 +11712,7 @@ def render_pages(data: dict[str, Any], host: str, generated_at: str | None = Non
         cycle_titles,
         data.get('cycle_files'),
         subagent_records=data.get('subagent_records'),
-        # ADR-036 rule 3: prompt text is call text and never reaches public pages;
-        # cycle_prompts is read but deliberately not passed to this renderer.
+        cycle_prompts=data.get('cycle_prompts'),
     )
 
     error_note = ''

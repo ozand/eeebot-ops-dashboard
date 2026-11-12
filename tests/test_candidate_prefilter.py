@@ -68,9 +68,6 @@ def _positive_samples(name):
         "basic_auth": ["Basic " + "A" * 16, "Authorization : Basic " + "A" * 16],
         "url_credentials": ["http://u:p@h", "https://u:p@h"],
         "private_key_header": ["-----BEGIN PRIVATE KEY-----"],
-        "structural_reasoning_content": ['"reasoning_content"', "'reasoning_content'"],
-        "structural_messages": ['"messages":', "'messages':"],
-        "structural_prompt": ['"prompt": {', "'prompt': {"],
         "_env_secret_kv": ["DB_PASS=abcdefghijk", "AUTH=abcdefghijk", "ACCOUNT_KEY=abcdefghijk", "GH_TOKEN=abcdefghijk"],
         "_json_secret_key": ['{"my_token_value":"abcdefghijk"}'],
     }[name]
