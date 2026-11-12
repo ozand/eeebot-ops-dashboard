@@ -1481,20 +1481,20 @@
 .indicator-alarm { background: rgba(248, 81, 73, 0.08); border: 1px solid rgba(248, 81, 73, 0.4); }
 .indicator-window-pressure { background: rgba(88, 166, 255, 0.06); border: 1px solid rgba(88, 166, 255, 0.25); }
 </style>
-<meta name="snapshot-version" content="1794450586-23e66b45bc83"></head>
+<meta name="snapshot-version" content="1794451543-64fdbb330c05"></head>
 <body>
 
     <header class="empire-strip">
       <h1 class="empire-title"># eeebot / tech-tree</h1>
       <span class="provenance-badge provenance-complete">Window: 7d (complete)</span>
-      <div class="empire-fresh"><span class="freshness freshness-fresh" data-data-epoch="1794450568.009" data-render-age-seconds="32">data: 31s old &middot; generated 02:30 UTC</span></div>
+      <div class="empire-fresh"><span class="freshness freshness-fresh" data-data-epoch="1794451515.572" data-render-age-seconds="41">data: 41s old &middot; generated 02:45 UTC</span></div>
     </header>
     
 <nav class="panel-nav site-nav" aria-label="Sections"><a href="index.html">now</a><a href="lineage.html">lineage</a><a href="cycles.html" class="nav-current" aria-current="page">cycles</a><a href="tokens.html">tokens</a><a href="lessons.html">lessons</a><a href="agent.html">agent</a><a href="hypotheses.html">hypotheses</a><a href="about.html">about</a></nav>
 <main class="dashboard-main">
 
     <section class="panel panel-feed" id="panel-feed">
-      <h2 class="panel-title">Cycle History (3669 cycles)</h2>
+      <h2 class="panel-title">Cycle History (3670 cycles)</h2>
       <div class="feed-controls"><label for="cycle-search">Search task or cycle ID</label><input id="cycle-search" type="search" autocomplete="off" placeholder="Search loaded cycles"><button type="button" class="feed-clear-search">Clear search</button><label for="cycle-from">From (recorded day)</label><input id="cycle-from" type="date"><label for="cycle-to">To (recorded day)</label><input id="cycle-to" type="date"><div class="filter-bar" role="group" aria-label="Filter cycles by outcome"><button type="button" class="filter-btn" data-filter="all" aria-pressed="false">all</button><button type="button" class="filter-btn" data-filter="integrated" aria-pressed="false">integrated</button><button type="button" class="filter-btn" data-filter="failed" aria-pressed="false">failed</button><button type="button" class="filter-btn" data-filter="partial" aria-pressed="false">partial</button><button type="button" class="filter-btn" data-filter="skipped" aria-pressed="false">skipped</button><button type="button" class="filter-btn" data-filter="push_pending" aria-pressed="false">push_pending</button><button type="button" class="filter-btn" data-filter="superseded" aria-pressed="false">superseded</button><button type="button" class="filter-btn" data-filter="abandoned" aria-pressed="false">abandoned</button><button type="button" class="filter-btn" data-filter="incomplete" aria-pressed="false">incomplete</button><button type="button" class="filter-btn" data-filter="running" aria-pressed="false">running</button><button type="button" class="filter-btn" data-filter="proposed" aria-pressed="false">proposed</button></div><p class="feed-coverage" role="status" aria-live="polite" data-feed-coverage></p></div><button class="feed-show-all" type="button" data-cycle-archive-index-src="cycles-archive-index.json">Load older cycles</button><span class="feed-archive-status" role="status" aria-live="polite"></span><script>(function(){var bar=document.querySelector(".filter-bar"),search=document.querySelector("#cycle-search"),clear=document.querySelector(".feed-clear-search"),from=document.querySelector("#cycle-from"),to=document.querySelector("#cycle-to"),coverage=document.querySelector("[data-feed-coverage]");if(!bar)return;function getRows(){return document.querySelectorAll("#panel-feed li[data-outcome]");}function apply(){var rows=getRows(),shown=0,k=bar.dataset.activeFilter||"all",q=(search.value||"").trim().toLocaleLowerCase(),start=from.value,end=to.value;rows.forEach(function(r){var day=r.dataset.day||"",match=(k==="all"||r.dataset.outcome===k)&&(!q||(r.dataset.search||"").toLocaleLowerCase().includes(q))&&(!start||day&&day>=start)&&(!end||day&&day<=end);r.classList.toggle("filtered-out",!match);r.setAttribute("aria-hidden",String(!match));if(match)shown++;});var headers=document.querySelectorAll("#panel-feed .feed-day-header");headers.forEach(function(h){h.hidden=true;});rows.forEach(function(r){if(!r.classList.contains("filtered-out")){var prev=r.previousElementSibling;while(prev&&!prev.classList.contains("feed-day-header"))prev=prev.previousElementSibling;if(prev)prev.hidden=false;}});var loaded=rows.length,empty=document.querySelector("[data-filter-empty]");if(empty){empty.hidden=shown>0;empty.textContent="No matches in the loaded cycle window.";}coverage.textContent=shown+" matching of "+loaded+" loaded cycles"+(k==="all"?"":" for "+k)+"; search covers loaded cycles only."+(start||end?" Dates use recorded timestamp day; bounds may differ from the displayed local day label.":"")+(document.querySelector(".feed-show-all[data-cycle-archive-index-src]")?" Older archive chunks remain unsearched.":" No older archive chunks are available.");bar.querySelectorAll(".filter-btn").forEach(function(b){var selected=b.dataset.filter===k;b.classList.toggle("active",selected);b.setAttribute("aria-pressed",String(selected));});}function readUrl(){var h=location.hash||"",k=h.indexOf("#f-")===0?h.slice(3):"",params=new URLSearchParams(location.search);bar.dataset.activeFilter=Array.prototype.some.call(bar.querySelectorAll(".filter-btn"),function(b){return b.dataset.filter===k;})?k:"all";if(search)search.value=params.get("q")||"";if(from)from.value=params.get("from")||"";if(to)to.value=params.get("to")||"";apply();}function writeSearch(){var u=new URL(location.href);if(search.value)u.searchParams.set("q",search.value);else u.searchParams.delete("q");if(from.value)u.searchParams.set("from",from.value);else u.searchParams.delete("from");if(to.value)u.searchParams.set("to",to.value);else u.searchParams.delete("to");history.replaceState(null,"",u.pathname+u.search+u.hash);apply();}readUrl();bar.addEventListener("click",function(e){var b=e.target.closest(".filter-btn");if(!b)return;var k=b.dataset.filter;bar.dataset.activeFilter=k;if(k==="all"){history.replaceState(null,"",location.pathname+location.search);}else{location.hash="f-"+encodeURIComponent(k);}apply();});if(search)search.addEventListener("input",writeSearch);if(from)from.addEventListener("change",writeSearch);if(to)to.addEventListener("change",writeSearch);if(clear)clear.addEventListener("click",function(){search.value="";from.value="";to.value="";writeSearch();search.focus();});window.addEventListener("hashchange",readUrl);window.addEventListener("cycle-feed-update",apply);})();</script><script>
             (function(){
               var btn=document.querySelector('.feed-show-all[data-cycle-archive-index-src]');
@@ -1523,6 +1523,24 @@
         <li class="filter-empty" data-filter-empty hidden>No matches in the loaded cycle window.</li>
         
         <li class="feed-day-header">2026-11-12 MSK</li>
+        <li class="feed-row feed-outcome-rejected" data-outcome="rejected" data-search="rejected: sizing_rejected cycle-d5d150e12fb6" data-day="2026-11-12" id="cycle-cycle-d5d150e12fb6">
+          <details class="feed-card">
+            <summary class="feed-card-summary"><span class="feed-card-chevron" aria-hidden="true"></span><div class="feed-header">
+            <span class="badge badge-rejected">REJECTED: sizing_rejected</span>
+            <strong class="feed-title">rejected: sizing_rejected</strong>
+            <span class="feed-cid copyable" translate="no">(cycle-d5d150e12fb6)</span>
+            
+            <span class="feed-ts" title="2026-11-12T02:40:59.823217Z">05:40 MSK</span>
+          </div><span class="feed-card-hint">evidence</span></summary>
+            <div class="feed-card-evidence">
+          <div class="feed-links"><a class="cycle-detail-link" href="cycle.html?id=cycle-d5d150e12fb6">details</a> </div>
+          
+          <div class="feed-cycle-timing">Recorded cycle interval (available history; coverage may be partial): <div class="feed-cycle-elapsed unavailable-note">Cycle elapsed: UNKNOWN</div> &middot; <span class="feed-bridge-span unavailable-note">Bridge span: unavailable</span> &middot; Tool operations: unavailable (not recorded)</div>
+          <div class="feed-cost">&#9889; 2 LLM calls &middot; 10.92K tok &middot; Σ LLM wait 52s &middot; recorded through 05:40 MSK (selected telemetry window; may be incomplete) &middot; not cycle elapsed <span class="cost-pressure" title="a call in this cycle ended with finish_reason=length (context/budget limit hit)">&#9888; context overflow</span></div>
+          <div class="feed-planning-cost">Planning: unknown (planning data unavailable or not observed)</div></div>
+          </details>
+        </li>
+        
         <li class="feed-row feed-outcome-partial" data-outcome="partial" data-search="partial: no artifact recorded cycle-830bd357c614" data-day="2026-11-12" id="cycle-cycle-830bd357c614">
           <details class="feed-card">
             <summary class="feed-card-summary"><span class="feed-card-chevron" aria-hidden="true"></span><div class="feed-header">
@@ -1536,7 +1554,7 @@
           <div class="feed-links"><a class="cycle-detail-link" href="cycle.html?id=cycle-830bd357c614">details</a> </div>
           
           <div class="feed-cycle-timing">Recorded cycle interval (available history; coverage may be partial): <div class="feed-cycle-elapsed">Cycle elapsed: 18m37s</div> &middot; <span class="feed-bridge-span">Bridge span: 39m25s</span> &middot; Tool operations: unavailable (not recorded)</div>
-          <div class="feed-cost">&#9889; 7 LLM calls &middot; 247.8K tok &middot; Σ LLM wait 13m3s &middot; recorded through 05:28 MSK (selected telemetry window; may be incomplete) &middot; not cycle elapsed <span class="cost-pressure" title="a call in this cycle ended with finish_reason=length (context/budget limit hit)">&#9888; context overflow</span></div>
+          <div class="feed-cost">&#9889; 8 LLM calls &middot; 267.4K tok &middot; Σ LLM wait 13m27s &middot; recorded through 05:38 MSK (selected telemetry window; may be incomplete) &middot; not cycle elapsed <span class="cost-pressure" title="a call in this cycle ended with finish_reason=length (context/budget limit hit)">&#9888; context overflow</span></div>
           <div class="feed-planning-cost">Planning: 10 iterations &middot; unknown planner calls &middot; 1 planning sessions</div></div>
           </details>
         </li>
@@ -2407,29 +2425,11 @@
           </details>
         </li>
         
-        <li class="feed-row feed-outcome-rejected" data-outcome="rejected" data-search="rejected: sizing_rejected cycle-5b01e7d58646" data-day="2026-11-08" id="cycle-cycle-5b01e7d58646">
-          <details class="feed-card">
-            <summary class="feed-card-summary"><span class="feed-card-chevron" aria-hidden="true"></span><div class="feed-header">
-            <span class="badge badge-rejected">REJECTED: sizing_rejected</span>
-            <strong class="feed-title">rejected: sizing_rejected</strong>
-            <span class="feed-cid copyable" translate="no">(cycle-5b01e7d58646)</span>
-            
-            <span class="feed-ts" title="2026-11-08T21:11:03.524194Z">Nov 9 MSK</span>
-          </div><span class="feed-card-hint">evidence</span></summary>
-            <div class="feed-card-evidence">
-          <div class="feed-links"><a class="cycle-detail-link" href="cycle.html?id=cycle-5b01e7d58646">details</a> </div>
-          
-          <div class="feed-cycle-timing">Recorded cycle interval (available history; coverage may be partial): <div class="feed-cycle-elapsed unavailable-note">Cycle elapsed: UNKNOWN</div> &middot; <span class="feed-bridge-span unavailable-note">Bridge span: unavailable</span> &middot; Tool operations: unavailable (not recorded)</div>
-          <div class="feed-cost">&#9889; 2 LLM calls &middot; 11.44K tok &middot; Σ LLM wait 15s &middot; recorded through Nov 9 MSK (selected telemetry window; may be incomplete) &middot; not cycle elapsed <span class="cost-pressure" title="a call in this cycle ended with finish_reason=length (context/budget limit hit)">&#9888; context overflow</span></div>
-          <div class="feed-planning-cost">Planning: unknown (planning data unavailable or not observed)</div></div>
-          </details>
-        </li>
-        
       </ul>
     </section>
     
 </main>
-<footer class="page-footer">generator 2bb7814 · generated 2026-11-12 02:30:00 UTC &middot; host eeepc &middot; newest source 31s old &middot; <span class="footer-computed">scorecard computed 2026-11-12 04:50:54 MSK</span></footer>
+<footer class="page-footer">generator 2bb7814 · generated 2026-11-12 02:45:57 UTC &middot; host eeepc &middot; newest source 41s old &middot; <span class="footer-computed">scorecard computed 2026-11-12 05:34:09 MSK</span></footer>
 <script>
 document.querySelectorAll('.copyable').forEach(function (el) {
   el.addEventListener('click', function () {
@@ -2460,5 +2460,5 @@ document.querySelectorAll('.copyable').forEach(function (el) {
   setInterval(updateFreshness, 30000);
 })();
 </script>
-<footer class="snapshot-meta">Snapshot 1794450586-23e66b45bc83 · generated 2026-11-12T02:29:46.749232+00:00</footer></body>
+<footer class="snapshot-meta">Snapshot 1794451543-64fdbb330c05 · generated 2026-11-12T02:45:43.213912+00:00</footer></body>
 </html>
