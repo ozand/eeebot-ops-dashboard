@@ -44,6 +44,8 @@ import os
 import hashlib
 import html
 import json
+import io
+import stat
 import re
 import subprocess
 import sys
@@ -60,6 +62,8 @@ try:
         build_two_tier_context_html,
         compute_window_pressure,
         read_agent_context_dict,
+        read_instance_file_bytes,
+        read_instance_file_text,
         read_lesson_corpus,
     )
 except ImportError:
@@ -68,6 +72,8 @@ except ImportError:
         build_two_tier_context_html,
         compute_window_pressure,
         read_agent_context_dict,
+        read_instance_file_bytes,
+        read_instance_file_text,
         read_lesson_corpus,
     )
 
@@ -461,18 +467,49 @@ LEDGER_HISTORY_DAYS = 90
 # Format: exactly 7 hex chars, no surrounding whitespace.  Never edit manually.
 _BAKED_GENERATOR_SHA: str = ''
 
+def _subagent_record_matches_instance(data, state_root, instance_repo):
+    """Exclude explicit subagent producer provenance mismatches."""
+    for field, expected in (("workspace", instance_repo), ("runtime_state_root", state_root)):
+        if field in data:
+            value = data[field]
+            if not isinstance(value, str) or not value.strip():
+                return False
+            if os.path.normcase(os.path.realpath(value)) != os.path.normcase(os.path.realpath(expected)):
+                return False
+    origins = []
+    if "origin" in data:
+        origins.append(data["origin"])
+    if "parent_context" in data:
+        parent = data["parent_context"]
+        if not isinstance(parent, dict):
+            return False
+        if "origin" in parent:
+            origins.append(parent["origin"])
+    for origin in origins:
+        if not isinstance(origin, dict):
+            return False
+        channel, chat_id = origin.get("channel"), origin.get("chat_id")
+        if channel not in ("system",) or chat_id not in ("self-evolving-agent",):
+            return False
+    return True
+
+
 # Read every source fail-soft, from a single remote python3 process fed over
 # stdin. This keeps the whole fetch to exactly one SSH round-trip and avoids
 # leaving any temp files behind on the remote host.
 REMOTE_READER_SCRIPT = r'''
 from datetime import datetime, timezone, timedelta
 import gzip
+import io
 import json
 import os
+import stat
 import re
 import subprocess
 import time
 from urllib.parse import unquote
+from pathlib import Path
+from typing import Any
 
 STATE_ROOT = "/var/lib/eeepc-agent/self-evolving-agent/state"
 INSTANCE_REPO = "/var/lib/eeepc-agent/self-evolving-agent/eeebot-self-evolving"
@@ -486,6 +523,166 @@ LEDGER_HISTORY_DAYS = 90
 
 _mtimes = []
 _llm_stats_source_complete = False
+
+
+def read_instance_bytes(path: Path, max_bytes: int) -> tuple[int, bytes] | None:
+    """Read bounded instance-owned bytes only through the no-follow fd walk."""
+    if (os.open not in os.supports_dir_fd or not hasattr(os, "O_NOFOLLOW")
+            or not hasattr(os, "O_DIRECTORY") or max_bytes < 0):
+        return None
+    try:
+        root = Path(INSTANCE_REPO).resolve()
+        parts = path.relative_to(root).parts
+    except (OSError, ValueError):
+        return None
+    if not parts or any(part in {"", ".", ".."} for part in parts):
+        return None
+    directory_flags = os.O_RDONLY | os.O_DIRECTORY | os.O_NOFOLLOW | getattr(os, "O_CLOEXEC", 0)
+    file_flags = os.O_RDONLY | os.O_NOFOLLOW | getattr(os, "O_CLOEXEC", 0) | getattr(os, "O_NONBLOCK", 0)
+    opened_fds: list[int] = []
+    try:
+        current = os.open(root, directory_flags)
+        opened_fds.append(current)
+        for part in parts[:-1]:
+            current = os.open(part, directory_flags, dir_fd=current)
+            opened_fds.append(current)
+        fd = os.open(parts[-1], file_flags, dir_fd=current)
+        opened_fds.append(fd)
+        metadata = os.fstat(fd)
+        if not stat.S_ISREG(metadata.st_mode) or metadata.st_size > max_bytes:
+            return None
+        with os.fdopen(fd, "rb") as stream:
+            opened_fds.remove(fd)
+            content = stream.read(max_bytes + 1)
+        if len(content) > max_bytes:
+            return None
+        return metadata.st_size, content
+    except (OSError, ValueError):
+        return None
+    finally:
+        for fd in reversed(opened_fds):
+            os.close(fd)
+
+
+def read_instance_text(path: Path, max_chars: int) -> tuple[int, str] | None:
+    result = read_instance_bytes(path, max_chars * 4)
+    if result is None:
+        return None
+    size, content = result
+    return size, content.decode("utf-8", errors="replace")[:max_chars]
+
+
+def read_instance_file_bytes(inst_path, path, max_bytes):
+    if (os.open not in os.supports_dir_fd or not hasattr(os, "O_NOFOLLOW")
+            or not hasattr(os, "O_DIRECTORY") or max_bytes < 0):
+        return None
+    try:
+        root = Path(inst_path).resolve()
+        if root not in {Path(INSTANCE_REPO).resolve(), Path(STATE_ROOT).resolve()}:
+            return None
+        parts = path.relative_to(root).parts
+    except (OSError, ValueError):
+        return None
+    if not parts or any(part in {"", ".", ".."} for part in parts):
+        return None
+    directory_flags = os.O_RDONLY | os.O_DIRECTORY | os.O_NOFOLLOW | getattr(os, "O_CLOEXEC", 0)
+    file_flags = os.O_RDONLY | os.O_NOFOLLOW | getattr(os, "O_CLOEXEC", 0) | getattr(os, "O_NONBLOCK", 0)
+    opened_fds = []
+    try:
+        current = os.open(root, directory_flags)
+        opened_fds.append(current)
+        for part in parts[:-1]:
+            current = os.open(part, directory_flags, dir_fd=current)
+            opened_fds.append(current)
+        fd = os.open(parts[-1], file_flags, dir_fd=current)
+        opened_fds.append(fd)
+        metadata = os.fstat(fd)
+        if not stat.S_ISREG(metadata.st_mode) or metadata.st_size > max_bytes:
+            return None
+        with os.fdopen(fd, "rb") as stream:
+            opened_fds.remove(fd)
+            content = stream.read(max_bytes + 1)
+        if len(content) > max_bytes:
+            return None
+        return metadata.st_size, content
+    except (OSError, ValueError):
+        return None
+    finally:
+        for fd in reversed(opened_fds):
+            os.close(fd)
+
+
+def read_instance_file_tail(inst_path, path, max_bytes):
+    if (os.open not in os.supports_dir_fd or not hasattr(os, "O_NOFOLLOW")
+            or not hasattr(os, "O_DIRECTORY") or max_bytes <= 0):
+        return None
+    try:
+        root = Path(inst_path).resolve()
+        parts = path.relative_to(root).parts
+    except (OSError, ValueError):
+        return None
+    if not parts or any(part in {"", ".", ".."} for part in parts):
+        return None
+    directory_flags = os.O_RDONLY | os.O_DIRECTORY | os.O_NOFOLLOW | getattr(os, "O_CLOEXEC", 0)
+    file_flags = os.O_RDONLY | os.O_NOFOLLOW | getattr(os, "O_CLOEXEC", 0) | getattr(os, "O_NONBLOCK", 0)
+    opened_fds = []
+    try:
+        current = os.open(root, directory_flags); opened_fds.append(current)
+        for part in parts[:-1]:
+            current = os.open(part, directory_flags, dir_fd=current); opened_fds.append(current)
+        fd = os.open(parts[-1], file_flags, dir_fd=current); opened_fds.append(fd)
+        metadata = os.fstat(fd)
+        if not stat.S_ISREG(metadata.st_mode):
+            return None
+        offset = max(0, metadata.st_size - max_bytes)
+        starts_mid_line = False
+        if offset:
+            os.lseek(fd, offset - 1, os.SEEK_SET)
+            starts_mid_line = os.read(fd, 1) != bytes([10])
+        os.lseek(fd, offset, os.SEEK_SET)
+        with os.fdopen(fd, "rb") as stream:
+            opened_fds.remove(fd); content = stream.read(max_bytes)
+        if len(content) > max_bytes:
+            return None
+        return metadata.st_size, starts_mid_line, content
+    except (OSError, ValueError):
+        return None
+    finally:
+        for fd in reversed(opened_fds):
+            os.close(fd)
+
+
+def read_instance_file_text(inst_path, path, max_chars):
+    result = read_instance_file_bytes(inst_path, path, max_chars * 4)
+    if result is None:
+        return None
+    size, content = result
+    return size, content.decode("utf-8", errors="replace")[:max_chars]
+
+
+def _embedded_subagent_record_matches_instance(data, state_root, instance_repo):
+    for field, expected in (("workspace", instance_repo), ("runtime_state_root", state_root)):
+        if field in data:
+            value = data[field]
+            if not isinstance(value, str) or not value.strip():
+                return False
+            if os.path.normcase(os.path.realpath(value)) != os.path.normcase(os.path.realpath(expected)):
+                return False
+    origins = []
+    if "origin" in data:
+        origins.append(data["origin"])
+    if "parent_context" in data:
+        parent = data["parent_context"]
+        if not isinstance(parent, dict):
+            return False
+        if "origin" in parent:
+            origins.append(parent["origin"])
+    for origin in origins:
+        if not isinstance(origin, dict):
+            return False
+        if origin.get("channel") != "system" or origin.get("chat_id") != "self-evolving-agent":
+            return False
+    return True
 
 
 def read_json(relpath):
@@ -864,6 +1061,7 @@ def read_token_heatmap(max_days=62):
     msk_raw_hourly = {}
     msk_raw_5min = {}
     msk_records_dates = set()
+    msk_invalid_dates = set()
 
     for n in active_names:
         fpath = os.path.join(ldir, n)
@@ -898,15 +1096,24 @@ def read_token_heatmap(max_days=62):
                     h_msk = dt_msk.hour
                     m_msk = dt_msk.minute
                     b_idx = h_msk * 12 + (m_msk // 5)
+                    msk_records_dates.add(d_msk)
 
                     tok = row.get("total_tokens")
-                    if not isinstance(tok, (int, float)) or isinstance(tok, bool) or tok < 0:
-                        tok = (row.get("prompt_tokens") or 0) + (row.get("completion_tokens") or 0)
-                    tok = int(tok) if isinstance(tok, (int, float)) and not isinstance(tok, bool) else 0
+                    if "total_tokens" not in row:
+                        prompt = row.get("prompt_tokens")
+                        completion = row.get("completion_tokens")
+                        valid_prompt = isinstance(prompt, int) and not isinstance(prompt, bool) and prompt >= 0
+                        valid_completion = isinstance(completion, int) and not isinstance(completion, bool) and completion >= 0
+                        if valid_prompt and valid_completion:
+                            tok = prompt + completion
+                        else:
+                            msk_invalid_dates.add(d_msk)
+                            continue
+                    if not isinstance(tok, int) or isinstance(tok, bool) or tok < 0:
+                        msk_invalid_dates.add(d_msk)
+                        continue
                     cat = classify_model(row.get("model"))
                     comp = str(row.get("component") or "unknown").strip().lower()
-
-                    msk_records_dates.add(d_msk)
 
                     if d_msk not in msk_raw_hourly:
                         msk_raw_hourly[d_msk] = [[0, 0, 0, 0, 0, {}] for _ in range(24)]
@@ -1034,6 +1241,7 @@ def read_token_heatmap(max_days=62):
             "days_span": len(calendar_dates),
             "days_present": days_present_count,
             "days_missing": len(calendar_dates) - days_present_count,
+            "invalid_days": sorted(msk_invalid_dates.intersection(calendar_dates)),
             "timezone": "MSK",
             "timezone_offset_hours": 3,
             "source_timezone": "UTC",
@@ -1138,31 +1346,104 @@ def read_bridge_runs():
     return runs
 
 
+def read_instance_bytes(relpath, max_bytes):
+    return read_instance_file_bytes(Path(INSTANCE_REPO), Path(INSTANCE_REPO) / relpath, max_bytes)
+
+
+def read_instance_text(relpath, max_chars):
+    return read_instance_file_text(Path(INSTANCE_REPO), Path(INSTANCE_REPO) / relpath, max_chars)
+
+
 def read_file_text(relpath):
-    path = os.path.join(INSTANCE_REPO, relpath)
     try:
-        with open(path, "r", encoding="utf-8", errors="replace") as fh:
-            content = fh.read()
-        _mtimes.append(os.path.getmtime(path))
-        return content
+        result = read_instance_text(Path(INSTANCE_REPO) / relpath, 50_000)
+        return result[1] if result is not None else None
     except Exception:
         return None
 
 
+    if (os.open not in os.supports_dir_fd or not hasattr(os, "O_NOFOLLOW")
+            or not hasattr(os, "O_DIRECTORY") or max_bytes <= 0):
+        return None
+    try:
+        root = inst_path.resolve()
+        if root not in {Path(INSTANCE_REPO).resolve(), Path(STATE_ROOT).resolve()}:
+            return None
+        parts = path.relative_to(root).parts
+    except (OSError, ValueError):
+        return None
+    if not parts or any(part in {"", ".", ".."} for part in parts):
+        return None
+    directory_flags = os.O_RDONLY | os.O_DIRECTORY | os.O_NOFOLLOW | getattr(os, "O_CLOEXEC", 0)
+    file_flags = os.O_RDONLY | os.O_NOFOLLOW | getattr(os, "O_CLOEXEC", 0) | getattr(os, "O_NONBLOCK", 0)
+    opened_fds = []
+    try:
+        current = os.open(root, directory_flags)
+        opened_fds.append(current)
+        for part in parts[:-1]:
+            current = os.open(part, directory_flags, dir_fd=current)
+            opened_fds.append(current)
+        fd = os.open(parts[-1], file_flags, dir_fd=current)
+        opened_fds.append(fd)
+        metadata = os.fstat(fd)
+        if not stat.S_ISREG(metadata.st_mode):
+            return None
+        offset = max(0, metadata.st_size - max_bytes)
+        starts_mid_line = False
+        if offset:
+            os.lseek(fd, offset - 1, os.SEEK_SET)
+            starts_mid_line = os.read(fd, 1) != b"\n"
+        os.lseek(fd, offset, os.SEEK_SET)
+        with os.fdopen(fd, "rb") as stream:
+            opened_fds.remove(fd)
+            content = stream.read(max_bytes)
+        if len(content) > max_bytes:
+            return None
+        return metadata.st_size, offset, starts_mid_line, content
+    except (OSError, ValueError):
+        return None
+    finally:
+        for fd in reversed(opened_fds):
+            os.close(fd)
+
+
 def read_jsonl(relpath):
     path = os.path.join(STATE_ROOT, relpath)
+    if relpath != "reflector/reflections.jsonl":
+        rows = []
+        try:
+            with open(path, "r", encoding="utf-8", errors="replace") as fh:
+                for line in fh:
+                    if not line.strip():
+                        continue
+                    try:
+                        row = json.loads(line)
+                    except Exception:
+                        continue
+                    if isinstance(row, dict):
+                        rows.append(row)
+            _mtimes.append(os.path.getmtime(path))
+        except Exception:
+            pass
+        return rows
+    safe_tail = read_instance_file_tail(Path(STATE_ROOT), Path(path), 4 * 1024 * 1024)
+    if safe_tail is None:
+        return []
+    _source_size, starts_mid_line, content = safe_tail
     rows = []
     try:
-        with open(path, "r", encoding="utf-8", errors="replace") as fh:
-            for line in fh:
-                if not line.strip():
-                    continue
-                try:
-                    row = json.loads(line)
-                except Exception:
-                    continue
-                if isinstance(row, dict):
-                    rows.append(row)
+        if starts_mid_line:
+            content = content.split(b"\n", 1)[1] if b"\n" in content else b""
+        text = content.decode("utf-8", errors="replace")
+        for line in text.splitlines():
+            if not line.strip():
+                continue
+            try:
+                row = json.loads(line)
+            except Exception:
+                continue
+            if isinstance(row, dict):
+                rows.append(row)
         _mtimes.append(os.path.getmtime(path))
     except Exception:
         pass
@@ -1172,6 +1453,38 @@ def read_jsonl(relpath):
 _MAX_SUBAGENT_FILES = 6000
 _SUBAGENT_TEXT_LIMIT = 400
 _MAX_PROMPT_BYTES = 65536
+
+
+def _subagent_record_matches_instance(data: dict[str, Any], state_root: Path, instance_repo: Path) -> bool:
+    """Exclude explicit mismatches; absent optional origin stays legacy-eligible."""
+    for field, expected in (("workspace", instance_repo), ("runtime_state_root", state_root)):
+        if field in data:
+            value = data[field]
+            if not isinstance(value, str) or not value.strip():
+                return False
+            if os.path.normcase(os.path.realpath(value)) != os.path.normcase(os.path.realpath(expected)):
+                return False
+    if "origin" in data:
+        origin = data["origin"]
+        if not isinstance(origin, dict):
+            return False
+    elif "parent_context" in data:
+        parent = data["parent_context"]
+        if not isinstance(parent, dict):
+            return False
+        if "origin" not in parent:
+            origin = None
+        else:
+            origin = parent["origin"]
+            if not isinstance(origin, dict):
+                return False
+    else:
+        origin = None
+    if origin is not None:
+        channel, chat_id = origin.get("channel"), origin.get("chat_id")
+        if channel != "system" or chat_id != "self-evolving-agent":
+            return False
+    return True
 
 
 def read_subagent_records():
@@ -1197,13 +1510,19 @@ def read_subagent_records():
     dated.sort(reverse=True)
     records = []
     for _mtime, path in dated[:_MAX_SUBAGENT_FILES]:
+        safe_file = read_instance_file_bytes(
+            Path(STATE_ROOT), Path(STATE_ROOT) / os.path.relpath(path, STATE_ROOT), 1024 * 1024,
+        )
+        if safe_file is None:
+            continue
         try:
-            with open(path, "r", encoding="utf-8", errors="replace") as fh:
-                data = json.load(fh)
-            _mtimes.append(os.path.getmtime(path))
+            data = json.loads(safe_file[1].decode("utf-8", errors="replace"))
         except Exception:
             continue
-        if not isinstance(data, dict):
+        _mtimes.append(os.path.getmtime(path))
+        if not isinstance(data, dict) or not _embedded_subagent_record_matches_instance(
+            data, Path(STATE_ROOT), Path(INSTANCE_REPO),
+        ):
             continue
         task_text = str(data.get("task") or "")
         summary_text = str(data.get("summary") or "")
@@ -1250,12 +1569,10 @@ def read_cycle_prompts():
         else:
             cid, kind = name[:-len(".task.txt")], "task"
         path = os.path.join(pdir, name)
-        try:
-            with open(path, "rb") as fh:
-                raw = fh.read()
-            _mtimes.append(os.path.getmtime(path))
-        except Exception:
+        safe_prompt = read_instance_file_bytes(Path(STATE_ROOT), Path(path), _MAX_PROMPT_BYTES * 4)
+        if safe_prompt is None:
             continue
+        _source_size, raw = safe_prompt
         original_bytes = len(raw)
         truncated = original_bytes > _MAX_PROMPT_BYTES
         text = raw[:_MAX_PROMPT_BYTES].decode("utf-8", errors="replace")
@@ -1308,16 +1625,19 @@ def _parse_lessons_text(text):
 
 
 def _lesson_corpus_scan(lessons_dir):
-    """#274: enumerate lessons/*.md (excluding index.md) -- the live corpus
-    the loop writes today. Distinguishes a missing dir from an unreadable
-    one so the page can say which happened rather than showing 0 either way."""
+    """#274: enumerate safe lessons, preserving partial status on rejected links."""
     if not os.path.isdir(lessons_dir):
         return None, "missing"
     try:
         names = sorted(f for f in os.listdir(lessons_dir) if f.endswith(".md") and f != "index.md")
     except Exception:
         return None, "unavailable"
-    return names, "present"
+    safe_names = [
+        name for name in names
+        if (safe_body := read_instance_text(os.path.join(lessons_dir, name), 128 * 1024)) is not None
+        and safe_body[0] <= 128 * 1024
+    ]
+    return safe_names, "unavailable" if len(safe_names) != len(names) else "present"
 
 
 def _read_lesson_index(lessons_dir):
@@ -1327,12 +1647,10 @@ def _read_lesson_index(lessons_dir):
     Missing/unreadable index -> {} -- callers fall back to the filename as
     the title rather than treating it as a distinct failure state."""
     path = os.path.join(lessons_dir, "index.md")
-    try:
-        with open(path, "r", encoding="utf-8", errors="replace") as fh:
-            text = fh.read()
-        _mtimes.append(os.path.getmtime(path))
-    except Exception:
+    result = read_instance_text(path, 128 * 1024)
+    if result is None:
         return {}
+    _size, text = result
     rows = {}
     for line in text.splitlines():
         m = re.fullmatch(r"\| \[(.*?)\]\(([^)]+)\) \| (.*?) \| (.*?) \|", line.strip())
@@ -1351,13 +1669,10 @@ def _read_lesson_md_body(path):
     (Description/Root Causes) vs action (everything else) -- mirrors
     nanobot.runtime.lesson_v2.markdown_lesson_pair's split without importing
     nanobot."""
-    try:
-        if os.path.getsize(path) > 128 * 1024:
-            return "", ""
-        with open(path, "r", encoding="utf-8", errors="replace") as fh:
-            text = fh.read()
-    except Exception:
+    result = read_instance_text(path, 128 * 1024)
+    if result is None or result[0] > 128 * 1024:
         return "", ""
+    _size, text = result
     sections = re.split(r"(?m)^## ", text)[1:]
     condition = " ".join(s.strip() for s in sections if s.startswith(("Description", "Root Causes")))
     action = " ".join(s.strip() for s in sections if not s.startswith(("Description", "Root Causes")))
@@ -1394,6 +1709,9 @@ def read_lessons():
                 _mtimes.append(os.path.getmtime(path))
             except Exception:
                 pass
+            safe_body = read_instance_text(path, 128 * 1024)
+            if safe_body is None or safe_body[0] > 128 * 1024:
+                continue
             problem, solution = _read_lesson_md_body(path)
             rows_all.append({
                 "id": lid,
@@ -1419,12 +1737,9 @@ def _read_lessons_archive(lessons_dir):
     never break the publish. #274: this is now an explicitly labelled
     archive, not the live-corpus count source -- see `read_lessons` above."""
     texts = []
-    try:
-        with open(os.path.join(lessons_dir, "lessons.yaml"), "r", encoding="utf-8", errors="replace") as fh:
-            texts.append(fh.read())
-        _mtimes.append(os.path.getmtime(os.path.join(lessons_dir, "lessons.yaml")))
-    except Exception:
-        pass
+    safe_archive = read_instance_text(Path(lessons_dir) / "lessons.yaml", 128 * 1024)
+    if safe_archive is not None and safe_archive[0] <= 128 * 1024:
+        texts.append(safe_archive[1])
     try:
         archive_dir = os.path.join(lessons_dir, "archive")
         # #1564: these v1 receipt archives (518 rows, 8 distinct insights,
@@ -1441,6 +1756,10 @@ def _read_lessons_archive(lessons_dir):
             (datetime.now(timezone.utc) - timedelta(days=LEDGER_HISTORY_DAYS)).strftime("%Y-%m-%d"),
             "%Y-%m-%d"))
         for name in names:
+            relative = os.path.relpath(os.path.join(archive_dir, name), INSTANCE_REPO)
+            safe_archive = read_instance_bytes(Path(INSTANCE_REPO) / relative, 2 * 1024 * 1024)
+            if safe_archive is None:
+                continue
             day = name[len("lessons-"):-len(".yaml.gz")]
             try:
                 if time.mktime(time.strptime(day, "%Y-%m-%d")) < cutoff:
@@ -1448,10 +1767,12 @@ def _read_lessons_archive(lessons_dir):
             except Exception:
                 pass
             try:
-                with gzip.open(os.path.join(archive_dir, name), "rt", encoding="utf-8", errors="replace") as fh:
-                    texts.append(fh.read())
-                _mtimes.append(os.path.getmtime(os.path.join(archive_dir, name)))
-            except Exception:
+                with gzip.GzipFile(fileobj=io.BytesIO(safe_archive[1])) as archive_stream:
+                    text = archive_stream.read(10 * 1024 * 1024 + 1)
+                if len(text) > 10 * 1024 * 1024:
+                    continue
+                texts.append(text.decode("utf-8", errors="replace"))
+            except (OSError, ValueError):
                 continue
     except Exception:
         pass
@@ -1736,11 +2057,11 @@ def read_agent_context():
     cid = row.get('cycle_id')
     prompt = None
     if cid:
-        try:
-            with open(os.path.join(STATE_ROOT, 'prompts', f'{cid}.system.txt'), encoding='utf-8', errors='replace') as fh:
-                prompt = fh.read()[:150000]
-        except Exception:
-            pass
+        prompt_result = read_instance_file_text(
+            Path(STATE_ROOT), Path(STATE_ROOT) / 'prompts' / f'{cid}.system.txt', 150_000,
+        )
+        if prompt_result is not None:
+            _size, prompt = prompt_result
     return {
         'system_prompt': row,
         'truncation_streak': compute_truncation_streak(rows),
@@ -1878,7 +2199,52 @@ print(json.dumps(result))
 '''.lstrip('\n')
 
 
-def _executor_stats_from_llm_stats(stats: Any) -> dict[str, Any] | None:
+def read_instance_file_tail(inst_path: Path, path: Path, max_bytes: int):
+    """Read a bounded suffix through the selected instance/state root's no-follow descriptors."""
+    if (os.open not in os.supports_dir_fd or not hasattr(os, "O_NOFOLLOW")
+            or not hasattr(os, "O_DIRECTORY") or max_bytes <= 0):
+        return None
+    try:
+        parts = path.relative_to(inst_path).parts
+        root = inst_path.resolve()
+    except (OSError, ValueError):
+        return None
+    if not parts or any(part in {"", ".", ".."} for part in parts):
+        return None
+    directory_flags = os.O_RDONLY | os.O_DIRECTORY | os.O_NOFOLLOW | getattr(os, "O_CLOEXEC", 0)
+    file_flags = os.O_RDONLY | os.O_NOFOLLOW | getattr(os, "O_CLOEXEC", 0) | getattr(os, "O_NONBLOCK", 0)
+    opened_fds: list[int] = []
+    try:
+        current = os.open(root, directory_flags)
+        opened_fds.append(current)
+        for part in parts[:-1]:
+            current = os.open(part, directory_flags, dir_fd=current)
+            opened_fds.append(current)
+        fd = os.open(parts[-1], file_flags, dir_fd=current)
+        opened_fds.append(fd)
+        metadata = os.fstat(fd)
+        if not stat.S_ISREG(metadata.st_mode):
+            return None
+        offset = max(0, metadata.st_size - max_bytes)
+        starts_mid_line = False
+        if offset:
+            os.lseek(fd, offset - 1, os.SEEK_SET)
+            starts_mid_line = os.read(fd, 1) != bytes([10])
+        os.lseek(fd, offset, os.SEEK_SET)
+        with os.fdopen(fd, "rb") as stream:
+            opened_fds.remove(fd)
+            content = stream.read(max_bytes)
+        if len(content) > max_bytes:
+            return None
+        return metadata.st_size, starts_mid_line, content
+    except (OSError, ValueError):
+        return None
+    finally:
+        for fd in reversed(opened_fds):
+            os.close(fd)
+
+
+def _executor_stats_from_llm_stats(stats: dict[str, Any]) -> dict[str, Any] | None:
     if not isinstance(stats, dict):
         return None
     rows = [value for value in stats.values() if isinstance(value, dict) and value.get('component') == 'executor']
@@ -2222,16 +2588,36 @@ def read_local_state(
 
     def read_jsonl(relpath: str) -> list[dict[str, Any]]:
         path = root / relpath
+        if relpath != 'reflector/reflections.jsonl':
+            try:
+                with path.open('r', encoding='utf-8', errors='replace') as fh:
+                    rows = []
+                    for line in fh:
+                        if not line.strip():
+                            continue
+                        try:
+                            rows.append(json.loads(line))
+                        except Exception:  # noqa: BLE001
+                            continue
+                mtimes.append(path.stat().st_mtime)
+            except Exception:  # noqa: BLE001
+                return []
+            return [row for row in rows if isinstance(row, dict)]
+        safe_tail = globals()["read_instance_file_tail"](root, path, 4 * 1024 * 1024)
+        if safe_tail is None:
+            return []
+        _source_size, starts_mid_line, content = safe_tail
         try:
-            with path.open('r', encoding='utf-8', errors='replace') as fh:
-                rows = []
-                for line in fh:
-                    if not line.strip():
-                        continue
-                    try:
-                        rows.append(json.loads(line))
-                    except Exception:  # noqa: BLE001
-                        continue
+            if starts_mid_line:
+                content = content.split(b'\n', 1)[1] if b'\n' in content else b''
+            rows = []
+            for line in content.decode('utf-8', errors='replace').splitlines():
+                if not line.strip():
+                    continue
+                try:
+                    rows.append(json.loads(line))
+                except Exception:  # noqa: BLE001
+                    continue
             mtimes.append(path.stat().st_mtime)
         except Exception:  # noqa: BLE001
             return []
@@ -2651,12 +3037,9 @@ def read_local_state(
     agents_text = None
     if repo_path.is_dir():
         agents_file = repo_path / 'AGENTS.md'
-        try:
-            with agents_file.open('r', encoding='utf-8', errors='replace') as fh:
-                agents_text = fh.read()
-            mtimes.append(agents_file.stat().st_mtime)
-        except Exception:
-            pass
+        safe_agents = read_instance_file_text(repo_path, agents_file, 50_000)
+        if safe_agents is not None:
+            _size, agents_text = safe_agents
 
     tree_for_titles = read_json('evolution/tree.json')
     node_shas = list(tree_for_titles.get('nodes', {}).keys()) if isinstance(tree_for_titles, dict) else []
@@ -2678,11 +3061,10 @@ def read_local_state(
         """Local mirror of REMOTE_READER_SCRIPT _read_lesson_index() -- keep
         in sync. Missing/unreadable index -> {}."""
         path = lessons_dir / 'index.md'
-        try:
-            text = path.read_text(encoding='utf-8', errors='replace')
-            mtimes.append(path.stat().st_mtime)
-        except OSError:
+        safe_index = read_instance_file_text(repo_path, path, 128 * 1024)
+        if safe_index is None:
             return {}
+        _size, text = safe_index
         rows: dict[str, dict[str, str]] = {}
         for line in text.splitlines():
             m = re.fullmatch(r"\| \[(.*?)\]\(([^)]+)\) \| (.*?) \| (.*?) \|", line.strip())
@@ -2698,12 +3080,10 @@ def read_local_state(
     def _read_lesson_md_body_local(path: Path) -> tuple[str, str]:
         """Local mirror of REMOTE_READER_SCRIPT _read_lesson_md_body() --
         keep in sync."""
-        try:
-            if path.stat().st_size > 128 * 1024:
-                return '', ''
-            text = path.read_text(encoding='utf-8', errors='replace')
-        except OSError:
+        safe_body = read_instance_file_text(repo_path, path, 128 * 1024)
+        if safe_body is None or safe_body[0] > 128 * 1024:
             return '', ''
+        _size, text = safe_body
         sections = re.split(r"(?m)^## ", text)[1:]
         condition = ' '.join(s.strip() for s in sections if s.startswith(('Description', 'Root Causes')))
         action = ' '.join(s.strip() for s in sections if not s.startswith(('Description', 'Root Causes')))
@@ -2806,7 +3186,7 @@ def read_local_state(
         -- keep in sync."""
         sdir = root / 'subagents'
         try:
-            names = [p for p in sdir.iterdir() if p.is_file() and p.name.endswith('.json')]
+            names = [p for p in sdir.iterdir() if p.name.endswith('.json')]
         except OSError:
             return []
         dated: list[tuple[float, Path]] = []
@@ -2818,12 +3198,15 @@ def read_local_state(
         dated.sort(key=lambda pair: pair[0], reverse=True)
         records: list[dict[str, Any]] = []
         for _mtime, path in dated[:_MAX_SUBAGENT_FILES]:
+            safe_file = read_instance_file_bytes(root, root / path.relative_to(root), 1024 * 1024)
+            if safe_file is None:
+                continue
             try:
-                data = json.loads(path.read_text(encoding='utf-8', errors='replace'))
+                data = json.loads(safe_file[1].decode('utf-8', errors='replace'))
                 mtimes.append(path.stat().st_mtime)
             except (OSError, ValueError):
                 continue
-            if not isinstance(data, dict):
+            if not isinstance(data, dict) or not _subagent_record_matches_instance(data, root, repo_path):
                 continue
             task_text = str(data.get('task') or '')
             summary_text = str(data.get('summary') or '')
@@ -2865,11 +3248,10 @@ def read_local_state(
                 cid, kind = path.name[:-len('.system.txt')], 'system'
             else:
                 cid, kind = path.name[:-len('.task.txt')], 'task'
-            try:
-                raw = path.read_bytes()
-                mtimes.append(path.stat().st_mtime)
-            except OSError:
+            safe_prompt = read_instance_file_bytes(root, path, _MAX_PROMPT_BYTES * 4)
+            if safe_prompt is None:
                 continue
+            _source_size, raw = safe_prompt
             original_bytes = len(raw)
             truncated = original_bytes > _MAX_PROMPT_BYTES
             text = raw[:_MAX_PROMPT_BYTES].decode('utf-8', errors='replace')
@@ -2890,7 +3272,7 @@ def read_local_state(
         lessons_dir = repo_path / 'lessons'
         corpus = read_lesson_corpus(repo_path)
         live_rows: list[dict[str, Any]] = []
-        if corpus['corpus_status'] == 'present':
+        if corpus['corpus_status'] in {'present', 'unavailable'} and corpus['files']:
             index_rows = _read_lesson_index_local(lessons_dir)
             for f in corpus['files']:
                 name = Path(f['name']).name
@@ -2927,12 +3309,10 @@ def read_local_state(
         fail-soft everywhere (#29). #274: this is now an explicitly
         labelled archive, not the live-corpus count source."""
         texts: list[tuple[str, str]] = []
-        try:
-            live = lessons_dir / 'lessons.yaml'
-            texts.append(('live', live.read_text(encoding='utf-8', errors='replace')))
-            mtimes.append(live.stat().st_mtime)
-        except Exception:  # noqa: BLE001
-            pass
+        live = lessons_dir / 'lessons.yaml'
+        safe_live = read_instance_file_text(repo_path, live, 128 * 1024)
+        if safe_live is not None and safe_live[0] <= 128 * 1024:
+            texts.append(('live', safe_live[1]))
         try:
             # #1564: these v1 receipt archives (518 rows, 8 distinct insights,
             # zero recurrence) are deleted from the instance repo; keep the guard
@@ -2956,11 +3336,18 @@ def read_local_state(
                     continue
             except Exception:  # noqa: BLE001
                 pass
+            safe_archive = read_instance_file_bytes(
+                repo_path, lessons_dir / 'archive' / name, 2 * 1024 * 1024,
+            )
+            if safe_archive is None:
+                continue
             try:
-                with gzip.open(lessons_dir / 'archive' / name, 'rt', encoding='utf-8', errors='replace') as fh:
-                    texts.append((name, fh.read()))
-                mtimes.append((lessons_dir / 'archive' / name).stat().st_mtime)
-            except Exception:  # noqa: BLE001
+                with gzip.GzipFile(fileobj=io.BytesIO(safe_archive[1])) as archive_stream:
+                    text = archive_stream.read(10 * 1024 * 1024 + 1)
+                if len(text) > 10 * 1024 * 1024:
+                    continue
+                texts.append((name, text.decode('utf-8', errors='replace')))
+            except (OSError, EOFError, ValueError):  # noqa: BLE001
                 continue
         entries: list[dict[str, Any]] = []
 
@@ -3308,6 +3695,7 @@ def read_token_heatmap(root: Path | str, max_days: int = 62) -> dict[str, Any] |
     msk_raw_hourly: dict[str, list[list[Any]]] = {}
     msk_raw_5min: dict[str, dict[int, list[Any]]] = {}
     msk_records_dates: set[str] = set()
+    msk_invalid_dates: set[str] = set()
 
     for file_path in active_files:
         try:
@@ -3332,16 +3720,25 @@ def read_token_heatmap(root: Path | str, max_days: int = 62) -> dict[str, Any] |
                     h_msk = dt_msk.hour
                     m_msk = dt_msk.minute
                     b_idx = h_msk * 12 + (m_msk // 5)
+                    msk_records_dates.add(d_msk)
 
                     tok = row.get('total_tokens')
-                    if not isinstance(tok, (int, float)) or isinstance(tok, bool) or tok < 0:
-                        tok = (row.get('prompt_tokens') or 0) + (row.get('completion_tokens') or 0)
-                    tok = int(tok) if isinstance(tok, (int, float)) and not isinstance(tok, bool) else 0
+                    if 'total_tokens' not in row:
+                        prompt = row.get('prompt_tokens')
+                        completion = row.get('completion_tokens')
+                        valid_prompt = isinstance(prompt, int) and not isinstance(prompt, bool) and prompt >= 0
+                        valid_completion = isinstance(completion, int) and not isinstance(completion, bool) and completion >= 0
+                        if valid_prompt and valid_completion:
+                            tok = prompt + completion
+                        else:
+                            msk_invalid_dates.add(d_msk)
+                            continue
+                    if not isinstance(tok, int) or isinstance(tok, bool) or tok < 0:
+                        msk_invalid_dates.add(d_msk)
+                        continue
 
                     cat = classify_model(str(row.get('model') or ''))
                     comp = str(row.get('component') or 'unknown').strip().lower()
-
-                    msk_records_dates.add(d_msk)
 
                     if d_msk not in msk_raw_hourly:
                         msk_raw_hourly[d_msk] = [[0, 0, 0, 0, 0, {}] for _ in range(24)]
@@ -3474,6 +3871,7 @@ def read_token_heatmap(root: Path | str, max_days: int = 62) -> dict[str, Any] |
             'days_span': len(calendar_dates),
             'days_present': days_present_count,
             'days_missing': len(calendar_dates) - days_present_count,
+            'invalid_days': sorted(msk_invalid_dates.intersection(calendar_dates)),
             'timezone': 'MSK',
             'timezone_offset_hours': 3,
             'source_timezone': 'UTC',
@@ -4281,12 +4679,12 @@ def _build_vertical_day_lineage(
              '<div class="lineage-legend" aria-label="Lineage Legend">',
              '  <div class="lineage-legend-group"><span class="lineage-legend-title">Edges:</span>',
              '    <span class="lineage-legend-item"><svg class="lineage-legend-swatch" width="28" height="12"><line x1="0" y1="6" x2="28" y2="6" class="lineage-legend-edge lineage-legend-edge-recorded"/></svg> recorded</span>',
-             '    <span class="lineage-legend-item"><svg class="lineage-legend-swatch" width="28" height="12"><line x1="0" y1="6" x2="28" y2="6" class="lineage-legend-edge lineage-legend-edge-inferred"/></svg> inferred</span></div>',
+             '    <span class="lineage-legend-item"><svg class="lineage-legend-swatch" width="28" height="12"><line x1="0" y1="6" x2="28" y2="6" class="lineage-legend-edge lineage-legend-edge-inferred"/></svg> <a href="about.html#term-inferred" aria-label="Inferred relationship; about definition">inferred</a></span></div>',
              '  <div class="lineage-legend-group"><span class="lineage-legend-title">Nodes:</span>',
              '    <span class="lineage-legend-item"><svg class="lineage-legend-swatch" width="14" height="14"><circle cx="7" cy="7" r="5" class="arch-node arch-integrated lineage-legend-node"/></svg> integrated</span>',
              '    <span class="lineage-legend-item"><svg class="lineage-legend-swatch" width="14" height="14"><circle cx="7" cy="7" r="5" class="arch-node arch-skipped lineage-legend-node"/></svg> skipped</span>',
              '    <span class="lineage-legend-item"><svg class="lineage-legend-swatch" width="14" height="14"><circle cx="7" cy="7" r="5" class="arch-node arch-partial lineage-legend-node"/></svg> partial</span>',
-             '    <span class="lineage-legend-item"><svg class="lineage-legend-swatch" width="14" height="14"><circle cx="7" cy="7" r="5" class="arch-node arch-failed lineage-legend-node"/></svg> failed</span>' '    <span class="lineage-legend-item"><svg class="lineage-legend-swatch" width="14" height="14"><circle cx="7" cy="7" r="5" class="arch-node arch-push_pending lineage-legend-node"/></svg> push pending</span>' '    <span class="lineage-legend-item"><svg class="lineage-legend-swatch" width="14" height="14"><circle cx="7" cy="7" r="5" class="arch-node arch-superseded lineage-legend-node"/></svg> superseded</span>' '    <span class="lineage-legend-item"><svg class="lineage-legend-swatch" width="14" height="14"><circle cx="7" cy="7" r="5" class="arch-node arch-abandoned lineage-legend-node"/></svg> abandoned</span></div>',
+             '    <span class="lineage-legend-item"><svg class="lineage-legend-swatch" width="14" height="14"><circle cx="7" cy="7" r="5" class="arch-node arch-failed lineage-legend-node"/></svg> <a href="about.html#term-incomplete" aria-label="Failed or incomplete outcome; about definition">failed / incomplete</a></span>' '    <span class="lineage-legend-item"><svg class="lineage-legend-swatch" width="14" height="14"><circle cx="7" cy="7" r="5" class="arch-node arch-push_pending lineage-legend-node"/></svg> push pending</span>' '    <span class="lineage-legend-item"><svg class="lineage-legend-swatch" width="14" height="14"><circle cx="7" cy="7" r="5" class="arch-node arch-superseded lineage-legend-node"/></svg> superseded</span>' '    <span class="lineage-legend-item"><svg class="lineage-legend-swatch" width="14" height="14"><circle cx="7" cy="7" r="5" class="arch-node arch-abandoned lineage-legend-node"/></svg> abandoned</span></div>',
              '  <div class="lineage-legend-group"><span class="lineage-legend-title">Current:</span>',
              '    <span class="lineage-legend-item"><span class="arch-star" style="font-size:14px;line-height:1;">&#9733;</span> current sha</span></div>',
              '</div>',
@@ -4572,6 +4970,7 @@ def _lineage_coverage_text(coverage: dict[str, Any]) -> str:
     if span_from or span_to:
         parts.append(f'emitted timestamp span {span_from or "?"} to {span_to or "?"}')
     parts.append('older or missing ancestry may be unavailable')
+    parts.append('Date filters change visibility, not retained history')
     return '; '.join(parts) + '.'
 
 
@@ -4735,7 +5134,7 @@ def _build_unified_lineage(
     height = max(84, max((y for _, y in positions.values()), default=42) + 36)
     data_json = json.dumps(payload, ensure_ascii=True, separators=(',', ':')).replace('<', '\\u003c')
 
-    parts = ['<div class="lineage-day-filter lineage-unified-graph" data-default-filter="today" data-lineage-default-mode="today" data-lineage-now="' + esc(now or '') + '"><div class="lineage-day-controls">', '<button type="button" data-lineage-filter="all">All</button>', '<button type="button" data-lineage-filter="today" class="active">Today</button>', '<button type="button" data-lineage-filter="24h">24h</button>', '<button type="button" data-lineage-filter="yesterday-today">Yesterday+Today (UTC calendar)</button>', '<label>from <input type="date" data-lineage-from></label><label>to <input type="date" data-lineage-to></label>', '<button type="button" data-lineage-filter="range">Apply</button>', '<span class="lineage-filter-note" hidden></span></div>', '<div class="lineage-coverage-note" role="status" aria-live="polite" data-default-text="' + esc(_lineage_coverage_text(payload['coverage'])) + '">' + esc(_lineage_coverage_text(payload['coverage'])) + '</div>', '<div class="lineage-legend" aria-label="Lineage Legend">', '  <div class="lineage-legend-group"><span class="lineage-legend-title">Edges:</span>', '    <span class="lineage-legend-item"><svg class="lineage-legend-swatch" width="28" height="12"><line x1="0" y1="6" x2="28" y2="6" class="lineage-legend-edge lineage-legend-edge-recorded"/></svg> recorded</span>', '    <span class="lineage-legend-item"><svg class="lineage-legend-swatch" width="28" height="12"><line x1="0" y1="6" x2="28" y2="6" class="lineage-legend-edge lineage-legend-edge-inferred"/></svg> inferred</span></div>', '  <div class="lineage-legend-group"><span class="lineage-legend-title">Nodes:</span>', '    <span class="lineage-legend-item"><svg class="lineage-legend-swatch" width="14" height="14"><circle cx="7" cy="7" r="5" class="arch-node arch-integrated lineage-legend-node"/></svg> integrated</span>', '    <span class="lineage-legend-item"><svg class="lineage-legend-swatch" width="14" height="14"><circle cx="7" cy="7" r="5" class="arch-node arch-skipped lineage-legend-node"/></svg> skipped</span>', '    <span class="lineage-legend-item"><svg class="lineage-legend-swatch" width="14" height="14"><circle cx="7" cy="7" r="5" class="arch-node arch-partial lineage-legend-node"/></svg> partial</span>', '    <span class="lineage-legend-item"><svg class="lineage-legend-swatch" width="14" height="14"><circle cx="7" cy="7" r="5" class="arch-node arch-failed lineage-legend-node"/></svg> failed</span>' '    <span class="lineage-legend-item"><svg class="lineage-legend-swatch" width="14" height="14"><circle cx="7" cy="7" r="5" class="arch-node arch-push_pending lineage-legend-node"/></svg> push pending</span>' '    <span class="lineage-legend-item"><svg class="lineage-legend-swatch" width="14" height="14"><circle cx="7" cy="7" r="5" class="arch-node arch-superseded lineage-legend-node"/></svg> superseded</span>' '    <span class="lineage-legend-item"><svg class="lineage-legend-swatch" width="14" height="14"><circle cx="7" cy="7" r="5" class="arch-node arch-abandoned lineage-legend-node"/></svg> abandoned</span>' '    <span class="lineage-legend-item"><svg class="lineage-legend-swatch" width="14" height="14"><circle cx="7" cy="7" r="5" class="arch-node arch-model_call_incomplete lineage-legend-node"/></svg> model call incomplete</span>' '    <span class="lineage-legend-item"><svg class="lineage-legend-swatch" width="14" height="14"><circle cx="7" cy="7" r="5" class="arch-node arch-unknown lineage-legend-node"/></svg> unavailable</span></div>', '  <div class="lineage-legend-group"><span class="lineage-legend-title">Current:</span>', '    <span class="lineage-legend-item"><span class="arch-star" style="font-size:14px;line-height:1;">&#9733;</span> current sha</span></div>', '</div>', f'<script type="application/json" id="lineage-data" hidden aria-hidden="true">{data_json}</script>', '<div class="lineage-zoom-controls" role="group" aria-label="Graph zoom"><span class="lineage-zoom-label">Zoom</span><button type="button" data-lineage-zoom="out" aria-label="Zoom out" title="Zoom out">&minus;</button><output class="lineage-zoom-level" data-lineage-zoom-level aria-live="off">100%</output><button type="button" data-lineage-zoom="in" aria-label="Zoom in" title="Zoom in">+</button><button type="button" data-lineage-zoom="fit" title="Scale the whole graph into the visible area">Fit to window</button><button type="button" data-lineage-zoom="reset" title="Back to 100%">1:1</button><button type="button" data-lineage-pan-toggle aria-pressed="false" title="Hand tool: drag anywhere to move the graph. Hold Space for the same thing without leaving select mode, or drag with the middle button. Shortcut: H">Hand</button><span class="lineage-zoom-label">wheel zooms &middot; drag pans &middot; shift+wheel scrolls</span></div>', f'<div class="lineage-graph-scroll" data-lineage-graph-scroll tabindex="0" role="region" aria-label="Lineage graph"><svg id="lineage-svg" class="lineage-day-svg lineage-unified-dag arch-tree" width="{width}" height="{height}" viewBox="0 0 {width} {height}" data-lineage-renderer="unified-dag" data-lineage-rendered="server">']
+    parts = ['<div class="lineage-day-filter lineage-unified-graph" data-default-filter="today" data-lineage-default-mode="today" data-lineage-now="' + esc(now or '') + '"><div class="lineage-controls-wrap"><div class="lineage-day-controls" aria-label="Date filters; visibility only, independent from retention and ancestry">', '<button type="button" data-lineage-filter="all">All</button>', '<button type="button" data-lineage-filter="today" class="active">Today</button>', '<button type="button" data-lineage-current aria-label="Locate current node">Current</button><button type="button" data-lineage-list-open aria-haspopup="dialog">Cycle list</button>', '<button type="button" data-lineage-filter="24h">24h</button>', '<button type="button" data-lineage-filter="yesterday-today">Yesterday+Today (UTC calendar)</button>', '<label>from <input type="date" data-lineage-from></label><label>to <input type="date" data-lineage-to></label>', '<button type="button" data-lineage-filter="range">Apply</button>', '<span class="lineage-filter-note" role="status" aria-live="polite" hidden></span></div></div><dialog class="lineage-list-dialog" aria-labelledby="lineage-list-title"><h2 id="lineage-list-title">Cycles</h2><button type="button" data-lineage-list-close>Close cycle list</button><ol class="lineage-cycle-list" data-lineage-cycle-list></ol></dialog>', '<div class="lineage-coverage-note" role="status" aria-live="polite" data-default-text="' + esc(_lineage_coverage_text(payload['coverage'])) + '">' + esc(_lineage_coverage_text(payload['coverage'])) + '</div>', '<div class="lineage-legend" aria-label="Lineage Legend">', '  <div class="lineage-legend-group"><span class="lineage-legend-title">Edges:</span>', '    <span class="lineage-legend-item"><svg class="lineage-legend-swatch" width="28" height="12"><line x1="0" y1="6" x2="28" y2="6" class="lineage-legend-edge lineage-legend-edge-recorded"/></svg> recorded</span>', '    <span class="lineage-legend-item"><svg class="lineage-legend-swatch" width="28" height="12"><line x1="0" y1="6" x2="28" y2="6" class="lineage-legend-edge lineage-legend-edge-inferred"/></svg> <a href="about.html#term-inferred" aria-label="Inferred relationship; about definition">inferred</a></span></div>', '  <div class="lineage-legend-group"><span class="lineage-legend-title">Nodes:</span>', '    <span class="lineage-legend-item"><svg class="lineage-legend-swatch" width="14" height="14"><circle cx="7" cy="7" r="5" class="arch-node arch-integrated lineage-legend-node"/></svg> integrated</span>', '    <span class="lineage-legend-item"><svg class="lineage-legend-swatch" width="14" height="14"><circle cx="7" cy="7" r="5" class="arch-node arch-skipped lineage-legend-node"/></svg> skipped</span>', '    <span class="lineage-legend-item"><svg class="lineage-legend-swatch" width="14" height="14"><circle cx="7" cy="7" r="5" class="arch-node arch-partial lineage-legend-node"/></svg> partial</span>', '    <span class="lineage-legend-item"><svg class="lineage-legend-swatch" width="14" height="14"><circle cx="7" cy="7" r="5" class="arch-node arch-failed lineage-legend-node"/></svg> <a href="about.html#term-incomplete" aria-label="Failed or incomplete outcome; about definition">failed / incomplete</a></span>' '    <span class="lineage-legend-item"><svg class="lineage-legend-swatch" width="14" height="14"><circle cx="7" cy="7" r="5" class="arch-node arch-push_pending lineage-legend-node"/></svg> push pending</span>' '    <span class="lineage-legend-item"><svg class="lineage-legend-swatch" width="14" height="14"><circle cx="7" cy="7" r="5" class="arch-node arch-superseded lineage-legend-node"/></svg> superseded</span>' '    <span class="lineage-legend-item"><svg class="lineage-legend-swatch" width="14" height="14"><circle cx="7" cy="7" r="5" class="arch-node arch-abandoned lineage-legend-node"/></svg> abandoned</span>' '    <span class="lineage-legend-item"><svg class="lineage-legend-swatch" width="14" height="14"><circle cx="7" cy="7" r="5" class="arch-node arch-model_call_incomplete lineage-legend-node"/></svg> <a href="about.html#term-incomplete" aria-label="Model call incomplete; about definition">model call incomplete</a></span>' '    <span class="lineage-legend-item"><svg class="lineage-legend-swatch" width="14" height="14"><circle cx="7" cy="7" r="5" class="arch-node arch-unknown lineage-legend-node"/></svg> unavailable</span></div>', '  <div class="lineage-legend-group"><span class="lineage-legend-title">Current:</span>', '    <span class="lineage-legend-item"><span class="arch-star" style="font-size:14px;line-height:1;">&#9733;</span> current sha</span></div>', '</div>', f'<script type="application/json" id="lineage-data" hidden aria-hidden="true">{data_json}</script>', '<div class="lineage-zoom-controls" role="group" aria-label="Graph zoom"><span class="lineage-zoom-label">Zoom</span><button type="button" data-lineage-zoom="out" aria-label="Zoom out" title="Zoom out">&minus;</button><output class="lineage-zoom-level" data-lineage-zoom-level aria-live="off">100%</output><button type="button" data-lineage-zoom="in" aria-label="Zoom in" title="Zoom in">+</button><button type="button" data-lineage-zoom="fit" title="Scale the whole graph into the visible area">Fit to window</button><button type="button" data-lineage-zoom="reset" title="Back to 100%">1:1</button><button type="button" data-lineage-pan-toggle aria-pressed="false" title="Hand tool: drag anywhere to move the graph. Hold Space for the same thing without leaving select mode, or drag with the middle button. Shortcut: H">Hand</button><span class="lineage-zoom-label">wheel zooms &middot; drag pans &middot; shift+wheel scrolls</span></div>',  f'<div class="lineage-graph-scroll" data-lineage-graph-scroll tabindex="0" role="region" aria-label="Lineage graph"><svg id="lineage-svg" class="lineage-day-svg lineage-unified-dag arch-tree" width="{width}" height="{height}" viewBox="0 0 {width} {height}" data-lineage-renderer="unified-dag" data-lineage-rendered="server">']
     for edge in payload_edges:
         if not (edge.get('source_available') and edge['source'] in positions and edge['target'] in positions):
             continue
@@ -4955,35 +5354,44 @@ def build_cycle_details(
             continue
         out = record(str(lesson['cycle_id']))
         insight = lesson.get('insight') or lesson.get('generalized_insight') or lesson.get('reusable_insight') or lesson.get('result')
-        # ADR-036 rule 3: lesson bodies are instance-repo content -- LAN only;
-        # public records keep their size.
+        # Bounded project-authored lesson fields are eligible for the public projection.
         if insight:
+            out['lesson_insight'] = str(insight)[:12_000]
+        insight_chars = lesson.get('insight_chars', lesson.get('result_chars'))
+        if isinstance(insight_chars, int) and not isinstance(insight_chars, bool) and insight_chars >= 0:
+            out['lesson_insight_chars'] = insight_chars
+        elif insight:
             out['lesson_insight_chars'] = len(str(insight))
-        elif lesson.get('insight_chars') is not None:
-            out['lesson_insight_chars'] = int(lesson['insight_chars'])
-        elif lesson.get('result_chars') is not None:
-            out['lesson_insight_chars'] = int(lesson['result_chars'])
-        # Issue #92: v2 schema fields supersede legacy insight when present.
         if lesson.get('problem'):
+            out['lesson_problem'] = str(lesson['problem'])[:12_000]
+        problem_chars = lesson.get('problem_chars')
+        if isinstance(problem_chars, int) and not isinstance(problem_chars, bool) and problem_chars >= 0:
+            out['lesson_problem_chars'] = problem_chars
+        elif lesson.get('problem'):
             out['lesson_problem_chars'] = len(str(lesson['problem']))
-        elif lesson.get('problem_chars') is not None:
-            out['lesson_problem_chars'] = int(lesson['problem_chars'])
         if lesson.get('solution'):
+            out['lesson_solution'] = str(lesson['solution'])[:12_000]
+        solution_chars = lesson.get('solution_chars')
+        if isinstance(solution_chars, int) and not isinstance(solution_chars, bool) and solution_chars >= 0:
+            out['lesson_solution_chars'] = solution_chars
+        elif lesson.get('solution'):
             out['lesson_solution_chars'] = len(str(lesson['solution']))
-        elif lesson.get('solution_chars') is not None:
-            out['lesson_solution_chars'] = int(lesson['solution_chars'])
 
     for reflection in reflections or []:
         if not isinstance(reflection, dict) or not reflection.get('cycle_id'):
             continue
         out = record(str(reflection['cycle_id']))
-        # ADR-036 rule 3: the reflector's output is model text -- public
-        # records carry only its shape (sizes and counts), never the words.
-        payload: dict[str, Any] = {'summary_chars': int(reflection.get('summary_chars') or len(str(reflection.get('summary') or '')))}
+        # This agent's own bounded reflection output is eligible for the public projection.
+        payload: dict[str, Any] = {'summary': str(reflection.get('summary') or '')[:12_000],
+                                   'summary_chars': int(reflection.get('summary_chars') or len(str(reflection.get('summary') or '')))}
         for key in ('findings', 'recommendations'):
             value = reflection.get(key)
             preserved_count = reflection.get(f'{key}_count')
             payload[f'{key}_count'] = int(preserved_count) if preserved_count is not None else (len(value) if isinstance(value, list) else (1 if value else 0))
+            if isinstance(value, list):
+                payload[key] = [str(item)[:12_000] for item in value[:50] if isinstance(item, str)]
+            elif isinstance(value, str) and value:
+                payload[key] = [value[:12_000]]
         if any(payload.values()):
             out['reflection'] = payload
 
@@ -5006,13 +5414,14 @@ def build_cycle_details(
             'status': text(rec.get('status'), 40),
             'started_at': rec.get('started_at'),
             'finished_at': rec.get('finished_at'),
-            # ADR-036 rule 3: task/summary/result text of a subagent is call
-            # text -- LAN only. Public records keep sizes, never excerpts.
             'task_truncated': bool(rec.get('task_truncated')),
             'task_bytes': rec.get('task_bytes'),
-            'task_chars': int(rec.get('task_excerpt_chars') or rec.get('task_chars') or len(str(rec.get('task_excerpt') or ''))),
-            'summary_chars': int(rec.get('summary_excerpt_chars') or rec.get('summary_chars') or len(str(rec.get('summary_excerpt') or ''))),
-            'result_chars': int(rec.get('result_excerpt_chars') or rec.get('result_chars') or len(str(rec.get('result_excerpt') or ''))),
+            'task': str(rec.get('task_excerpt') or rec.get('task') or '')[:12_000],
+            'summary': str(rec.get('summary_excerpt') or rec.get('summary') or '')[:12_000],
+            'result': str(rec.get('result_excerpt') or rec.get('result') or '')[:12_000],
+            'task_chars': int(rec.get('task_excerpt_chars') or rec.get('task_chars') or len(str(rec.get('task_excerpt') or rec.get('task') or ''))),
+            'summary_chars': int(rec.get('summary_excerpt_chars') or rec.get('summary_chars') or len(str(rec.get('summary_excerpt') or rec.get('summary') or ''))),
+            'result_chars': int(rec.get('result_excerpt_chars') or rec.get('result_chars') or len(str(rec.get('result_excerpt') or rec.get('result') or ''))),
             'iteration_count': rec.get('iteration_count'),
         }
         if not cid:
@@ -5095,9 +5504,9 @@ def build_cycle_detail_page() -> str:
           '<div><span class="badge">' + esc(sa.status || 'unknown') + '</span> <strong>' + esc(sa.label || sa.subagent_id || '') + '</strong></div>' +
           line('Started', sa.started_at) + line('Finished', sa.finished_at) +
           line('Loop iterations', sa.iteration_count) +
-          '<p><b>Task:</b> ' + esc(sa.task_excerpt || '') + truncNote + '</p>' +
-          (sa.summary_excerpt ? '<p><b>Summary:</b> ' + esc(sa.summary_excerpt) + '</p>' : '') +
-          (sa.result_excerpt ? '<p><b>Result:</b> ' + esc(sa.result_excerpt) + '</p>' : '') +
+          '<p><b>Task:</b> ' + esc(sa.task || '') + truncNote + '</p>' +
+          (sa.summary ? '<p><b>Summary:</b> ' + esc(sa.summary) + '</p>' : '') +
+          (sa.result ? '<p><b>Result:</b> ' + esc(sa.result) + '</p>' : '') +
           '</li>';
       }}
       function render(id, data) {{
@@ -5406,14 +5815,14 @@ def _build_ci_freshness_item(ci_freshness: dict[str, Any] | None) -> str:
     if not isinstance(ci_freshness, dict):
         return (
             '<div class="now-item"><span class="now-label">GitHub CI:</span> '
-            '<span class="unavailable-note">cannot ask</span></div>'
+            '<span class="unavailable-note">cannot ask; run evidence unavailable</span></div>'
         )
     observed = esc(ci_freshness.get('observed_at_utc') or 'unknown read time')
     repositories = ci_freshness.get('repositories')
     if not isinstance(repositories, dict) or not repositories:
         return (
             '<div class="now-item"><span class="now-label">GitHub CI:</span> '
-            f'<span class="unavailable-note">cannot ask (read {observed})</span></div>'
+            f'<span class="unavailable-note">cannot ask (read {observed}); run evidence unavailable</span></div>'
         )
     items = []
     for repository, record in repositories.items():
@@ -5440,7 +5849,8 @@ def _build_ci_freshness_item(ci_freshness: dict[str, Any] | None) -> str:
             latest = freshness.get('latest_completed_at_utc')
             if latest:
                 status += f', last {fmt_ts(latest)}'
-        items.append(f'<li><code>{esc(repository)}</code>: {esc(status)}</li>')
+        evidence = ' <span class="unavailable-note">run evidence unavailable in public snapshot</span>'
+        items.append(f'<li><code>{esc(repository)}</code>: {esc(status)}{evidence}</li>')
     return (
         '<div class="now-item ci-freshness-item"><span class="now-label">GitHub CI:</span> '
         f'<span class="now-sub">read {observed}</span>'
@@ -5550,7 +5960,7 @@ def _build_systemd_drift_item(systemd_drift: dict[str, Any] | None) -> str:
     return (
         '<div class="now-item systemd-drift-item"><span class="now-label">Systemd drift:</span> '
         f'<span class="badge probe-{esc(probe)}">{symbol} {esc(probe)}</span> '
-        f'<span class="now-sub">{detail}</span>'
+        f'<span class="now-sub">{detail}; evidence link unavailable in the published drift summary</span>'
         f'{finding_rows}</div>'
     )
 
@@ -5641,9 +6051,7 @@ def _build_next_up_item(derived_view: dict[str, Any] | None) -> str:
         label = esc(item.get('label') or item.get('id') or '')
         vector = esc(item.get('vector') or '')
         summary = str(item.get('summary') or '')
-        # ADR-036 rule 3: a priority's summary may quote the operator's goal
-        # text -- LAN only. Public form: number, label, vector, source.
-        summary_html = ''
+        summary_html = f' <span class="now-sub">{esc(summary[:12000])}</span>' if summary else ''
         rows.append(
             f'<li class="demand-queue-row" data-demand-provenance="{esc(provenance)}">'
             f'<span class="badge badge-researching" translate="no">{kind}</span> '
@@ -5764,7 +6172,18 @@ def build_now_panel(
     now = now or datetime.now(timezone.utc).isoformat()
     outcomes: list[str] = []
     ledger_integrated_ts: str | None = None
-    if isinstance(ledger_tail, list):
+    ledger_available = isinstance(ledger_tail, list)
+    ledger_state_note = (
+        'available tail may be empty or unreadable; history outside this tail is unknown'
+        if ledger_available else 'ledger not readable; outcome state unknown'
+    )
+    latest_result_html = (f'<span class="unavailable-note">outcome unavailable; {ledger_state_note}</span>'
+                          if not ledger_available else
+                          f'<span class="unavailable-note">no outcome evidence in available tail; {ledger_state_note}</span>')
+    latest_result_time: datetime | None = None
+    outcome_rows_seen = 0
+    outcome_rows_without_orderable_ts = 0
+    if ledger_available:
         # read_ledger_tail returns rows oldest-first over a 5000-row window, so
         # the newest integration is the LAST evolution_tree row, not the first.
         for entry in ledger_tail:
@@ -5772,7 +6191,22 @@ def build_now_panel(
                 continue
             outcome = str(entry.get('outcome') or entry.get('status') or '')
             if entry.get('phase') == 'outcome' and outcome:
-                outcomes.append('failed' if outcome == 'fail' else outcome)
+                normalized_outcome = 'failed' if outcome == 'fail' else outcome
+                outcomes.append(normalized_outcome)
+                outcome_rows_seen += 1
+                timestamp = entry.get('ts')
+                parsed_result_time = None
+                if isinstance(timestamp, str):
+                    try:
+                        parsed_result_time = datetime.fromisoformat(timestamp.replace('Z', '+00:00'))
+                    except ValueError:
+                        pass
+                if parsed_result_time is None or parsed_result_time.tzinfo is None:
+                    outcome_rows_without_orderable_ts += 1
+                elif latest_result_time is None or parsed_result_time >= latest_result_time:
+                    latest_result_time = parsed_result_time
+                    latest_result_html = f'<strong>{esc(normalized_outcome)}</strong> <span class="now-sub">recorded {fmt_ts(timestamp)}</span>'
+
             if entry.get('phase') == 'evolution_tree' and entry.get('ts'):
                 ledger_integrated_ts = str(entry['ts'])
     # Precedence: caller override, then the current tree node (authoritative
@@ -5984,7 +6418,7 @@ def build_now_panel(
     charter_html = _build_charter_item(derived_view)
     planning_observation = (planning_activity or {}).get('ledger') if isinstance(planning_activity, dict) else None
     if not isinstance(planning_observation, dict):
-        planning_html = '<div class="now-item"><span class="now-label">Planning observation:</span> <span class="unavailable-note">unavailable or unknown</span>; rest source unavailable pending explicit reader-path approval.</div>'
+        planning_html = '<div class="now-item"><span class="now-label">Planning observation:</span> <span class="unavailable-note">unavailable or unknown</span>; rest source unavailable pending explicit reader-path approval; ledger evidence link unavailable.</div>'
     else:
         source_status = planning_observation.get('status')
         last = planning_observation.get('last_observation')
@@ -6004,7 +6438,127 @@ def build_now_panel(
         age_text = 'source age unknown' if not isinstance(source_age, (int, float)) else f'source file {humanize_age(source_age)} old'
         planning_html = (f'<div class="now-item"><span class="now-label">Planning observation (separate from cycles):</span> '
                          f'{last_text}; {age_text}. Planner rest fields: unavailable pending explicit reader-path approval; '
-                         f'no current-rest or active-work inference.</div>')
+                         f'no current-rest or active-work inference; ledger evidence link unavailable.</div>')
+
+    # #435: lead with observations while keeping source authority and unknowns explicit.
+    execution_observation_html = (
+        '<div class="now-item" data-now-evidence="execution"><span class="now-label">Execution observation:</span> '
+        '<span class="unavailable-note">unknown; no current execution state is established by this view</span></div>'
+    )
+    if outcome_rows_seen and latest_result_time is None:
+        latest_result_html = f'<strong>result recorded</strong> <span class="unavailable-note">timestamp/order unknown; {ledger_state_note}</span>'
+    elif outcome_rows_without_orderable_ts:
+        latest_result_html += f' <span class="unavailable-note">chronology incomplete; a later untimestamped result may exist; {ledger_state_note}</span>'
+    elif outcome_rows_seen:
+        latest_result_html += f' <span class="now-sub">latest timestamped outcome in available tail; {ledger_state_note}</span>'
+    result_html = f'<div class="now-item" data-now-evidence="result"><span class="now-label">Latest outcome:</span> {latest_result_html}</div>'
+    integration_value = None
+    if last_integrated_ts:
+        integration_value = f'{fmt_ts(last_integrated_ts)} <span class="now-sub">integration timestamp from available source</span>'
+    elif not ledger_available and not tree_integrated_ts:
+        integration_value = '<span class="unavailable-note">integration status unknown; ledger unavailable and no current-tree timestamp</span>'
+    elif not ledger_available:
+        integration_value = '<span class="unavailable-note">integration status unknown; no current-tree timestamp and ledger unavailable</span>'
+    else:
+        integration_value = '<span class="unavailable-note">no integration evidence in available tail; tail may be empty or unreadable and older history is unknown</span>'
+    integration_html = (
+        '<div class="now-item" data-now-evidence="integration"><span class="now-label">Integration evidence:</span> '
+        f'{integration_value}</div>'
+    )
+    attention_items = []
+    if verdict != 'healthy':
+        attention_items.append(f'scoped health {esc(verdict)}: {esc(verdict_reason)}')
+    if isinstance(planning_observation, dict):
+        planning_status = planning_observation.get('status')
+        planning_last = planning_observation.get('last_observation')
+        if planning_status != 'present':
+            attention_items.append(f'planning: {esc(str(planning_status or "unknown"))}')
+        if not isinstance(planning_last, dict):
+            if planning_status == 'present':
+                attention_items.append('planning: no observation')
+        elif planning_last.get('outcome') in {'timed_out', 'spawn_failed', 'commit_failed', 'malformed'}:
+            outcome_label = 'planning latest outcome' if planning_status != 'present' else 'planning'
+            attention_items.append(f'{outcome_label}: {esc(str(planning_last.get("outcome")))}')
+    else:
+        attention_items.append('planning: unavailable')
+    ci_repositories = ci_freshness.get('repositories') if isinstance(ci_freshness, dict) else None
+    if isinstance(ci_repositories, dict):
+        for repository, record in ci_repositories.items():
+            record = record if isinstance(record, dict) else {}
+            state = record.get('freshness_state') or 'unknown'
+            conclusion = record.get('latest_conclusion') or 'unknown'
+            enabled = record.get('actions_enabled')
+            if enabled is False:
+                attention_items.append(f'CI {esc(str(repository))}: Actions disabled')
+            elif enabled in {'unanswerable', 'cannot_ask'}:
+                attention_items.append(f'CI {esc(str(repository))}: Actions enablement {esc(str(enabled))}')
+            elif enabled is None:
+                attention_items.append(f'CI {esc(str(repository))}: Actions enablement unknown')
+            elif state not in {'recent'} or conclusion not in {'success', 'none'}:
+                attention_items.append(f'CI {esc(str(repository))}: {esc(str(state))}/{esc(str(conclusion))}')
+    else:
+        attention_items.append('CI: unavailable')
+    drift_status = systemd_drift.get('status') if isinstance(systemd_drift, dict) else 'unavailable'
+    drift_host_state = systemd_drift.get('state') if isinstance(systemd_drift, dict) else None
+    if drift_status != 'present':
+        attention_items.append(f'drift: {esc(str(drift_status or "unknown"))}')
+    elif drift_host_state != 'present':
+        attention_items.append(f'drift probe: {esc(str(drift_host_state or "unknown"))}')
+    elif isinstance(systemd_drift, dict):
+        defect_count = systemd_drift.get('defect_count')
+        if isinstance(defect_count, int) and defect_count > 0:
+            attention_items.append(f'drift defects: {esc(str(defect_count))}')
+        elif not isinstance(defect_count, int):
+            attention_items.append('drift: defect count unknown')
+    local_state = local_ci.get('probe') if isinstance(local_ci, dict) else 'unavailable'
+    if local_state != 'present':
+        attention_items.append(f'local CI: {esc(str(local_state or "unknown"))}')
+    elif isinstance(local_ci, dict):
+        exit_code = local_ci.get('exit_code')
+        if isinstance(exit_code, int) and not isinstance(exit_code, bool):
+            if exit_code != 0:
+                local_summary = local_ci.get('summary')
+                detail_text = f'exit={exit_code}'
+                if local_summary:
+                    detail_text += f'; {esc(str(local_summary))}'
+                attention_items.append(f'local CI failed ({detail_text})')
+        else:
+            attention_items.append('local CI result unavailable (exit code unknown)')
+    strategist_failure = False
+    if isinstance(strategist_decisions, list):
+        latest_strategist = next((row for row in reversed(strategist_decisions) if isinstance(row, dict)), None)
+        if isinstance(latest_strategist, dict):
+            strategist_refused = (
+                latest_strategist.get('refused') is True
+                or latest_strategist.get('decision') in {'refused', 'declined'}
+                or isinstance(latest_strategist.get('reason'), str)
+                and latest_strategist['reason'] in {'refused', 'declined'}
+            )
+            if strategist_refused:
+                attention_items.append('strategist: refused')
+                strategist_failure = True
+            elif latest_strategist.get('success') is False:
+                attention_items.append('strategist: run failed')
+                strategist_failure = True
+    latest_doc_budget = next((row for row in reversed(ledger_tail or [])
+                              if isinstance(row, dict) and row.get('phase') == 'doc_only_budget'), None) if isinstance(ledger_tail, list) else None
+    if isinstance(latest_doc_budget, dict):
+        if latest_doc_budget.get('ledger_blind') is True:
+            attention_items.append('doc budget: ledger unreadable (fail-open)')
+        elif isinstance(latest_doc_budget.get('doc_only_deferred'), int) and latest_doc_budget['doc_only_deferred'] > 0:
+            attention_items.append(f'doc budget: deferred {latest_doc_budget["doc_only_deferred"]}')
+        elif latest_doc_budget.get('doc_budget_exceeded') is True:
+            attention_items.append('doc budget: cap reached')
+    bridge_failures = (bridge_exit_streak or {}).get('consecutive_failures') if isinstance(bridge_exit_streak, dict) else None
+    if isinstance(bridge_failures, int) and not isinstance(bridge_failures, bool) and 0 < bridge_failures < HEALTH_FAILURE_STREAK_LENGTH:
+        attention_items.append(f'bridge exit streak: {bridge_failures} consecutive failure(s)')
+    attention_text = '; '.join(attention_items) if attention_items else 'No attention signal reported by these sources; review each source status below.'
+    attention_html = (
+        '<div class="now-item" data-now-evidence="attention"><span class="now-label">Attention:</span> '
+        f'<span>{attention_text}</span> <span class="now-sub">Unknown or unavailable is not a healthy result.</span></div>'
+    )
+    next_up_details = f'<details class="now-detail-disclosure"><summary>Ranked demand candidates (not a promise of next selection)</summary><p class="now-sub">Candidates are not a prediction of the next actual selection.</p>{next_up_html}</details>'
+    charter_details = f'<details class="now-detail-disclosure"><summary>Charter and priorities</summary>{charter_html}</details>'
 
     # 13. Artifact dependency graph (eeebot#1769, ADR-024) -- published at
     # scorecard.quality.artifact_graph; read as published, never recomputed
@@ -6015,23 +6569,32 @@ def build_now_panel(
     <section class="panel panel-now" id="panel-now">
       <h2 class="panel-title">Now / Active Focus</h2>
       <div class="now-content">
-        {health_banner}
-        {dir_html}
-        {cycle_html}
-        {next_up_html}
-        {charter_html}
+        <div class="now-evidence-summary" aria-label="Current evidence">
+          <h3>Observed work and evidence</h3>
+          <p class="now-sub">Snapshot age is shown in the shared header. Feed freshness is separate from execution or outcome.</p>
+          {execution_observation_html}
+          {result_html}
+          {integration_html}
+          {attention_html}
+        </div>
         {planning_html}
-        {streak_html}
-        {feed_ages_html}
-        {doc_budget_html}
-        {strategist_html}
-        {ci_freshness_html}
-        {systemd_drift_html}
-        {local_ci_html}
+        <details class="now-detail-disclosure"><summary>Source freshness and health indicators</summary>
+          {health_banner}
+          {feed_ages_html}
+          {ci_freshness_html}
+          {systemd_drift_html}
+          {local_ci_html}
+          {streak_html}
+          {doc_budget_html}
+          {strategist_html}
+        </details>
+        {next_up_details}
+        {charter_details}
         {executor_model_html}
         {artifact_graph_html}
         {_render_failed_bridge_exits(bridge_exits)}
         {demand_history_html}
+        <details class="now-detail-disclosure"><summary>Direction and latest cycle context</summary>{dir_html}{cycle_html}</details>
       </div>
     </section>
     '''
@@ -6815,22 +7378,29 @@ def build_cycle_feed(
                 last_day = day
                 day_html = f'<li class="feed-day-header">{esc(day)} MSK</li>\n        '
 
-        rows.append(f'''
-        {day_html}<li class="feed-row feed-outcome-{outcome_kind}" data-outcome="{esc(outcome_kind)}" id="cycle-{esc(cid)}">
-          <div class="feed-header">
-            <span class="badge {badge_class}">{esc(outcome_label)}</span>
+        searchable_title = esc(title).replace('"', '&quot;')
+        searchable_day = esc(str(ts_val)[:10]) if isinstance(ts_val, str) and len(ts_val) >= 10 else ''
+        term_key = 'integration' if outcome_kind == 'integrated' else 'incomplete' if outcome_kind in {'incomplete', 'model_call_incomplete'} else ''
+        term_link_html = f' <a class="cycle-glossary-link" href="about.html#term-{term_key}">about {term_key}</a>' if term_key else ''
+        header_html = f'''<div class="feed-header">
+            <span class="badge {badge_class}">{esc(outcome_label)}</span>{term_link_html}
             <strong class="feed-title">{esc(title)}</strong>
             <span class="feed-cid copyable" translate="no">({esc(cid)})</span>
-            <a class="cycle-detail-link" href="cycle.html?id={quote(str(cid), safe='')}">details</a>
             {delta_html}
-            {node_link_html}
             {ts_html}
-          </div>
-          {('<div class="entity-links">' + ' &middot; '.join(dict.fromkeys(entity_links)) + '</div>') if entity_links else ''}
+          </div>'''
+        evidence_html = f'''{('<div class="entity-links">' + ' &middot; '.join(dict.fromkeys(entity_links)) + '</div>') if entity_links else ''}
+          <div class="feed-links"><a class="cycle-detail-link" href="cycle.html?id={quote(str(cid), safe='')}">details</a> {node_link_html}</div>
           {files_html}
           <div class="feed-cycle-timing">Recorded cycle interval (available history; coverage may be partial): {cycle_elapsed_html} &middot; {bridge_span_html} &middot; Tool operations: unavailable (not recorded)</div>
           {cost_html}
-          {planning_html}
+          {planning_html}'''
+        rows.append(f'''
+        {day_html}<li class="feed-row feed-outcome-{outcome_kind}" data-outcome="{esc(outcome_kind)}" data-search="{searchable_title} {esc(cid)}" data-day="{searchable_day}" id="cycle-{esc(cid)}">
+          <details class="feed-card">
+            <summary class="feed-card-summary"><span class="feed-card-chevron" aria-hidden="true"></span>{header_html}<span class="feed-card-hint">evidence</span></summary>
+            <div class="feed-card-evidence">{evidence_html}</div>
+          </details>
         </li>
         ''')
 
@@ -6861,7 +7431,7 @@ def build_cycle_feed(
                 ]
         # Issue #89/#72: client-side outcome filter, state in URL hash (#f-<kind>).
         filter_buttons = ''.join(
-            f'<button class="filter-btn" data-filter="{k}">{k}</button>'
+            f'<button type="button" class="filter-btn" data-filter="{k}" aria-pressed="false">{k}</button>'
             for k in (
                 'all', 'integrated', 'failed', 'partial', 'skipped', 'push_pending',
                 # #297: pushed_late folds into 'integrated' above (a delayed
@@ -6870,40 +7440,34 @@ def build_cycle_feed(
                 'superseded', 'abandoned', 'incomplete', 'running', 'proposed',
             )
         )
-        filter_empty = '<li class="filter-empty" data-filter-empty hidden>0 cycles with status <span class="filter-empty-value"></span></li>'
+        filter_empty = '<li class="filter-empty" data-filter-empty hidden>No matches in the loaded cycle window.</li>'
         if archive_out is not None:
             show_all_btn = (
-                f'<button class="feed-show-all" type="button" data-cycle-archive-index-src="{esc(CYCLES_ARCHIVE_INDEX_FILE)}">show {archived_count} older cycles</button>'
-                if archived_count else ''
+                '<button class="feed-show-all" type="button" data-cycle-archive-index-src="' + esc(CYCLES_ARCHIVE_INDEX_FILE) + '">Load older cycles</button>'
+                '<span class="feed-archive-status" role="status" aria-live="polite"></span>'
+                if archived_count else '<p class="feed-archive-status" role="status">No older archive chunks are available.</p>'
             )
             archive_script = '''<script>
             (function(){
-              var btn = document.querySelector('.feed-show-all[data-cycle-archive-index-src]');
-              if (!btn) return;
-              btn.addEventListener('click', function () {
-                var indexSrc = btn.getAttribute('data-cycle-archive-index-src');
-                btn.disabled = true;
-                var original = btn.textContent;
-                btn.textContent = 'loading…';
-                function getJson(url) { return fetch(url).then(function (r) { if (!r.ok) throw new Error('HTTP ' + r.status + ' for ' + url); return r.json(); }); }
-                getJson(indexSrc).then(function (idx) {
-                  var count = Number(idx && idx.chunk_count || 0);
-                  var urls = [];
-                  for (var i = 0; i < count; i++) { urls.push(indexSrc.replace(/cycles-archive-index\\.json$/, 'cycles-archive-' + i + '.json')); }
-                  return Promise.all(urls.map(getJson));
-                }).then(function (chunks) {
-                  var list = document.querySelector('#panel-feed .feed-list');
-                  // Chunks are numbered oldest-first; render newest-archived-first
-                  // (chunk with the highest index) to match the page's own order.
-                  for (var i = chunks.length - 1; i >= 0; i--) {
-                    (chunks[i] || []).forEach(function (html) { list.insertAdjacentHTML('beforeend', html); });
-                  }
-                  btn.remove();
-                  window.dispatchEvent(new Event('hashchange'));
-                }).catch(function (err) {
-                  btn.disabled = false;
-                  btn.textContent = original + ' -- unavailable (' + (err && err.message || err) + ')';
-                });
+              var btn=document.querySelector('.feed-show-all[data-cycle-archive-index-src]');
+              if(!btn)return;
+              var status=document.querySelector('.feed-archive-status'),indexSrc=btn.dataset.cycleArchiveIndexSrc,nextIndex=null,totalRows=null;
+              function getJson(url){return fetch(url).then(function(r){if(!r.ok)throw new Error('HTTP '+r.status);return r.json();});}
+              btn.addEventListener('click',function(){
+                btn.disabled=true;btn.textContent='Loading older cycles…';status.textContent='';
+                function loadIndex(){return getJson(indexSrc).then(function(idx){totalRows=Number(idx.total_rows)||0;nextIndex=nextIndex===null?Number(idx.chunk_count)-1:nextIndex;return idx;});}
+                (nextIndex===null?loadIndex():Promise.resolve()).then(function(){
+                  if(nextIndex<0){btn.remove();status.textContent='No more archived cycles.';return;}
+                  var chunkIndex=nextIndex,url=indexSrc.slice(0,indexSrc.length-'cycles-archive-index.json'.length)+'cycles-archive-'+chunkIndex+'.json';
+                  return getJson(url).then(function(rows){
+                    var list=document.querySelector('#panel-feed .feed-list');
+                    (rows||[]).forEach(function(row){list.insertAdjacentHTML('beforeend',row);});
+                    nextIndex=chunkIndex-1;window.dispatchEvent(new Event('cycle-feed-update'));
+                    var loaded=list.querySelectorAll('li[data-outcome]').length;
+                    status.textContent='Loaded '+loaded+' cycles; '+(totalRows===null?'archive total unavailable':totalRows+' archived cycles indexed')+'. Search covers loaded cycles only.';
+                    if(nextIndex<0){btn.remove();}else{btn.disabled=false;btn.textContent='Load next older chunk';}
+                  });
+                }).catch(function(err){btn.disabled=false;btn.textContent='Retry loading older cycles';status.textContent='Archive chunk unavailable ('+(err&&err.message||err)+'). Loaded results remain limited to the current window. Retry this chunk.';});
               });
             })();
             </script>'''
@@ -6916,27 +7480,29 @@ def build_cycle_feed(
             )
             archive_script = ''
         filter_html = (
-            f'<div class="filter-bar">{filter_buttons}</div>'
+            '<div class="feed-controls"><label for="cycle-search">Search task or cycle ID</label>'
+            '<input id="cycle-search" type="search" autocomplete="off" placeholder="Search loaded cycles">'
+            '<button type="button" class="feed-clear-search">Clear search</button>'
+            '<label for="cycle-from">From (recorded day)</label><input id="cycle-from" type="date">'
+            '<label for="cycle-to">To (recorded day)</label><input id="cycle-to" type="date">'
+            f'<div class="filter-bar" role="group" aria-label="Filter cycles by outcome">{filter_buttons}</div>'
+            '<p class="feed-coverage" role="status" aria-live="polite" data-feed-coverage></p></div>'
             f'{show_all_btn}'
             '<script>'
             '(function(){'
-            'var bar=document.querySelector(".filter-bar");if(!bar)return;'
+            'var bar=document.querySelector(".filter-bar"),search=document.querySelector("#cycle-search"),clear=document.querySelector(".feed-clear-search"),from=document.querySelector("#cycle-from"),to=document.querySelector("#cycle-to"),coverage=document.querySelector("[data-feed-coverage]");if(!bar)return;'
             'function getRows(){return document.querySelectorAll("#panel-feed li[data-outcome]");}'
-            'function apply(k){var rows=getRows(),shown=0;'
-            'rows.forEach(function(r){var hidden=k!=="all"&&r.getAttribute("data-outcome")!==k;r.classList.toggle("filtered-out",hidden);if(!hidden)shown++;});'
-            'var empty=document.querySelector("[data-filter-empty]");if(empty){empty.hidden=k==="all"||shown>0;empty.querySelector(".filter-empty-value").textContent=k;}'
-            'bar.querySelectorAll(".filter-btn").forEach(function(b){b.classList.toggle("active",b.getAttribute("data-filter")===k);});}'
-            'var h=location.hash||"",init=h.indexOf("#f-")===0?h.slice(3):"";'
-            'apply(bar.querySelector("[data-filter=\'"+init+"\']")?init:"all");'
-            'bar.addEventListener("click",function(e){'
-            'var b=e.target.closest(".filter-btn");if(!b)return;'
-            'var k=b.getAttribute("data-filter");'
-            'if(k==="all"){history.replaceState(null,"",location.pathname+location.search);}'
-            'else{location.hash="f-"+k;}'
-            'apply(k);});'
-            'window.addEventListener("hashchange",function(){'
-            'var h=location.hash||"",k=h.indexOf("#f-")===0?h.slice(3):"";'
-            'if(bar.querySelector("[data-filter=\'"+k+"\']")){apply(k);}});'
+            'function apply(){var rows=getRows(),shown=0,k=bar.dataset.activeFilter||"all",q=(search.value||"").trim().toLocaleLowerCase(),start=from.value,end=to.value;'
+            'rows.forEach(function(r){var day=r.dataset.day||"",match=(k==="all"||r.dataset.outcome===k)&&(!q||(r.dataset.search||"").toLocaleLowerCase().includes(q))&&(!start||day&&day>=start)&&(!end||day&&day<=end);r.classList.toggle("filtered-out",!match);r.setAttribute("aria-hidden",String(!match));if(match)shown++;});'
+            'var headers=document.querySelectorAll("#panel-feed .feed-day-header");headers.forEach(function(h){h.hidden=true;});rows.forEach(function(r){if(!r.classList.contains("filtered-out")){var prev=r.previousElementSibling;while(prev&&!prev.classList.contains("feed-day-header"))prev=prev.previousElementSibling;if(prev)prev.hidden=false;}});'
+            'var loaded=rows.length,empty=document.querySelector("[data-filter-empty]");if(empty){empty.hidden=shown>0;empty.textContent="No matches in the loaded cycle window.";}'
+            'coverage.textContent=shown+" matching of "+loaded+" loaded cycles"+(k==="all"?"":" for "+k)+"; search covers loaded cycles only."+(start||end?" Dates use recorded timestamp day; bounds may differ from the displayed local day label.":"")+(document.querySelector(".feed-show-all[data-cycle-archive-index-src]")?" Older archive chunks remain unsearched.":" No older archive chunks are available.");'
+            'bar.querySelectorAll(".filter-btn").forEach(function(b){var selected=b.dataset.filter===k;b.classList.toggle("active",selected);b.setAttribute("aria-pressed",String(selected));});}'
+            'function readUrl(){var h=location.hash||"",k=h.indexOf("#f-")===0?h.slice(3):"",params=new URLSearchParams(location.search);bar.dataset.activeFilter=Array.prototype.some.call(bar.querySelectorAll(".filter-btn"),function(b){return b.dataset.filter===k;})?k:"all";if(search)search.value=params.get("q")||"";if(from)from.value=params.get("from")||"";if(to)to.value=params.get("to")||"";apply();}'
+            'function writeSearch(){var u=new URL(location.href);if(search.value)u.searchParams.set("q",search.value);else u.searchParams.delete("q");if(from.value)u.searchParams.set("from",from.value);else u.searchParams.delete("from");if(to.value)u.searchParams.set("to",to.value);else u.searchParams.delete("to");history.replaceState(null,"",u.pathname+u.search+u.hash);apply();}'
+            'readUrl();'
+            'bar.addEventListener("click",function(e){var b=e.target.closest(".filter-btn");if(!b)return;var k=b.dataset.filter;bar.dataset.activeFilter=k;if(k==="all"){history.replaceState(null,"",location.pathname+location.search);}else{location.hash="f-"+encodeURIComponent(k);}apply();});'
+            'if(search)search.addEventListener("input",writeSearch);if(from)from.addEventListener("change",writeSearch);if(to)to.addEventListener("change",writeSearch);if(clear)clear.addEventListener("click",function(){search.value="";from.value="";to.value="";writeSearch();search.focus();});window.addEventListener("hashchange",readUrl);window.addEventListener("cycle-feed-update",apply);'
             '})();'
             '</script>'
             f'{archive_script}'
@@ -7134,12 +7700,20 @@ def build_scorecard_hypothesis_metrics(scorecard: dict[str, Any] | None) -> str:
     state = f'split: {split_status}; reader: {reader_value}' if split_status is not None and reader_value is not None else None
     return f'''<section class="scorecard-hypothesis-metrics" id="scorecard-hypothesis-metrics">
       <h3>Hypothesis loop metrics <small>(published scorecard)</small></h3>
-      <p class="scorecard-metric">selection rate: <strong>{humanize_ratio(loop.get('hypothesis_selection_rate'))}</strong> · served cycles: <strong>{_scorecard_value(loop.get('hypothesis_served_cycles'))}</strong></p>
-      <p class="scorecard-metric">verdict yield: supported <strong>{_scorecard_value(hypothesis.get('supported'))}</strong> / refuted <strong>{_scorecard_value(hypothesis.get('refuted'))}</strong> / inconclusive <strong>{_scorecard_value(hypothesis.get('inconclusive'))}</strong> · total <strong>{_scorecard_value(total_value)}</strong></p>
+      <p class="scorecard-metric">selection rate: <strong>{humanize_ratio(loop.get('hypothesis_selection_rate'))}</strong> · hypothesis-served cycles: <strong>{_scorecard_value(loop.get('hypothesis_served_cycles'))}</strong> / denominator: terminal cycle population (count not published by dashboard projection)</p>
+      <p class="scorecard-metric">Verdict population: scorecard lifecycle snapshot (visibility-only; not additive to registry titles). supported <strong>{_scorecard_value(hypothesis.get('supported'))}</strong> / refuted <strong>{_scorecard_value(hypothesis.get('refuted'))}</strong> / inconclusive <strong>{_scorecard_value(hypothesis.get('inconclusive'))}</strong> · total <strong>{_scorecard_value(total_value)}</strong></p>
       <p class="scorecard-metric">inconclusive window: within <strong>{_scorecard_value(hypothesis.get('inconclusive_within_window'))}</strong> · aged <strong>{_scorecard_value(hypothesis.get('inconclusive_aged'))}</strong></p>
       <p class="scorecard-metric">undatable: <strong>{_scorecard_value(hypothesis.get('inconclusive_undatable'))}</strong> (no artifact {_scorecard_value(hypothesis.get('inconclusive_undatable_no_qualifying_artifact'))}, no completion {_scorecard_value(hypothesis.get('inconclusive_undatable_no_completion'))}, invalid timestamp {_scorecard_value(hypothesis.get('inconclusive_undatable_invalid_timestamp'))})</p>
-      <p class="scorecard-metric">{esc(state) if state else '<span class="unavailable-note">unavailable</span>'} · window {_scorecard_value(scorecard.get('window_days'))}d · computed_at_utc <strong>{_scorecard_value(scorecard.get('computed_at_utc'))}</strong></p>
+      <p class="scorecard-metric">{esc(state) if state else '<span class="unavailable-note">unavailable</span>'} · selection-rate ledger window: {_scorecard_value(scorecard.get('window_days'))}d; lifecycle snapshot as published at computed_at_utc <strong>{_scorecard_value(scorecard.get('computed_at_utc'))}</strong></p>
     </section>'''
+
+
+def _initial_cycle_feed_ids(feed_html: str) -> set[str]:
+    """Return cycle IDs from rows actually emitted in the initial feed HTML."""
+    return {
+        html.unescape(value)[len('cycle-'):]
+        for value in re.findall(r'<li\b(?=[^>]*\bclass="feed-row\b)[^>]*\bid="(cycle-[^"]+)"', feed_html)
+    }
 
 
 def build_hypotheses_panel(
@@ -7150,6 +7724,8 @@ def build_hypotheses_panel(
     hypotheses_durable: dict[str, Any] | None = None,
     demand_futility: dict[str, Any] | None = None,
     scorecard: dict[str, Any] | None = None,
+    cycle_detail_ids: set[str] | None = None,
+    standalone: bool = False,
 ) -> str:
     # Accept either hypotheses_lifecycle or legacy hypotheses dict
     entries_dict = {}
@@ -7256,8 +7832,8 @@ def build_hypotheses_panel(
               <span class="badge {badge_cls}">{esc(badge_lbl)}</span>
               <strong class="hypo-title">{esc(title)}</strong>
               <div class="hypo-meta">
-                {f'<span class="hypo-ts" title="{esc(first_seen)}">seen {fmt_ts_short(first_seen, now=ref_now)}</span>' if first_seen else ""}
-                {f'<span class="hypo-ts" title="{esc(last_touched)}">touched {fmt_ts_short(last_touched, now=ref_now)}</span>' if last_touched else ""}
+                {f'<span class="hypo-ts" title="{esc(first_seen)}">seen {fmt_ts_short(first_seen, now=ref_now)}</span>' if first_seen else '<span class="hypo-ts">first seen date unavailable</span>'}
+                {f'<span class="hypo-ts" title="{esc(last_touched)}">touched {fmt_ts_short(last_touched, now=ref_now)}</span>' if last_touched else '<span class="hypo-ts">last touched date unavailable</span>'}
               </div>
             </li>
         '''
@@ -7276,10 +7852,18 @@ def build_hypotheses_panel(
             ev_str = str(answered_ev)
             target_cid = ev_str if ev_str.startswith('cycle-') else f"cycle-{ev_str}"
             clean_cid = ev_str[6:] if ev_str.startswith('cycle-') else ev_str
-            if target_cid in valid_feed_cycles or clean_cid in valid_feed_cycles or ev_str in valid_feed_cycles:
-                ev_html = f'<span class="hypo-ev">evidence: <a href="#cycle-{esc(ev_str)}">{esc(ev_str)}</a></span>'
-            else:
-                ev_html = f'<span class="hypo-ev">evidence: {esc(ev_str)}</span>'
+            exact_in_details = ev_str in (cycle_detail_ids or set())
+            exact_in_feed = ev_str in valid_feed_cycles
+            matched_cid = ev_str if exact_in_details or exact_in_feed else next((cid for cid in (target_cid, clean_cid) if cid in valid_feed_cycles or cid in (cycle_detail_ids or set())), None)
+            if matched_cid in valid_feed_cycles:
+                href = f'#cycle-{esc(matched_cid)}' if standalone else f'cycles.html#cycle-{esc(matched_cid)}'
+                ev_html = f'<span class="hypo-ev">evidence: <a href="{href}">{esc(ev_str)}</a></span>'
+            elif not standalone and matched_cid in (cycle_detail_ids or set()):
+                ev_html = f'<span class="hypo-ev">evidence: <a href="cycle.html?id={quote(matched_cid, safe="")}">{esc(ev_str)}</a> (older cycle details)</span>'
+            elif standalone and matched_cid in (cycle_detail_ids or set()):
+                ev_html = f'<span class="hypo-ev">evidence: {esc(ev_str)} (verification cycle unavailable in this document)</span>'
+            elif matched_cid is None:
+                ev_html = f'<span class="hypo-ev">evidence {esc(ev_str)} (verification cycle unavailable in published feed)</span>'
 
         v_label = str(verdict or status).upper()
         badge_class = {
@@ -7294,7 +7878,7 @@ def build_hypotheses_panel(
               <strong class="hypo-title">{esc(title)}</strong>
               <div class="hypo-meta">
                 {ev_html}
-                {f'<span class="hypo-ts" title="{esc(answered_at)}">answered {fmt_ts_short(answered_at, now=ref_now)}</span>' if answered_at else ""}
+                {f'<span class="hypo-ts" title="{esc(answered_at)}">answered {fmt_ts_short(answered_at, now=ref_now)}</span>' if answered_at else '<span class="hypo-ts">answered date unavailable</span>'}
               </div>
             </li>
         '''
@@ -7321,19 +7905,19 @@ def build_hypotheses_panel(
     else:
         active_body = "".join(fresh_rendered + stale_rendered)
 
-    active_html = f'<div class="hypo-group"><h3>Active titles ({total_active_count})</h3><p class="hypo-count-note">unique titles; lifecycle rows may be higher</p><ul class="hypo-list">{active_body}</ul></div>'
+    active_html = f'<div class="hypo-group"><h3>Lifecycle registry — active or stale unique titles ({total_active_count})</h3><p class="hypo-count-note">Active: {len(fresh_active)} · stale: {len(stale_active)}. Titles are deduplicated separately by lifecycle status; source rows may be higher. Eligibility is not reported by this projection. Staleness uses recorded last_touched, falling back to first_seen, older than 14 days; missing or invalid dates are not aged by inference.</p><ul class="hypo-list">{active_body}</ul></div>'
 
     if answered_rendered:
         ans_count = len(answered_rendered)
         answered_list_html = f'<ul class="hypo-list">{"".join(answered_rendered)}</ul>'
         answered_html = f'''<div class="hypo-group">
           <details class="hypo-details">
-            <summary class="hypo-summary"><h3>Answered ({ans_count}) &mdash; show</h3></summary>
+            <summary class="hypo-summary"><h3>Lifecycle registry — answered titles ({ans_count}) &mdash; show</h3></summary>
             {answered_list_html}
           </details>
         </div>'''
     else:
-        answered_html = '<div class="hypo-group"><h3>Answered (0)</h3><ul class="hypo-list"><li class="unavailable-note">none answered</li></ul></div>'
+        answered_html = '<div class="hypo-group"><h3>Lifecycle registry — answered titles (0)</h3><ul class="hypo-list"><li class="unavailable-note">none answered</li></ul></div>'
 
     scorecard_metrics_html = build_scorecard_hypothesis_metrics(scorecard)
 
@@ -7680,13 +8264,26 @@ def build_lessons_panel(lessons: list[dict[str, Any]] | None, *, corpus_status: 
     not one collapsed "no data" note (#274)."""
     entries = [l for l in (lessons or []) if isinstance(l, dict)]
     corpus_note = ''
+    live_entries = [l for l in entries if l.get('source') == 'live']
+    archive_entries = [l for l in entries if 'source' not in l]
+    unknown_source_entries = [l for l in entries if 'source' in l and l.get('source') != 'live']
+    corpus_note = ''
     if corpus_status == 'missing':
-        corpus_note = '<p class="unavailable-note">Live corpus (lessons/*.md): directory missing on host.</p>'
+        corpus_note = '<p class="unavailable-note">Live corpus (lessons/*.md): directory missing.</p>'
     elif corpus_status == 'unavailable':
-        corpus_note = '<p class="unavailable-note">Live corpus (lessons/*.md): present but unreadable.</p>'
+        corpus_note = '<p class="unavailable-note">Live corpus (lessons/*.md): read unavailable.</p>'
     elif corpus_status == 'present':
-        live_count = sum(1 for l in entries if isinstance(l, dict) and l.get('source') == 'live')
-        corpus_note = f'<p class="lessons-corpus-note">Live corpus (lessons/*.md): {live_count} files &mdash; same count agent.html reports.</p>'
+        corpus_note = f'<p class="lessons-corpus-note">Live corpus (lessons/*.md): {len(live_entries)} files in this view ({sum(1 for l in live_entries if _is_v2_lesson(l))} v2 cards); the executor retrieval corpus is a separate population.</p>'
+    source_counts = (
+        f'<span>Published rows: {len(entries)}</span> · '
+        f'<span>live: {len(live_entries)}</span> · '
+        f'<span>retained archive rows: {len(archive_entries)}</span>'
+        + (f' · <span>source unknown: {len(unknown_source_entries)}</span>' if unknown_source_entries else '')
+    )
+    unknown_source_option = (
+        f'<option value="unknown">Unknown source ({len(unknown_source_entries)})</option>'
+        if unknown_source_entries else ''
+    )
     id_counts: dict[str, int] = {}
     for entry in entries:
         lesson_id = str(entry.get('id') or '')
@@ -7709,11 +8306,12 @@ def build_lessons_panel(lessons: list[dict[str, Any]] | None, *, corpus_status: 
 
     rendered_lesson_ids = {str(l.get('id')) for l in entries if l.get('id')}
     if not entries:
+        empty_note = 'No lessons history data recorded in this published view; retained-history source completeness unavailable.'
         return (
             '<section class="panel panel-lessons" id="panel-lessons">'
             '<h2 class="panel-title">Lessons History</h2>'
             f'{corpus_note}'
-            '<p class="unavailable-note">no lessons history data recorded</p>'
+            f'<p class="unavailable-note">{empty_note}</p>'
             '</section>'
         )
 
@@ -7732,6 +8330,7 @@ def build_lessons_panel(lessons: list[dict[str, Any]] | None, *, corpus_status: 
     last_date: str | None = None
     for l in v2_entries:
         date = str(l.get('date') or 'unknown')
+        source_group = 'live' if l.get('source') == 'live' else 'unknown' if 'source' in l else 'archive'
         if date != last_date:
             last_date = date
             v2_rows.append(f'<li class="lesson-day-header">{esc(date)}</li>')
@@ -7769,22 +8368,39 @@ def build_lessons_panel(lessons: list[dict[str, Any]] | None, *, corpus_status: 
         meta_chips = kind_html + severity_html + tags_html + seen_html + duplicate_html
         meta_chips_html = f'<div class="lesson-chips">{meta_chips}</div>' if meta_chips else ''
 
-        # ADR-036 rule 3: problem/solution bodies are LAN-only; public shows size.
-        problem_chars = int(l.get('problem_chars') if l.get('problem_chars') is not None else len(problem))
-        solution_chars = int(l.get('solution_chars') if l.get('solution_chars') is not None else len(solution))
-        problem_html = f'<div class="lesson-problem lan-only-note"><span class="lesson-label">Problem:</span> text on the LAN site only ({problem_chars:,} chars)</div>' if problem_chars else ''
-        solution_html = f'<div class="lesson-solution lan-only-note"><span class="lesson-label">Solution:</span> text on the LAN site only ({solution_chars:,} chars)</div>' if solution_chars else ''
+        problem_chars = l.get('problem_chars')
+        problem_size = problem_chars if isinstance(problem_chars, int) and not isinstance(problem_chars, bool) and problem_chars >= 0 else len(problem)
+        solution_chars = l.get('solution_chars')
+        solution_size = solution_chars if isinstance(solution_chars, int) and not isinstance(solution_chars, bool) and solution_chars >= 0 else len(solution)
+        problem_html = (
+            f'<div class="lesson-problem"><span class="lesson-label">Problem:</span> {esc(problem[:12000])}</div>'
+            if problem else
+            '<div class="lesson-problem unavailable-note">Problem: no text recorded.</div>'
+            if problem_size == 0 else
+            f'<div class="lesson-problem unavailable-note">Problem text unavailable ({problem_size:,} characters recorded).</div>'
+        )
+        solution_html = (
+            f'<div class="lesson-solution"><span class="lesson-label">Solution:</span> {esc(solution[:12000])}</div>'
+            if solution else
+            '<div class="lesson-solution unavailable-note">Solution: no text recorded.</div>'
+            if solution_size == 0 else
+            f'<div class="lesson-solution unavailable-note">Solution text unavailable ({solution_size:,} characters recorded).</div>'
+        )
 
-        title = str(l.get('title') or '')
-        title_html = f'<h3 class="lesson-title">{esc(title)}</h3>' if title else ''
+        title = str(l.get('title') or '').strip()
+        title_is_descriptive = bool(title and title != str(l.get('id') or ''))
+        title_html = (
+            f'<h3 class="lesson-title">{esc(title)}</h3>'
+            if title_is_descriptive else '<h3 class="lesson-title unavailable-note">Descriptive title unavailable; reason not published.</h3>'
+        )
         search_text = esc((' '.join([
             l.get('id') or '', title, str(l.get('task_id') or ''),
             kind, severity, ' '.join(str(t) for t in tags_list), cid,
         ])).lower())
         v2_rows.append(
-            f'<li class="lesson-row lesson-row-v2" data-text="{search_text}"{item_anchor}>'
+            f'<li class="lesson-row lesson-row-v2" data-text="{search_text}" data-source="{source_group}" data-date="{esc(date)}"{item_anchor}>'
             f'<div class="lesson-meta"><span class="lesson-id" translate="no">{esc(l.get("id") or "")}</span>'
-            f' {cycle_link}</div>'
+            f' {cycle_link} · <span class="lesson-recorded-date">{esc(date)}</span></div>'
             f'{meta_chips_html}'
             f'{title_html}'
             f'{problem_html}'
@@ -7797,6 +8413,7 @@ def build_lessons_panel(lessons: list[dict[str, Any]] | None, *, corpus_status: 
     last_date = None
     for l in legacy_entries:
         date = str(l.get('date') or 'unknown')
+        source_group = 'live' if l.get('source') == 'live' else 'unknown' if 'source' in l else 'archive'
         if date != last_date:
             last_date = date
             legacy_rows.append(f'<li class="lesson-day-header">{esc(date)}</li>')
@@ -7808,35 +8425,41 @@ def build_lessons_panel(lessons: list[dict[str, Any]] | None, *, corpus_status: 
         result = str(l.get('result') or '')
         result_chars = l.get('result_chars')
         result_size = result_chars if isinstance(result_chars, int) and not isinstance(result_chars, bool) and result_chars >= 0 else len(result)
-        # ADR-036 rule 3: legacy result/insight text is LAN-only; retain the
-        # validated projection's saved length when the body was redacted.
-        result_html = (
-            f'<div class="lesson-result lan-only-note">result: text on the LAN site only ({result_size:,} chars)</div>'
-            if result_size > 0 else ''
-        )
+        result_html = f'<div class="lesson-result">Result: {esc(result[:12000])}</div>' if result else ''
         insight = str(l.get('insight') or '')
         insight_chars = l.get('insight_chars')
         insight_size = insight_chars if isinstance(insight_chars, int) and not isinstance(insight_chars, bool) and insight_chars >= 0 else len(insight)
         duplicate_html = '<span class="lesson-duplicate-warning">duplicate id on disk</span>' if id_counts.get(str(l.get('id') or ''), 0) > 1 else ''
         item_anchor = _lesson_anchor(l)
-        insight_html = f'<div class="lesson-insight lan-only-note">insight: text on the LAN site only ({insight_size:,} chars)</div>' if insight_size > 0 else ''
+        insight_html = f'<div class="lesson-insight">Insight: {esc(insight[:12000])}</div>' if insight else '<div class="lesson-insight unavailable-note">Insight: no text recorded.</div>'
+        hypothesis_chars = l.get('hypothesis_chars')
+        hypothesis_size = hypothesis_chars if isinstance(hypothesis_chars, int) and not isinstance(hypothesis_chars, bool) and hypothesis_chars >= 0 else len(str(l.get('hypothesis') or ''))
+        hypothesis = str(l.get('hypothesis') or '')
+        hypothesis_html = f'<div class="lesson-hypothesis">Hypothesis: {esc(hypothesis[:12000])}</div>' if hypothesis else '<div class="lesson-hypothesis unavailable-note">Hypothesis: no text recorded.</div>'
+        result_html = result_html if result_size > 0 else '<div class="lesson-result unavailable-note">Result: no text recorded.</div>'
+        legacy_title = str(l.get('title') or '').strip()
         search_text = esc((' '.join([
-            l.get('id') or '', str(l.get('task_id') or ''), str(l.get('hypothesis') or ''),
+            l.get('id') or '', legacy_title, str(l.get('task_id') or ''), str(l.get('hypothesis') or ''),
             cid,
         ])).lower())
+        legacy_title_html = (
+            f'<h3 class="lesson-title">{esc(legacy_title)}</h3>'
+            if legacy_title and legacy_title != str(l.get('id') or '') else '<h3 class="lesson-title unavailable-note">Descriptive title unavailable; reason not published.</h3>'
+        )
         legacy_rows.append(
-            f'<li class="lesson-row" data-text="{search_text}"{item_anchor}>'
+            f'<li class="lesson-row" data-text="{search_text}" data-source="{source_group}" data-date="{esc(date)}"{item_anchor}>'
             f'<div class="lesson-meta"><span class="lesson-id" translate="no">{esc(l.get("id") or "")}</span>{duplicate_html}'
-            f' {cycle_link}</div>'
-            f'<div class="lesson-title">{esc(str(l.get("task_id") or "n/a"))}</div>'
-            f'<div class="lesson-hypothesis">{esc(str(l.get("hypothesis") or ""))}</div>'
-            f'{result_html}{insight_html}</li>'
+            f' {cycle_link} · <span class="lesson-recorded-date">{esc(date)}</span></div>'
+            f'{legacy_title_html}'
+            f'<div class="lesson-task-id">Task: {esc(str(l.get("task_id") or "unavailable"))}</div>'
+            f'{hypothesis_html}{result_html}{insight_html}</li>'
         )
 
     # --- assemble page ---
     v2_count = len(v2_entries)
     legacy_count = len(legacy_entries)
     total = len(entries)
+    missing_date_count = sum(1 for lesson in entries if not _parse_iso_ts(lesson.get('date')))
 
     title_parts = [f'{v2_count} v2' if v2_count else 'no v2 entries']
     if legacy_count:
@@ -7845,7 +8468,7 @@ def build_lessons_panel(lessons: list[dict[str, Any]] | None, *, corpus_status: 
         title_parts.append(f'{recent} recent')
     heading_detail = ' &middot; '.join(title_parts)
 
-    v2_section = ''.join(v2_rows) if v2_rows else '<li class="lesson-row"><p class="unavailable-note">no v2 lessons recorded yet</p></li>'
+    v2_section = ''.join(v2_rows) if v2_rows else '<li class="unavailable-note">no v2 lessons recorded yet</li>'
 
     legacy_section_html = ''
     if legacy_rows:
@@ -7860,49 +8483,120 @@ def build_lessons_panel(lessons: list[dict[str, Any]] | None, *, corpus_status: 
     return f'''
     <section class="panel panel-lessons" id="panel-lessons">
       <h2 class="panel-title">Lessons History ({total} retained history rows &middot; {heading_detail})</h2>
-      <p class="lessons-count-note">History only: {v2_count} active v2 cards plus retained archive rows; archive rows are not on the executor retrieval path. The executor retrieval corpus includes active v2 cards and active error cards from errors.yaml.</p>
+      <p class="lessons-count-note">Counts describe rows in this published retained-history view; they do not claim all-time archive completeness. Live corpus rows and retained archive rows are distinct from the executor retrieval corpus; archive rows are not on its retrieval path. Sorting applies within the current-format and legacy groups; legacy records remain in their disclosure.</p>
+      <p class="lessons-source-counts" aria-label="Published lesson row populations">{source_counts} · <span>date unavailable: {missing_date_count}</span></p>
+      <p class="lessons-body-policy">Bounded own project lesson content is shown as text. Secrets and unrelated data are rejected by the publication scanner.</p>
       {corpus_note}
-      <input class="lessons-filter" type="text" placeholder="filter lessons...">
-      <ul class="lessons-list">
-        <li class="filter-empty" data-filter-empty hidden>0 results for <span class="filter-empty-value"></span></li>
+      <div class="lessons-controls">
+        <label for="lessons-filter">Search lesson IDs, titles and public metadata
+          <input class="lessons-filter" id="lessons-filter" type="search" autocomplete="off">
+        </label>
+        <label for="lessons-source">Source
+          <select id="lessons-source" class="lessons-source-filter">
+            <option value="all">All sources ({total})</option><option value="live">Live ({len(live_entries)})</option><option value="archive">Retained archive ({len(archive_entries)})</option>{unknown_source_option}
+          </select>
+        </label>
+        <label for="lessons-sort">Sort
+          <select id="lessons-sort" class="lessons-sort"><option value="date-desc">Date, newest first</option><option value="date-asc">Date, oldest first</option><option value="title-asc">Title, A–Z</option></select>
+        </label>
+        <p class="lessons-match-count" role="status" aria-live="polite"></p>
+        <span class="lessons-page-status" aria-live="polite"></span>
+        <button type="button" class="lessons-prev" aria-label="Previous lesson results">Previous</button>
+        <button type="button" class="lessons-next" aria-label="Next lesson results">Next</button>
+      </div>
+      <ul class="lessons-list" aria-label="Published retained lessons">
+        <li class="filter-empty" data-filter-empty hidden><span class="filter-empty-count">0 results for</span> <span class="filter-empty-value"></span></li>
         {v2_section}
         {legacy_section_html}
       </ul>
       <script>
       (function(){{
-        var input = document.querySelector('.lessons-filter');
-        if (!input) return;
-        var rowsL = document.querySelectorAll('#panel-lessons .lesson-row');
-        function apply(q) {{
-          var t = (q || '').toLowerCase();
-           var shown = 0;
-           var legacyMatch = false;
-           rowsL.forEach(function (r) {{
-             var visible = !t || r.getAttribute('data-text').indexOf(t) !== -1;
-             r.style.display = visible ? '' : 'none';
-             if (visible) {{
-               shown += 1;
-               if (t && r.closest('.lesson-legacy-details')) legacyMatch = true;
-             }}
-           }});
-           var legacyDetails = document.querySelector('.lesson-legacy-details');
-           if (legacyDetails && t) {{
-             legacyDetails.open = legacyMatch;
-           }}
-           var empty = document.querySelector('#panel-lessons [data-filter-empty]');
-           if (empty) {{ empty.hidden = !t || shown > 0; empty.querySelector('.filter-empty-value').textContent = t ? '"' + t + '"' : ''; }}
-          input.value = t;
+        var root = document.getElementById('panel-lessons');
+        var input = root.querySelector('.lessons-filter');
+        var source = root.querySelector('.lessons-source-filter');
+        var sort = root.querySelector('.lessons-sort');
+        var rows = Array.prototype.slice.call(root.querySelectorAll('.lesson-row'));
+        var pageSize = 50, page = 0, matches = [];
+        var emptyView = rows.length === 0;
+        if(emptyView) {{
+          root.querySelector('.lessons-list').innerHTML = '<li class="unavailable-note">No published lesson rows in this view; retained-history source completeness unavailable.</li>';
+          root.querySelector('.lessons-controls').hidden = true;
+          return;
         }}
-        var init = decodeURIComponent((location.hash || '').replace('#q-', ''));
-        apply(init);
-        input.addEventListener('input', function () {{
-          var q = input.value.trim();
-          if (q) {{ location.hash = 'q-' + encodeURIComponent(q); }} else {{ history.replaceState(null, '', location.pathname + location.search); }}
-          apply(q);
-        }});
-        window.addEventListener('hashchange', function () {{
-          apply(decodeURIComponent((location.hash || '').replace('#q-', '')));
-        }});
+        function stateFromUrl() {{
+          var params = new URLSearchParams(location.search);
+          var hash = location.hash.slice(1);
+          var hashId = hash.indexOf('q-') === 0 ? decodeURIComponent(hash.slice(2)) : '';
+          var query = params.get('lesson_q') || (hashId && !root.querySelector('#q-'+CSS.escape(hashId)) ? hashId : '');
+          return {{q: query, source: params.get('lesson_source') || 'all', sort: params.get('lesson_sort') || 'date-desc', page: Math.max(0, Number(params.get('lesson_page') || 0))}};
+        }}
+        function writeUrl() {{
+          var params = new URLSearchParams(location.search);
+          ['lesson_q','lesson_source','lesson_sort','lesson_page'].forEach(function(key){{params.delete(key);}});
+          if (input.value) params.set('lesson_q', input.value);
+          if (source.value !== 'all') params.set('lesson_source', source.value);
+          if (sort.value !== 'date-desc') params.set('lesson_sort', sort.value);
+          if (page) params.set('lesson_page', String(page));
+          var hash=location.hash;
+          if(hash.indexOf('#q-')===0)hash='';
+          history.pushState(null, '', location.pathname + (params.toString() ? '?' + params.toString() : '') + hash);
+        }}
+        function apply(restore, skipUrlWrite) {{
+          if (restore) {{ var st=stateFromUrl(); input.value=st.q; source.value=st.source; sort.value=st.sort; page=st.page; }}
+          var q=input.value.trim().toLowerCase(), wanted=source.value;
+          matches=rows.filter(function(r){{return (!q || (r.getAttribute('data-text')||'').indexOf(q)!==-1) && (wanted==='all'||r.getAttribute('data-source')===wanted);}});
+          matches.sort(function(a,b){{
+            var av=(a.getAttribute('data-date')||'unknown'), bv=(b.getAttribute('data-date')||'unknown');
+            if(sort.value==='title-asc') return (a.querySelector('.lesson-title').textContent||'').localeCompare(b.querySelector('.lesson-title').textContent||'');
+            if(av==='unknown') return bv==='unknown'?0:1; if(bv==='unknown') return -1;
+            return sort.value==='date-asc'?av.localeCompare(bv):bv.localeCompare(av);
+          }});
+          var pages=Math.max(1,Math.ceil(matches.length/pageSize)); page=Math.min(page,pages-1);
+          var visible=matches.slice(page*pageSize,(page+1)*pageSize);
+          rows.forEach(function(r){{r.style.display=visible.indexOf(r)>=0?'':'none';}});
+          var v2List=root.querySelector('.lessons-list');
+          if(v2List){{visible.filter(function(r){{return r.classList.contains('lesson-row-v2');}}).forEach(function(r){{v2List.appendChild(r);}});}}
+          root.querySelectorAll('.lesson-day-header').forEach(function(n){{n.style.display='none';}});
+          root.querySelectorAll('.lesson-legacy-fold').forEach(function(n){{n.style.display='none';}});
+          var legacy=root.querySelector('.lesson-legacy-details'),legacyMatches=matches.filter(function(r){{return r.closest('.lesson-legacy-details');}});
+          if(legacy){{var legacyMatch=legacyMatches.length>0;legacy.open = legacyMatch;legacy.parentElement.style.display=legacyMatch?'':'none';
+            var legacyList=legacy.querySelector('.lessons-list-legacy');
+            if(legacyList){{legacyMatches.forEach(function(r){{legacyList.appendChild(r);}});}}
+          }}
+          root.querySelector('[data-filter-empty]').hidden=matches.length>0;
+          root.querySelector('.filter-empty-value').textContent=q?'“'+q+'”':'';
+          root.querySelector('.lessons-match-count').textContent=matches.length+' matching published rows';
+          root.querySelector('.lessons-page-status').textContent='Page '+(page+1)+' of '+pages+' · '+matches.length+' results';
+          root.querySelector('.lessons-prev').disabled=page===0; root.querySelector('.lessons-next').disabled=page>=pages-1;
+          if(!restore && !skipUrlWrite) writeUrl();
+        }}
+        function revealHash() {{
+          var id=location.hash.indexOf('#q-')===0?decodeURIComponent(location.hash.slice(3)):'';
+          var target=id&&root.querySelector('#q-'+CSS.escape(id));
+          if(!target)return false;
+          var params=new URLSearchParams(location.search);
+          if(['lesson_q','lesson_source','lesson_sort','lesson_page'].some(function(key){{return params.has(key);}}))return false;
+          input.value='';source.value=target.getAttribute('data-source')||'unknown';sort.value='date-desc';
+          apply(false,true);
+          var ix=matches.indexOf(target);
+          if(ix<0)return false;
+          page=Math.floor(ix/pageSize);apply(false,true);target.scrollIntoView();return true;
+        }}
+        function restoreLocation() {{
+          var params=new URLSearchParams(location.search);
+          if(['lesson_q','lesson_source','lesson_sort','lesson_page'].some(function(key){{return params.has(key);}})){{apply(true);return;}}
+          if(revealHash())return;
+          apply(true);
+        }}
+        input.addEventListener('input',function(){{page=0;apply(false);}});
+        source.addEventListener('change',function(){{page=0;apply(false);}});
+        sort.addEventListener('change',function(){{page=0;apply(false);}});
+        root.querySelector('.lessons-prev').addEventListener('click',function(){{page=Math.max(0,page-1);apply(false);}});
+        root.querySelector('.lessons-next').addEventListener('click',function(){{page++;apply(false);}});
+        window.addEventListener('popstate',restoreLocation);
+        window.addEventListener('hashchange',restoreLocation);
+        root.addEventListener('click',function(event){{var link=event.target.closest('a[href*="#q-"]');if(!link||link.origin!==location.origin||link.pathname!==location.pathname)return;var id=decodeURIComponent(link.hash.slice(3));if(!root.querySelector('#q-'+CSS.escape(id)))return;event.preventDefault();var params=new URLSearchParams(location.search);['lesson_q','lesson_source','lesson_sort','lesson_page'].forEach(function(key){{params.delete(key);}});history.pushState(null,'',location.pathname+(params.toString()?'?'+params.toString():'')+link.hash);restoreLocation();}});
+        restoreLocation();
       }})();
       </script>
     </section>
@@ -7933,10 +8627,13 @@ def build_agent_panel(
             md_text = str(agents_md).strip()
             md_lines = len(md_text.splitlines())
             md_chars = len(md_text)
+        if isinstance(agents_md, dict):
+            candidate_text = agents_md.get("text")
+            md_text = candidate_text[:12000] if isinstance(candidate_text, str) else ""
         agents_html = (
             f'<details class="charter-details agents-md-box">'
             f'<summary>AGENTS.md charter ({md_lines} lines)</summary>'
-            f'<div class="agent-wide-content"><p class="unavailable-note lan-only-note">text on the LAN site only ({md_chars:,} chars)</p></div></details>'
+            f'<div class="agent-wide-content">{esc(md_text)}</div></details>'
         )
     else:
         agents_html = '<p class="unavailable-note">AGENTS.md unavailable</p>'
@@ -7961,7 +8658,7 @@ def build_agent_panel(
             goals_html = (
                 f'<details class="charter-details goal-text-box">'
                 f'<summary>Goals charter ({size_note})</summary>'
-                f'<div class="agent-wide-content"><p class="unavailable-note lan-only-note">text on the LAN site only</p></div></details>'
+                f'<div class="agent-wide-content">{esc(str(goal_text.get("text") or "")[:12000])}</div></details>'
             )
         else:
             goals_html = '<p class="unavailable-note">goals charter unavailable</p>'
@@ -8041,7 +8738,7 @@ def build_agent_panel(
           {skills_html}
         </div>
       </div>
-      <div class="proposer-block">
+      <div class="proposer-block" id="agent-proposer">
         <h3>Proposer</h3>
         {_build_proposer_block(proposer_stats, ledger_tail)}
       </div>
@@ -8360,9 +9057,22 @@ def build_empire_stats_strip(
     scorecard: dict[str, Any] | None,
     age_seconds: float | None = None,
     generated_at: str | None = None,
-) -> str:
+    *,
+    separate_context: bool = False,
+) -> str | tuple[str, str]:
     if not isinstance(scorecard, dict):
-        return unavailable_panel('Empire Stats', 'scorecard unavailable')
+        unavailable = unavailable_panel('Empire Stats', 'scorecard unavailable')
+        if separate_context:
+            header = '''
+    <header class="empire-strip">
+      <h1 class="empire-title"># eeebot / tech-tree</h1>
+      <span class="provenance-badge provenance-unavailable">data inputs: unavailable</span>
+      <div class="empire-fresh"><span class="freshness freshness-unknown">data: age unknown</span></div>
+    </header>
+    '''
+            stats = f'<section class="empire-stats-context" aria-label="Scorecard metrics">{unavailable}</section>'
+            return header, stats
+        return unavailable
 
     loop = scorecard.get('loop') if isinstance(scorecard.get('loop'), dict) else {}
     cost = scorecard.get('cost') if isinstance(scorecard.get('cost'), dict) else {}
@@ -8442,9 +9152,10 @@ def build_empire_stats_strip(
     for label, value in stats:
         tip = kpi_tooltips.get(label)
         tip_attr = f' title="{esc(tip)}"' if tip else ''
+        glossary_link = ' <a href="about.html#term-held-out">about held-out</a>' if label == 'held-out' else ''
         stat_html += (
             f'<div class="empire-stat"{tip_attr}>'
-            f'<span class="stat-label">{esc(label)}</span>'
+            f'<span class="stat-label">{esc(label)}{glossary_link}</span>'
             f'<span class="stat-value">{value}</span>'
             f'{_target_html(label)}</div>'
         )
@@ -8471,14 +9182,15 @@ def build_empire_stats_strip(
 
     prov_html = _build_provenance_badge(scorecard)
 
-    return f'''
+    header = f'''
     <header class="empire-strip">
       <h1 class="empire-title"># eeebot / tech-tree</h1>
-      <div class="empire-stats">{stat_html}</div>
       {prov_html}
       <div class="empire-fresh">{freshness_html}</div>
     </header>
     '''
+    stats = f'<details class="empire-stats-context"><summary>Scorecard metrics</summary><div class="empire-stats" aria-label="Scorecard metrics">{stat_html}</div></details>'
+    return (header, stats) if separate_context else header + stats
 
 
 # ---------------------------------------------------------------------------
@@ -8523,42 +9235,59 @@ def build_tokens_panel(data: dict[str, Any], host: str = '', generated_at: str |
 
   <div class="tkn-kpi-strip">
     <div class="tkn-kpi-card">
-      <div class="tkn-kpi-val">{fmt_tokens(total_tokens)}</div>
-      <div class="tkn-kpi-lbl">Total Tokens</div>
+      <div class="tkn-kpi-val" id="tkn-total-tokens">{fmt_tokens(total_tokens)}</div>
+      <div class="tkn-kpi-lbl">Total Tokens · selected period</div>
     </div>
     <div class="tkn-kpi-card">
-      <div class="tkn-kpi-val">{fmt_tokens(vendor_tokens)} <span class="tkn-kpi-pct">({gw_pct:.1f}%)</span></div>
+      <div class="tkn-kpi-val" id="tkn-vendor-tokens">{fmt_tokens(vendor_tokens)} <span class="tkn-kpi-pct">({gw_pct:.1f}%)</span></div>
       <div class="tkn-kpi-lbl">Vendor API (cl/*, an/*)</div>
     </div>
     <div class="tkn-kpi-card">
-      <div class="tkn-kpi-val">{fmt_tokens(self_hosted_tokens)} <span class="tkn-kpi-pct">({loc_pct:.1f}%)</span></div>
+      <div class="tkn-kpi-val" id="tkn-local-tokens">{fmt_tokens(self_hosted_tokens)} <span class="tkn-kpi-pct">({loc_pct:.1f}%)</span></div>
       <div class="tkn-kpi-lbl">Self-hosted GPU (un/qwen)</div>
     </div>
-{other_kpi_card}
+    <div class="tkn-kpi-card" id="tkn-other-card"{'' if other_tokens > 0 else ' hidden'}>
+      <div class="tkn-kpi-val" id="tkn-other-tokens">{fmt_tokens(other_tokens)} <span class="tkn-kpi-pct">({oth_pct:.1f}%)</span></div>
+      <div class="tkn-kpi-lbl">Unclassified models</div>
+    </div>
     <div class="tkn-kpi-card">
-      <div class="tkn-kpi-val">{total_calls:,}</div>
+      <div class="tkn-kpi-val" id="tkn-total-calls">{total_calls:,}</div>
       <div class="tkn-kpi-lbl">LLM Calls</div>
     </div>
     <div class="tkn-kpi-card">
-      <div class="tkn-kpi-val">{days_span}d <span class="tkn-kpi-pct">({days_present} active, {days_missing} unobserved)</span></div>
+      <div class="tkn-kpi-val" id="tkn-period-days">{days_span}d <span class="tkn-kpi-pct">({days_present} active, {days_missing} unobserved)</span></div>
       <div class="tkn-kpi-lbl">Calendar Window</div>
     </div>
   </div>
 
+  <div class="tkn-period-controls" role="group" aria-label="Token heatmap period and selection">
+    <label>Period <select id="tkn-period" aria-label="Token heatmap period"><option value="24h">24 hours (latest MSK day)</option><option value="7d" selected>7 days</option><option value="30d">30 days</option><option value="range">Date range</option></select></label>
+    <label>From <input type="date" id="tkn-range-from" aria-label="Range start"></label>
+    <label>To <input type="date" id="tkn-range-to" aria-label="Range end"></label>
+    <label>Selected day <select id="tkn-selected-day" aria-label="Selected MSK day"></select></label>
+    <label>Selected hour <select id="tkn-selected-hour" aria-label="Selected MSK hour"></select></label>
+    <label>5-minute interval <select id="tkn-selected-interval" aria-label="Selected 5-minute MSK interval"></select></label>
+    <span id="tkn-period-label" role="status" aria-live="polite"></span>
+    <div class="tkn-detail-info" id="tkn-detail-info" role="status" aria-live="polite">Select a day and hour above for the recorded hour summary.</div>
+    <div class="tkn-detail-info" id="tkn-hour-detail" aria-live="polite"></div>
+    <div class="tkn-detail-info" id="tkn-interval-detail" role="status" aria-live="polite"></div>
+  </div>
+
   <div class="tkn-controls">
     <span class="tkn-ctrl-label">View:</span>
-    <button type="button" class="tkn-btn active" data-view="split">Split View (Self-hosted vs Vendor)</button>
-    <button type="button" class="tkn-btn" data-view="gateway">Vendor API (Gemini / Claude)</button>
-    <button type="button" class="tkn-btn" data-view="local">Self-hosted GPU (Qwen)</button>
-    <button type="button" class="tkn-btn" data-view="total">Combined Total</button>
+    <button type="button" class="tkn-btn active" data-view="split" aria-pressed="true">Split View (Self-hosted vs Vendor)</button>
+    <button type="button" class="tkn-btn" data-view="gateway" aria-pressed="false">Vendor API (Gemini / Claude)</button>
+    <button type="button" class="tkn-btn" data-view="local" aria-pressed="false">Self-hosted GPU (Qwen)</button>
+    <button type="button" class="tkn-btn" data-view="total" aria-pressed="false">Combined Total</button>
   </div>
 
   <div class="tkn-grid-container" id="tkn-grid-container">
     <div class="tkn-card" id="tkn-card-gw">
       <div class="tkn-card-header">
         <h3>Vendor API (cl/*, an/* — Cloud Providers)</h3>
-        <span class="tkn-card-sub">Proposer, Reflector, Strategist, Curator &bull; Quantile scale</span>
+        <span class="tkn-card-sub">Proposer, Reflector, Strategist, Curator &bull; Independent quantile scale</span>
       </div>
+      <p class="tkn-scroll-cue">Scroll within each chart to inspect retained days. Color quantiles are independent per chart.</p>
       <div class="tkn-matrix-wrap" id="matrix-gw"></div>
       <div class="tkn-legend" id="legend-gw"></div>
     </div>
@@ -8566,8 +9295,9 @@ def build_tokens_panel(data: dict[str, Any], host: str = '', generated_at: str |
     <div class="tkn-card" id="tkn-card-loc">
       <div class="tkn-card-header">
         <h3>Self-hosted GPU (un/* — Qwen на 3090Ti)</h3>
-        <span class="tkn-card-sub">Bridge Executor (без потокенной оплаты) &bull; Quantile scale</span>
+        <span class="tkn-card-sub">Bridge Executor (без потокенной оплаты) &bull; Independent quantile scale</span>
       </div>
+      <p class="tkn-scroll-cue">Scroll within each chart to inspect retained days. Color quantiles are independent per chart.</p>
       <div class="tkn-matrix-wrap" id="matrix-loc"></div>
       <div class="tkn-legend" id="legend-loc"></div>
     </div>
@@ -8575,8 +9305,9 @@ def build_tokens_panel(data: dict[str, Any], host: str = '', generated_at: str |
     <div class="tkn-card" id="tkn-card-tot" style="display: none;">
       <div class="tkn-card-header">
         <h3>Combined Total LLM Calls</h3>
-        <span class="tkn-card-sub">All models aggregated &bull; Quantile scale</span>
+        <span class="tkn-card-sub">All models aggregated &bull; Independent quantile scale</span>
       </div>
+      <p class="tkn-scroll-cue">Scroll within this chart to inspect retained days. Color quantiles are independent.</p>
       <div class="tkn-matrix-wrap" id="matrix-tot"></div>
       <div class="tkn-legend" id="legend-tot"></div>
     </div>
@@ -8602,7 +9333,6 @@ def build_tokens_panel(data: dict[str, Any], host: str = '', generated_at: str |
     <div class="tkn-strip-hours">
       <span>00h</span><span>03h</span><span>06h</span><span>09h</span><span>12h</span><span>15h</span><span>18h</span><span>21h</span><span>24h</span>
     </div>
-    <div class="tkn-detail-info" id="tkn-detail-info">Hover over any 5-minute block to inspect tokens and top component.</div>
   </div>
 
   <div id="tkn-tooltip" class="tkn-tooltip" style="display: none;"></div>
@@ -8652,6 +9382,15 @@ def build_tokens_panel(data: dict[str, Any], host: str = '', generated_at: str |
       color: #8b949e;
       font-weight: 600;
     }}
+    .tkn-period-controls {{ display:flex; flex-wrap:wrap; align-items:center; gap:8px; margin:12px 0; padding:8px; border:1px solid #30363d; border-radius:6px; }}
+    .tkn-period-controls label {{ display:flex; flex-direction:column; gap:4px; color:#8b949e; font-size:.78rem; }}
+    .tkn-period-controls select, .tkn-period-controls input {{ min-height:44px; min-width:100px; padding:8px; color:#dcebe1; background:#161b22; border:1px solid #3d6b52; border-radius:4px; }}
+    #tkn-selected-interval {{ min-width:150px; }}
+    .tkn-period-controls [type=date] {{ min-width:150px; }}
+    .tkn-period-controls [role=status] {{ flex:1 1 100%; color:#8b949e; }}
+    .tkn-scroll-cue {{ margin:4px 0 10px; color:#8b949e; font-size:.78rem; }}
+    .tkn-day-col {{ min-width:20px; min-height:308px; }}
+    .tkn-day-col:focus-visible, .tkn-cell:focus-visible {{ outline:3px solid #f0883e; outline-offset:2px; }}
     .tkn-btn {{
       background: #21262d;
       color: #c9d1d9;
@@ -8733,6 +9472,9 @@ def build_tokens_panel(data: dict[str, Any], host: str = '', generated_at: str |
     }}
     .tkn-matrix-wrap {{
       display: flex;
+      max-width: 100%;
+      overflow-x: auto;
+      overscroll-behavior-x: contain;
       gap: 2px;
       user-select: none;
       padding-bottom: 4px;
@@ -8906,10 +9648,74 @@ def build_tokens_panel(data: dict[str, Any], host: str = '', generated_at: str |
 
     const dates = data.dates;
     const hourly = data.hourly || {{}};
+    const periodControl = document.getElementById('tkn-period');
+    const selectedDay = document.getElementById('tkn-selected-day');
+    const selectedHour = document.getElementById('tkn-selected-hour');
+    const selectedInterval = document.getElementById('tkn-selected-interval');
+    let period = '7d';
+    function visibleDates() {{
+      const from = document.getElementById('tkn-range-from').value;
+      const to = document.getElementById('tkn-range-to').value;
+      if (period === 'range') return dates.filter(d => (!from || d >= from) && (!to || d <= to));
+      const count = period === '24h' ? 1 : (period === '30d' ? 30 : 7);
+      return dates.slice(-count);
+    }}
     const fiveMin = data.five_min || {{}};
     const summary = data.summary || {{}};
     const qHourly = summary.quantiles_hourly || {{}};
     const q5m = summary.quantiles_5min || {{}};
+    function updatePeriodLabel() {{
+      const label = document.getElementById('tkn-period-label');
+      if (!label) return;
+      const shown = visibleDates();
+      const from = shown[0] || 'no recorded dates';
+      const to = shown[shown.length - 1] || 'no recorded dates';
+      const rangeState = period === 'range' && !shown.length
+        ? (document.getElementById('tkn-range-from').value && document.getElementById('tkn-range-to').value && document.getElementById('tkn-range-from').value > document.getElementById('tkn-range-to').value ? ' · Start date is after end date.' : ' · No recorded dates in this range.')
+        : '';
+      const periodName = period === '24h' ? '24h MSK calendar day (latest available date)' : period;
+      const integrity = Array.isArray(summary.invalid_days);
+      const invalid = integrity ? summary.invalid_days.filter(d => shown.includes(d)).length : null;
+      const integrityText = integrity ? (invalid ? invalid + ' incomplete day(s)' : 'integrity reported complete') : 'completeness unknown';
+      label.textContent = 'Showing ' + periodName + ' · ' + from + ' to ' + to + ' · MSK (UTC+3) · independent quantile scales; equal color does not mean equal tokens. · ' + integrityText + rangeState;
+    }}
+    function updatePeriodSummary() {{
+      const shown = visibleDates();
+      let total = 0, gateway = 0, local = 0, other = 0, calls = 0, observed = 0;
+      shown.forEach(d => {{
+        const day = hourly[d];
+        if (day === null || day === undefined) return;
+        observed++;
+        day.forEach(row => {{
+          if (!row) return;
+          const rowLocal = Number(row[0]) || 0, rowGateway = Number(row[1]) || 0;
+          const rowOther = Number(row[2]) || 0, rowTotal = Number(row[3]) || 0;
+          local += rowLocal; gateway += rowGateway; other += rowOther;
+          total += rowTotal; calls += Number(row[4]) || 0;
+        }});
+      }});
+      document.getElementById('tkn-total-tokens').textContent = fmtTok(total);
+      document.getElementById('tkn-vendor-tokens').innerHTML = fmtTok(gateway) + ' <span class="tkn-kpi-pct">(' + (total ? (gateway / total * 100).toFixed(1) : '0.0') + '%)</span>';
+      document.getElementById('tkn-local-tokens').innerHTML = fmtTok(local) + ' <span class="tkn-kpi-pct">(' + (total ? (local / total * 100).toFixed(1) : '0.0') + '%)</span>';
+      const otherCard = document.getElementById('tkn-other-card');
+      if (otherCard) otherCard.hidden = other === 0;
+      const otherValue = document.getElementById('tkn-other-tokens');
+      if (otherValue) otherValue.innerHTML = fmtTok(other) + ' <span class="tkn-kpi-pct">(' + (total ? (other / total * 100).toFixed(1) : '0.0') + '%)</span>';
+      document.getElementById('tkn-total-calls').textContent = calls.toLocaleString();
+      document.getElementById('tkn-period-days').textContent = shown.length + 'd (' + observed + ' observed, ' + (shown.length - observed) + ' unobserved)';
+    }}
+    function fillPeriodControls() {{
+      selectedDay.replaceChildren();
+      visibleDates().forEach(d => {{ const o=document.createElement('option'); o.value=d; o.textContent=d + (hourly[d] == null ? ' · unobserved' : ''); selectedDay.appendChild(o); }});
+      selectedHour.replaceChildren();
+      for (let h=0; h<24; h++) {{ const o=document.createElement('option'); o.value=String(h); o.textContent=String(h).padStart(2,'0')+':00 MSK'; selectedHour.appendChild(o); }}
+      selectedDay.disabled = selectedDay.options.length === 0;
+      selectedHour.disabled = selectedDay.options.length === 0;
+      selectedInterval.disabled = selectedDay.options.length === 0;
+      if (visibleDates().includes(activeDate)) selectedDay.value=activeDate;
+      else if (selectedDay.options.length) activeDate=selectedDay.value;
+      fillIntervalOptions();
+    }}
 
     let activeDate = dates[dates.length - 1];
     for (let i = dates.length - 1; i >= 0; i--) {{
@@ -8974,7 +9780,7 @@ def build_tokens_panel(data: dict[str, Any], host: str = '', generated_at: str |
 
       const q = qHourly[qKey] || [1000, 5000, 20000, 100000];
 
-      dates.forEach(d => {{
+      visibleDates().forEach(d => {{
         const col = document.createElement('div');
         col.className = 'tkn-day-col' + (d === activeDate ? ' active-col' : '');
         col.setAttribute('data-date', d);
@@ -8995,7 +9801,7 @@ def build_tokens_panel(data: dict[str, Any], host: str = '', generated_at: str |
               showTooltip(e, '<div class="tkn-tt-title">' + d + ' (Unobserved)</div><div>No tracking record for this calendar day.</div>');
             }});
           }} else {{
-            const row = dayData[h] || [0, 0, 0, 0, ''];
+            const row = dayData[h] || [0, 0, 0, 0, 0, ''];
             const tok = row[fieldIdx] || 0;
             const lvl = getLevel(tok, q);
             if (lvl === 0) {{
@@ -9007,14 +9813,15 @@ def build_tokens_panel(data: dict[str, Any], host: str = '', generated_at: str |
               const hStr = String(h).padStart(2, '0') + ':00 MSK';
           const utcH = String((h - 3 + 24) % 24).padStart(2, '0');
               let html = '<div class="tkn-tt-title">' + d + ' ' + hStr + ' <span style="font-size:11px;color:#8b949e">(' + utcH + ':00 UTC)</span></div>';
-              if (row[2] === 0) {{
+              if (row[3] === 0) {{
                 html += '<div>0 tokens (Quiet hour, 0 calls)</div>';
               }} else {{
-                html += '<div class="tkn-tt-row"><span>Total:</span><span>' + fmtTok(row[2]) + '</span></div>';
+                html += '<div class="tkn-tt-row"><span>Total:</span><span>' + fmtTok(row[3]) + '</span></div>';
                 html += '<div class="tkn-tt-row"><span>Gateway:</span><span>' + fmtTok(row[1]) + '</span></div>';
                 html += '<div class="tkn-tt-row"><span>Local (Qwen):</span><span>' + fmtTok(row[0]) + '</span></div>';
-                html += '<div class="tkn-tt-row"><span>Calls:</span><span>' + row[3] + '</span></div>';
-                if (row[4]) html += '<div class="tkn-tt-row"><span>Top:</span><span>' + row[4] + '</span></div>';
+                html += '<div class="tkn-tt-row"><span>Other:</span><span>' + fmtTok(row[2]) + '</span></div>';
+                html += '<div class="tkn-tt-row"><span>Calls:</span><span>' + row[4] + '</span></div>';
+                if (row[5]) html += '<div class="tkn-tt-row"><span>Top:</span><span>' + row[5] + '</span></div>';
               }}
               showTooltip(e, html);
             }});
@@ -9047,6 +9854,36 @@ def build_tokens_panel(data: dict[str, Any], host: str = '', generated_at: str |
       }}
     }}
 
+    function fillIntervalOptions() {{
+      const previous = selectedInterval.value;
+      const hour = Number(selectedHour.value) || 0;
+      selectedInterval.replaceChildren();
+      for (let minute = 0; minute < 60; minute += 5) {{
+        const bucket = hour * 12 + minute / 5;
+        const option = document.createElement('option');
+        option.value = String(bucket);
+        option.textContent = String(hour).padStart(2, '0') + ':' + String(minute).padStart(2, '0') + ' MSK';
+        selectedInterval.appendChild(option);
+      }}
+      selectedInterval.value = [...selectedInterval.options].some(option => option.value === previous)
+        ? previous : selectedInterval.options[0].value;
+      updateIntervalDetail();
+    }}
+
+    function updateIntervalDetail() {{
+      const panel = document.getElementById('tkn-interval-detail');
+      const dateStr = selectedDay.value;
+      if (!dateStr || selectedDay.disabled) {{ panel.textContent = 'No five-minute detail: select a recorded day.'; return; }}
+      const bucket = Number(selectedInterval.value);
+      const hour = Math.floor(bucket / 12), minute = (bucket % 12) * 5;
+      const time = dateStr + ' ' + String(hour).padStart(2, '0') + ':' + String(minute).padStart(2, '0') + ' MSK';
+      const buckets = fiveMin[dateStr];
+      if (buckets === null || buckets === undefined) {{ panel.textContent = time + ' — day unobserved; interval data unavailable.'; return; }}
+      const row = buckets[String(bucket)];
+      if (!row) {{ panel.textContent = time + ' — no five-minute bucket recorded; quiet versus absent interval is not distinguished by this projection.'; return; }}
+      panel.textContent = time + ' — total ' + fmtTok(row[3]) + ', vendor ' + fmtTok(row[1]) + ', local ' + fmtTok(row[0]) + ', other ' + fmtTok(row[2]) + ', ' + row[4] + ' calls, top: ' + (row[5] || 'component unavailable') + '.';
+    }}
+
     function renderDayDetail(dateStr) {{
       const lbl = document.getElementById('tkn-active-date-label');
       if (lbl) lbl.textContent = dateStr;
@@ -9059,11 +9896,12 @@ def build_tokens_panel(data: dict[str, Any], host: str = '', generated_at: str |
       const isMissing = (buckets === null || buckets === undefined);
       const q = q5m.gateway || [500, 2000, 8000, 50000];
 
-      let dayTotal = 0, dayGw = 0, dayLoc = 0, dayCalls = 0;
+      let dayTotal = 0, dayGw = 0, dayLoc = 0, dayOther = 0, dayCalls = 0;
 
       for (let b = 0; b < 288; b++) {{
         const cell = document.createElement('div');
         cell.className = 'tkn-strip-cell';
+        cell.setAttribute('data-bucket', String(b));
         const h = Math.floor(b / 12);
         const m = (b % 12) * 5;
         const timeStr = String(h).padStart(2, '0') + ':' + String(m).padStart(2, '0') + ' MSK';
@@ -9082,8 +9920,8 @@ def build_tokens_panel(data: dict[str, Any], host: str = '', generated_at: str |
               showTooltip(e, '<div class="tkn-tt-title">' + dateStr + ' ' + timeStr + '</div><div>0 tokens (quiet 5m)</div>');
             }});
           }} else {{
-            const loc = bRow[0], gw = bRow[1], tot = bRow[2], calls = bRow[3], top = bRow[4];
-            dayTotal += tot; dayGw += gw; dayLoc += loc; dayCalls += calls;
+            const loc = bRow[0], gw = bRow[1], other = bRow[2], tot = bRow[3], calls = bRow[4], top = bRow[5];
+            dayTotal += tot; dayGw += gw; dayLoc += loc; dayOther += other; dayCalls += calls;
             const lvl = getLevel(gw > 0 ? gw : loc, q);
             cell.classList.add(gw > 0 ? ('gw-lvl-' + lvl) : ('loc-lvl-' + lvl));
             cell.addEventListener('mouseenter', (e) => {{
@@ -9091,6 +9929,7 @@ def build_tokens_panel(data: dict[str, Any], host: str = '', generated_at: str |
               html += '<div class="tkn-tt-row"><span>Total:</span><span>' + fmtTok(tot) + '</span></div>';
               html += '<div class="tkn-tt-row"><span>Gateway:</span><span>' + fmtTok(gw) + '</span></div>';
               html += '<div class="tkn-tt-row"><span>Local (Qwen):</span><span>' + fmtTok(loc) + '</span></div>';
+              html += '<div class="tkn-tt-row"><span>Other:</span><span>' + fmtTok(other) + '</span></div>';
               html += '<div class="tkn-tt-row"><span>Calls:</span><span>' + calls + '</span></div>';
               if (top) html += '<div class="tkn-tt-row"><span>Top:</span><span>' + top + '</span></div>';
               showTooltip(e, html);
@@ -9099,6 +9938,13 @@ def build_tokens_panel(data: dict[str, Any], host: str = '', generated_at: str |
         }}
         cell.addEventListener('mousemove', moveTooltip);
         cell.addEventListener('mouseleave', hideTooltip);
+        cell.addEventListener('click', () => {{
+          selectedHour.value = String(h);
+          fillIntervalOptions();
+          selectedInterval.value = String(b);
+          updateHourDetail();
+          updateIntervalDetail();
+        }});
         wrap.appendChild(cell);
       }}
 
@@ -9106,13 +9952,18 @@ def build_tokens_panel(data: dict[str, Any], host: str = '', generated_at: str |
         if (isMissing) {{
           info.textContent = 'Date ' + dateStr + ' has no recorded LLM calls data (unobserved gap).';
         }} else {{
-          info.textContent = dateStr + ' Summary: ' + fmtTok(dayTotal) + ' total tokens (' + fmtTok(dayGw) + ' gateway, ' + fmtTok(dayLoc) + ' local) across ' + dayCalls + ' calls.';
+          const hasIntegrity = data.summary && Array.isArray(data.summary.invalid_days);
+          const invalidDays = hasIntegrity ? data.summary.invalid_days : [];
+          const integrity = invalidDays.includes(dateStr) ? ' · incomplete (malformed token rows excluded)' : (hasIntegrity ? '' : ' · completeness unknown');
+          info.textContent = dateStr + ' Summary: ' + fmtTok(dayTotal) + ' total tokens (' + fmtTok(dayGw) + ' gateway, ' + fmtTok(dayLoc) + ' local, ' + fmtTok(dayOther) + ' other) across ' + dayCalls + ' calls.' + integrity;
         }}
       }}
     }}
 
     function selectDate(d) {{
       activeDate = d;
+      if (selectedDay) selectedDay.value = d;
+      if (selectedDay) selectedDay.value = d;
       document.querySelectorAll('.tkn-day-col').forEach(col => {{
         if (col.getAttribute('data-date') === d) {{
           col.classList.add('active-col');
@@ -9121,17 +9972,56 @@ def build_tokens_panel(data: dict[str, Any], host: str = '', generated_at: str |
         }}
       }});
       renderDayDetail(d);
+      updateHourDetail();
+      fillIntervalOptions();
     }}
+
+    function updateHourDetail() {{
+      const dateStr = selectedDay.value, hour = Number(selectedHour.value);
+      const row = (hourly[dateStr] || [])[hour];
+      const panel = document.getElementById('tkn-hour-detail');
+      if (!row) {{ panel.textContent = dateStr + ' ' + String(hour).padStart(2,'0') + ':00 MSK — time unavailable or unobserved.'; return; }}
+      panel.textContent = dateStr + ' ' + String(hour).padStart(2,'0') + ':00 MSK — total ' + fmtTok(row[3]) + ', vendor ' + fmtTok(row[1]) + ', local ' + fmtTok(row[0]) + ', other ' + fmtTok(row[2]) + ', ' + row[4] + ' calls' + (row[5] ? ', top: ' + row[5] : ', component unavailable') + '.';
+    }}
+    function changePeriod() {{
+      period = periodControl.value;
+      const shown = visibleDates();
+      fillPeriodControls(); updatePeriodSummary(); updatePeriodLabel();
+      if (shown.length) {{
+        document.getElementById('tkn-day-detail').hidden = false;
+        selectDate(selectedDay.value);
+      }} else {{
+        activeDate = null;
+        document.getElementById('tkn-active-date-label').textContent = 'No date selected';
+        document.getElementById('tkn-strip-wrap').replaceChildren();
+        document.getElementById('tkn-detail-info').textContent = 'No day details: the selected period contains no recorded dates.';
+        document.getElementById('tkn-hour-detail').textContent = 'No hour detail: select a period containing a recorded date.';
+        document.getElementById('tkn-interval-detail').textContent = 'No five-minute detail: select a recorded day.';
+        document.getElementById('tkn-day-detail').hidden = true;
+      }}
+      renderMatrix('matrix-gw', 'legend-gw', 1, 'gateway', 'gw-lvl');
+      renderMatrix('matrix-loc', 'legend-loc', 0, 'local', 'loc-lvl');
+      renderMatrix('matrix-tot', 'legend-tot', 3, 'total', 'tot-lvl');
+    }}
+    periodControl.addEventListener('change', changePeriod);
+    document.getElementById('tkn-range-from').addEventListener('change', () => {{ if (period === 'range') changePeriod(); }});
+    document.getElementById('tkn-range-to').addEventListener('change', () => {{ if (period === 'range') changePeriod(); }});
+    selectedDay.addEventListener('change', () => {{ selectDate(selectedDay.value); updateHourDetail(); }});
+    selectedHour.addEventListener('change', () => {{ updateHourDetail(); fillIntervalOptions(); }});
+    selectedInterval.addEventListener('change', updateIntervalDetail);
+    for (let h=0; h<24; h++) {{ const o=document.createElement('option'); o.value=String(h); o.textContent=String(h).padStart(2,'0')+':00 MSK'; selectedHour.appendChild(o); }}
+    fillPeriodControls(); updatePeriodSummary(); updatePeriodLabel(); updateHourDetail();
 
     renderMatrix('matrix-gw', 'legend-gw', 1, 'gateway', 'gw-lvl');
     renderMatrix('matrix-loc', 'legend-loc', 0, 'local', 'loc-lvl');
-    renderMatrix('matrix-tot', 'legend-tot', 2, 'total', 'tot-lvl');
+    renderMatrix('matrix-tot', 'legend-tot', 3, 'total', 'tot-lvl');
     renderDayDetail(activeDate);
 
     document.querySelectorAll('.tkn-btn').forEach(btn => {{
       btn.addEventListener('click', () => {{
-        document.querySelectorAll('.tkn-btn').forEach(b => b.classList.remove('active'));
+        document.querySelectorAll('.tkn-btn').forEach(b => {{ b.classList.remove('active'); b.setAttribute('aria-pressed', 'false'); }});
         btn.classList.add('active');
+        btn.setAttribute('aria-pressed', 'true');
         const view = btn.getAttribute('data-view');
         const cardGw = document.getElementById('tkn-card-gw');
         const cardLoc = document.getElementById('tkn-card-loc');
@@ -9167,10 +10057,7 @@ CSS = '''
       color-scheme: dark;
     }
     * { box-sizing: border-box; }
-    html, body {
-      overflow-x: hidden;
-      max-width: 100vw;
-    }
+    html, body { max-width: 100%; }
     body {
       margin: 0;
       background: radial-gradient(ellipse at top, #0c1512 0%, #080f0c 60%, #050a08 100%);
@@ -9189,11 +10076,14 @@ CSS = '''
       border-bottom: 2px solid #56d364;
       padding: 8px 20px;
       display: flex;
-      flex-wrap: nowrap;
-      overflow-x: auto;
+      flex-wrap: wrap;
       align-items: center;
-      gap: 18px;
+      gap: 8px 18px;
     }
+    .empire-stats-context { max-width: 1280px; margin: 0 auto; padding: 8px 20px; border-bottom: 1px solid #182a20; }
+    .empire-stats-context summary { min-height: 44px; display: flex; align-items: center; cursor: pointer; color: #8aa695; }
+    .empire-stats-context .empire-stats { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px 18px; padding-top: 8px; }
+    .empire-stats-context .empire-stat { min-width: 0; }
     .empire-title {
       color: #56d364;
       font-size: 1.05em;
@@ -9203,12 +10093,8 @@ CSS = '''
       margin: 0;
       font-weight: 700;
     }
-    .empire-stats {
-      display: flex;
-      flex-wrap: nowrap;
-      gap: 18px;
-    }
-    .empire-stat { display: flex; flex-direction: column; align-items: center; min-width: 78px; white-space: nowrap; }
+    .empire-stat { display: flex; flex-direction: column; align-items: flex-start; min-width: 78px; max-width: 100%; overflow-wrap: anywhere; }
+    .empire-stat .stat-value { overflow-wrap: anywhere; }
 
     /* --- freshness badge (issue #48) --- */
     .empire-fresh { margin-left: auto; white-space: nowrap; }
@@ -9318,6 +10204,12 @@ CSS = '''
       border-color: #8c2a2a;
       color: #ff9999;
       background: #2b1111;
+    }
+    .now-detail-disclosure > summary {
+      min-height: 44px;
+      display: flex;
+      align-items: center;
+      cursor: pointer;
     }
     .now-item {
       display: flex;
@@ -9441,6 +10333,41 @@ CSS = '''
       border-color: #2f5c46;
       background: rgba(15, 32, 24, 0.8);
     }
+    .feed-card { min-width: 0; }
+    .feed-card-summary {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      min-height: 44px;
+      cursor: pointer;
+      list-style: none;
+    }
+    .feed-card-summary::-webkit-details-marker { display: none; }
+    .feed-card-chevron { flex: 0 0 auto; width: 0; height: 0; border-top: 5px solid transparent; border-bottom: 5px solid transparent; border-left: 6px solid #8aa695; transition: transform 120ms ease; }
+    .feed-card[open] > .feed-card-summary .feed-card-chevron { transform: rotate(90deg); }
+    .feed-card-hint, .feed-coverage, .feed-archive-status {
+      color: #8aa695;
+      font-size: 0.78em;
+    }
+    .feed-card-evidence { padding: 8px 4px 2px; }
+    .feed-controls { display: grid; gap: 6px; margin-bottom: 10px; }
+    .feed-controls button, .feed-show-all { display: inline-flex; align-items: center; justify-content: center; }
+    .feed-controls label { color: #9db4a6; font-size: 0.8em; }
+    .feed-controls input[type="search"], .feed-controls input[type="date"] {
+      width: min(100%, 28rem); min-height: 44px; padding: 8px 10px;
+      color: #e2f0e6; background: rgba(8, 15, 11, 0.8); border: 1px solid #28503c; border-radius: 4px;
+    }
+    .feed-controls input[type="date"] { color-scheme: dark; }
+    .feed-controls input[type="date"]::-webkit-calendar-picker-indicator { filter: invert(0.75); }
+    .feed-coverage { margin: 0; }
+    .feed-clear-search, .feed-show-all {
+      justify-self: start; min-height: 44px; padding: 8px 12px;
+      appearance: none; -webkit-appearance: none;
+      color: #b8d0c2; background: #10271a; border: 1px solid #2f5c46;
+      border-radius: 4px; font-family: 'Consolas', monospace; font-size: 0.78rem; cursor: pointer;
+    }
+    .feed-clear-search:hover, .feed-show-all:hover { border-color: #56d364; color: #56d364; }
     .feed-outcome-integrated { border-left: 4px solid #2fd3c4; }
     .feed-outcome-failed { border-left: 4px solid #b23a3a; }
     .feed-outcome-gate_blocked { border-left: 4px solid #e06c75; }
@@ -9554,12 +10481,16 @@ CSS = '''
 
     /* --- panel nav + copyable ids (issue #47) --- */
     .panel-nav {
-      padding: 6px 20px;
+      padding: 4px 16px;
       font-family: 'Consolas', monospace;
       font-size: 0.82em;
       border-bottom: 1px solid #182a20;
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 2px 8px;
     }
-    .panel-nav a { color: #2fd3c4; text-decoration: none; }
+    .panel-nav a { color: #2fd3c4; text-decoration: none; display: inline-flex; align-items: center; min-width: 44px; min-height: 44px; padding: 0 4px; }
     .panel-nav a:hover { text-decoration: underline; }
     /* Issue #70: multi-page site nav -- current page highlighted. */
     .site-nav a.nav-current {
@@ -9567,6 +10498,13 @@ CSS = '''
       font-weight: 700;
       text-decoration: underline;
     }
+    a:focus-visible, button:focus-visible, input:focus-visible, summary:focus-visible {
+      outline: 2px solid #2fd3c4;
+      outline-offset: 2px;
+    }
+    .filter-btn, .tkn-btn, .lineage-day-controls button, .lineage-zoom-controls button { min-width: 44px; min-height: 44px; padding: 8px 12px; }
+    .filter-btn.active, .tkn-btn.active, .lineage-day-controls button.active { color: #56d364; border-color: #56d364; }
+    button[aria-pressed="true"] { color: #56d364; border-color: #56d364; }
     /* Issue #70: index teasers. */
     .teaser-list {
       list-style: none;
@@ -9702,7 +10640,19 @@ CSS = '''
       padding: 4px 8px;
       margin: 0 0 10px 0;
       width: min(420px, 100%);
+      min-height: 44px;
     }
+    .lessons-controls { display: flex; flex-wrap: wrap; gap: 8px; align-items: end; }
+    .lessons-controls label { color: #8aa695; display: flex; flex-direction: column; gap: 4px; flex: 1 1 180px; min-width: 0; }
+    .lessons-controls label input, .lessons-controls label select { min-height: 44px; width: 100%; box-sizing: border-box; background: #101913; color: #e2f0e6; border: 1px solid #2f5c46; padding: 8px; }
+    .lessons-controls button { min-height: 44px; width: auto; flex: 0 1 150px; box-sizing: border-box; background: #101913; color: #e2f0e6; border: 1px solid #2f5c46; padding: 8px; }
+    .lessons-controls .lessons-match-count, .lessons-controls .lessons-page-status { flex: 1 1 100%; }
+    .lessons-controls :focus-visible { outline: 2px solid #56d364; outline-offset: 2px; }
+    .lessons-match-count, .lessons-page-status { color: #8aa695; margin: 0; }
+    .lessons-source-counts, .lessons-count-note, .lessons-body-policy { line-height: 1.5; overflow-wrap: anywhere; }
+    .lessons-controls :focus-visible { outline: 2px solid #56d364; outline-offset: 2px; }
+    .lessons-match-count, .lessons-page-status { color: #8aa695; margin: 0; }
+    .lessons-source-counts, .lessons-count-note, .lessons-body-policy { line-height: 1.5; overflow-wrap: anywhere; }
     .lessons-list { list-style: none; margin: 0; padding: 0; }
     .lesson-day-header {
       font-size: 0.72em;
@@ -9964,9 +10914,23 @@ CSS = '''
     .arch-edge-best { stroke: #e2f0e6; stroke-width: 3.2; }
     .arch-node { cursor: pointer; }
     .lineage-day-controls { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; padding: 8px 12px; }
-    .lineage-day-controls button { background: #10271a; color: #b8d0c2; border: 1px solid #2f5c46; padding: 4px 8px; cursor: pointer; }
+    .lineage-controls-wrap { min-width: 0; flex: 0 0 auto; }
+    .lineage-day-controls button { background: #10271a; color: #b8d0c2; border: 1px solid #2f5c46; padding: 8px 12px; min-height: 44px; cursor: pointer; }
     .lineage-day-controls button.active { border-color: #56d364; color: #56d364; }
     .lineage-day-controls input { background: #08110c; color: #dcebe1; border: 1px solid #2f5c46; padding: 3px; }
+    body.page-lineage .lineage-coverage-note { min-width: 0; max-width: 100%; }
+    body.page-lineage .lineage-legend { min-width: 0; max-width: 100%; }
+    .lineage-day-controls button[data-lineage-current] { min-height: 44px; }
+    .lineage-cycle-list button { min-height: 44px; padding: 8px 12px; color: #2fd3c4; background: #080f0c; border: 1px solid #2f5c46; font: inherit; cursor: pointer; }
+    .lineage-day-controls button:focus-visible, .lineage-cycle-list button:focus-visible, .lineage-list-dialog button:focus-visible { outline: 3px solid #2fd3c4; outline-offset: 2px; }
+    .lineage-list-dialog { width: min(560px, calc(100vw - 24px)); max-height: min(80dvh, 720px); padding: 12px; overflow: auto; border: 1px solid #2f5c46; background: #0d1a15; color: #dcebe1; }
+    .lineage-list-dialog::backdrop { background: rgba(0, 0, 0, .68); }
+    .lineage-list-dialog h2 { margin: 0 0 8px; }
+    .lineage-list-dialog [data-lineage-list-close] { min-height: 44px; padding: 8px 12px; color: #2fd3c4; background: #080f0c; border: 1px solid #2f5c46; font: inherit; cursor: pointer; }
+    .lineage-cycle-list { margin: 0; padding-left: 28px; }
+    .lineage-cycle-list li { padding: 4px 0; }
+    .lineage-cycle-list button { display: block; width: 100%; text-align: left; white-space: normal; overflow-wrap: anywhere; }
+    .lineage-cycle-list button[aria-pressed="true"] { border-color: #56d364; color: #56d364; }
     .lineage-day-group { padding: 4px 12px 10px; overflow-x: auto; }
     .lineage-filter-note { color: #d19a66; font-size: .8rem; }
     .lineage-coverage-note { margin: 2px 12px 8px; color: #8aa695; font-size: .72rem; line-height: 1.35; overflow-wrap: anywhere; }
@@ -10003,7 +10967,7 @@ CSS = '''
     .lineage-collapsed-label { fill: #d19a66; font-size: 10px; pointer-events: none; }
     .lineage-day-truncated { color: #d19a66; font-size: .75rem; }
     .lineage-zoom-controls { display: flex; align-items: center; gap: 6px; padding: 0 12px 8px; flex-wrap: wrap; }
-    .lineage-zoom-controls button { background: #10271a; color: #b8d0c2; border: 1px solid #2f5c46; padding: 4px 9px; cursor: pointer; font-family: inherit; font-size: .78rem; line-height: 1; }
+    .lineage-zoom-controls button { background: #10271a; color: #b8d0c2; border: 1px solid #2f5c46; padding: 8px 12px; min-height: 44px; cursor: pointer; font-family: inherit; font-size: .78rem; line-height: 1; }
     .lineage-zoom-controls button:hover { border-color: #56d364; color: #56d364; }
     .lineage-zoom-controls button[aria-pressed="true"] { background: #16341f; border-color: #56d364; color: #56d364; }
     .lineage-zoom-label { color: #5a7a68; text-transform: uppercase; font-size: 0.68rem; letter-spacing: 0.5px; }
@@ -10037,13 +11001,49 @@ CSS = '''
     /* The details panel would otherwise consume the column the graph needs,
        so on this page it floats over the graph with its own scrollbar. */
     body.page-lineage .cycle-details-panel { position: fixed; right: 12px; bottom: 12px; margin: 0; width: min(430px, calc(100vw - 24px)); max-height: min(62vh, 640px); overflow: auto; z-index: 40; }
+    body.page-lineage .cycle-details-panel.current-locator-details { top: 96px; bottom: auto; max-height: min(32vh, 280px); }
     @media (max-width: 720px) {
+      body.page-lineage .lineage-cycle-list button { font-size: .78rem; }
       body.page-lineage .cycle-details-panel { left: 12px; right: 12px; width: auto; max-height: 50vh; }
+      body.page-lineage .cycle-details-panel.current-locator-details { top: 96px; bottom: auto; max-height: min(32vh, 240px); }
+      body.page-lineage .lineage-zoom-label { display: none; }
+      body.page-lineage .lineage-day-controls { gap: 4px; padding: 2px 6px; }
+      body.page-lineage .lineage-day-controls button { min-height: 44px; padding: 2px 4px; font-size: .72rem; }
+      body.page-lineage .lineage-day-controls label { font-size: .7rem; }
+      body.page-lineage .lineage-coverage-note { margin: 0 6px 2px; }
+      body.page-lineage .lineage-legend { margin: 2px 6px 4px; padding: 4px; gap: 6px; }
+      body.page-lineage .lineage-legend-group { max-width: 100%; }
+      body.page-lineage .lineage-zoom-controls { padding: 0 6px 4px; gap: 4px; }
+      body.page-lineage .lineage-zoom-controls button { min-width: 44px; padding: 0 4px; font-size: .7rem; }
+      body.page-lineage .lineage-zoom-label:last-child { display: none; }
+      body.page-lineage .cycle-details-panel:not([hidden]) { position: fixed; left: 12px; right: 12px; bottom: 12px; margin: 0; width: auto; max-width: none; max-height: 32vh; overflow: auto; }
+    }
+    @media (max-width: 720px) and (max-height: 700px) {
+      body.page-lineage .empire-strip { padding: 2px 8px; gap: 4px; }
+      body.page-lineage .empire-title { font-size: .9em; letter-spacing: 1px; }
+      body.page-lineage .site-nav { padding: 2px 6px; gap: 0 4px; }
+      body.page-lineage .site-nav a { min-height: 44px; padding: 0 2px; font-size: .9em; }
+      body.page-lineage #panel-lineage { overflow-y: auto; overscroll-behavior-y: contain; }
+      body.page-lineage .lineage-day-controls { flex-wrap: nowrap; overflow-x: auto; overscroll-behavior-x: contain; }
+      body.page-lineage .lineage-day-controls > * { flex: 0 0 auto; }
+      body.page-lineage .lineage-zoom-controls { flex-wrap: nowrap; overflow-x: auto; overscroll-behavior-x: contain; }
+      body.page-lineage .lineage-zoom-controls > * { flex: 0 0 auto; }
+      body.page-lineage .lineage-coverage-note { max-height: 2.7em; overflow-y: auto; }
+      body.page-lineage .lineage-legend { flex-wrap: nowrap; overflow-x: auto; overscroll-behavior-x: contain; }
+      body.page-lineage .lineage-legend-group { flex: 0 0 auto; }
+      body.page-lineage .lineage-graph-scroll { flex: 0 0 110px; min-height: 110px; }
+    }
+    @media (max-width: 720px) and (min-height: 701px) {
+      body.page-lineage .lineage-legend { flex-wrap: nowrap; overflow-x: auto; overscroll-behavior-x: contain; }
+      body.page-lineage .lineage-legend-group { flex: 0 0 auto; }
+      body.page-lineage .lineage-zoom-controls { flex-wrap: nowrap; overflow-x: auto; overscroll-behavior-x: contain; }
+      body.page-lineage .lineage-zoom-controls > * { flex: 0 0 auto; }
+      body.page-lineage .lineage-graph-scroll { flex: 0 0 110px; min-height: 110px; }
     }
     .arch-node.cycle-node-selected { stroke: #ffffff; stroke-width: 6; }
     .cycle-details-panel { max-width: 760px; margin: 14px 12px; padding: 14px 16px; border: 1px solid #2f5c46; border-left: 4px solid #56d364; background: #0c1912; box-shadow: 0 8px 24px rgba(0,0,0,.28); }
     .cycle-details-panel[hidden] { display: none; }
-    .cycle-details-close { float: right; background: transparent; color: #8aa695; border: 1px solid #2f5c46; padding: 4px 8px; cursor: pointer; }
+    .cycle-details-close { float: right; min-width: 44px; min-height: 44px; background: transparent; color: #8aa695; border: 1px solid #2f5c46; padding: 4px 8px; cursor: pointer; }
     .cycle-details-title { margin: 0 0 12px; color: #e2f0e6; font-size: 1rem; }
     .cycle-details-body { color: #b8d0c2; font-size: .82rem; line-height: 1.5; }
     .cycle-details-body h3 { color: #56d364; font-size: .78rem; margin: 12px 0 4px; }
@@ -10301,20 +11301,19 @@ def render_page(data: dict[str, Any], host: str, generated_at: str | None = None
     demand_completed = data.get('demand_completed')
     skill_reads = data.get('skill_reads')
     skill_evals = data.get('skill_evals')
-    goal_text = data.get('goal_meta') or data.get('goal_text')
-    agents_md = data.get('agents_meta') or data.get('agents_md')
+    goal_text = data.get('goal_meta') if isinstance(data.get('goal_meta'), dict) else data.get('goal_text')
+    agents_md = data.get('agents_meta') if isinstance(data.get('agents_meta'), dict) else data.get('agents_md')
     cycle_titles = data.get('cycle_titles')
-    # Issue #172: build cycle_details from ledger_history (full history) rather than ledger_tail
+    # Issue #172: use retained history, falling back to tail when history is empty.
     cycle_details = build_cycle_details(
-        ledger_history if ledger_history is not None else ledger_tail,
+        ledger_history or ledger_tail,
         evolution_tree,
         data.get('lessons'),
         data.get('reflections'),
         cycle_titles,
         data.get('cycle_files'),
         subagent_records=data.get('subagent_records'),
-        # ADR-036 rule 3: prompt text is call text and never reaches public pages;
-        # cycle_prompts is read but deliberately not passed to this renderer.
+        cycle_prompts=data.get('cycle_prompts'),
     )
 
     error_note = ''
@@ -10398,14 +11397,10 @@ def render_page(data: dict[str, Any], host: str, generated_at: str | None = None
         evolution_tree=evolution_tree,
         task_titles=cycle_titles,
     )
-    # Determine which cycle IDs are rendered in the feed (for evidence linking)
-    feed_cycles = set()
-    if isinstance(ledger_tail, list):
-        feed_cycles = {
-            str(r.get('cycle_id') or '')
-            for r in ledger_tail
-            if isinstance(r, dict) and r.get('cycle_id')
-        }
+    feed_cycles = {
+        str(row.get('cycle_id') or '') for row in (ledger_tail or [])
+        if isinstance(row, dict) and row.get('cycle_id')
+    }
 
     rendered_lesson_ids = {
         str(lesson.get('id')) for lesson in (data.get('lessons') or [])
@@ -10430,6 +11425,7 @@ def render_page(data: dict[str, Any], host: str, generated_at: str | None = None
         bridge_runs=data.get('bridge_runs'),
         bridge_active_run=data.get('bridge_active_run'),
     )
+    feed_cycles = _initial_cycle_feed_ids(cycle_feed)
     daily_digest = build_daily_digest(
         ledger_tail=ledger_tail,
         demand_completed=demand_completed,
@@ -10441,6 +11437,8 @@ def render_page(data: dict[str, Any], host: str, generated_at: str | None = None
         hypotheses_durable=hypotheses_durable,
         demand_futility=data.get('demand_futility'),
         scorecard=data.get('scorecard'),
+        cycle_detail_ids=set(cycle_details or {}),
+        standalone=True,
     )
     agent_panel = build_agent_panel(
         agents_md=agents_md,
@@ -10558,9 +11556,9 @@ TECHTREE_REDIRECT = '''<!doctype html>
 def _site_nav(current: str) -> str:
     parts = []
     for fname, label in SITE_PAGES:
-        cls = ' class="nav-current"' if fname == current else ''
-        parts.append(f'<a href="{fname}"{cls}>{label}</a>')
-    return '<nav class="panel-nav site-nav" aria-label="Sections">' + ' &middot; '.join(parts) + '</nav>'
+        attrs = ' class="nav-current" aria-current="page"' if fname == current else ''
+        parts.append(f'<a href="{fname}"{attrs}>{label}</a>')
+    return '<nav class="panel-nav site-nav" aria-label="Sections">' + ''.join(parts) + '</nav>'
 
 
 # Issue #250: lineage.html is the one application-shaped page -- the graph owns
@@ -10702,20 +11700,19 @@ def render_pages(data: dict[str, Any], host: str, generated_at: str | None = Non
     demand_completed = data.get('demand_completed')
     skill_reads = data.get('skill_reads')
     skill_evals = data.get('skill_evals')
-    goal_text = data.get('goal_meta') or data.get('goal_text')
-    agents_md = data.get('agents_meta') or data.get('agents_md')
+    goal_text = data.get('goal_meta') if isinstance(data.get('goal_meta'), dict) else data.get('goal_text')
+    agents_md = data.get('agents_meta') if isinstance(data.get('agents_meta'), dict) else data.get('agents_md')
     cycle_titles = data.get('cycle_titles')
-    # Issue #172: build cycle_details from ledger_history (full history) rather than ledger_tail
+    # Issue #172: use retained history, falling back to tail when history is empty.
     cycle_details = build_cycle_details(
-        ledger_history if ledger_history is not None else ledger_tail,
+        ledger_history or ledger_tail,
         evolution_tree,
         data.get('lessons'),
         data.get('reflections'),
         cycle_titles,
         data.get('cycle_files'),
         subagent_records=data.get('subagent_records'),
-        # ADR-036 rule 3: prompt text is call text and never reaches public pages;
-        # cycle_prompts is read but deliberately not passed to this renderer.
+        cycle_prompts=data.get('cycle_prompts'),
     )
 
     error_note = ''
@@ -10735,11 +11732,13 @@ def render_pages(data: dict[str, Any], host: str, generated_at: str | None = Non
     else:
         source_age = 'age unknown'
 
-    empire_strip = build_empire_stats_strip(
+    empire_strip_result = build_empire_stats_strip(
         scorecard,
         age_seconds=age_seconds if isinstance(age_seconds, (int, float)) else None,
         generated_at=generated_at,
+        separate_context=True,
     )
+    empire_strip, empire_stats = empire_strip_result
     now_panel = build_now_panel(
         portfolio=portfolio,
         evolution_tree=evolution_tree,
@@ -10773,13 +11772,6 @@ def render_pages(data: dict[str, Any], host: str, generated_at: str | None = Non
         ledger_history=data.get('ledger_history'),
         now=generated_at,
     )
-    feed_cycles = set()
-    if isinstance(ledger_tail, list):
-        feed_cycles = {
-            str(r.get('cycle_id') or '')
-            for r in ledger_tail
-            if isinstance(r, dict) and r.get('cycle_id')
-        }
     # Issue #72: cycles.html renders FULL history (live ledger + .gz
     # archives) with day grouping and the outcome filter; index teaser
     # keeps the recent-tail feed.
@@ -10815,12 +11807,14 @@ def render_pages(data: dict[str, Any], host: str, generated_at: str | None = Non
         bridge_runs=data.get('bridge_runs'),
         bridge_active_run=data.get('bridge_active_run'),
     )
+    feed_cycles = _initial_cycle_feed_ids(cycle_feed)
     hypotheses_panel = build_hypotheses_panel(
         hypotheses,
         feed_cycles=feed_cycles,
         hypotheses_durable=hypotheses_durable,
         demand_futility=data.get('demand_futility'),
         scorecard=data.get('scorecard'),
+        cycle_detail_ids=set(cycle_details or {}),
     )
     agent_panel = build_agent_panel(
         agents_md=agents_md,
@@ -10840,6 +11834,8 @@ def render_pages(data: dict[str, Any], host: str, generated_at: str | None = Non
     )
 
     def _page(title: str, current: str, page_main: str) -> str:
+        if current == 'cycle.html':
+            current = 'cycles.html'
         return _site_page(title, current, empire_strip, page_main,
                           generated_at, host, source_age,
                           computed_note, error_note, titles_note, esc(str(generator_sha or 'unknown')[:7]))
@@ -10862,7 +11858,7 @@ def render_pages(data: dict[str, Any], host: str, generated_at: str | None = Non
     )
 
     pages: dict[str, str] = {
-        'index.html': _page('eeebot / now', 'index.html', now_panel + teaser_html + teaser_feed),
+        'index.html': _page('eeebot / now', 'index.html', now_panel + empire_stats + teaser_html + teaser_feed),
         'lineage.html': _page('eeebot / lineage', 'lineage.html', canvas_html),
         'cycle.html': _page('eeebot / cycle', 'cycle.html', build_cycle_detail_page()),
         # #208 step 8: the cycle-details records travel as a sibling static JSON

@@ -1,5 +1,9 @@
 # Testing Guide & Operational Baselines
 
+## Token heatmap day-summary regression (#433)
+The public typed projection contract added optional, bounded `summary.invalid_days`; projection `PROJECTION_VERSION` is bumped from `d1.1-typed-2` to `d1.1-typed-3` so publication digest changes with the output domain. Local and embedded reader parity and invalid-only observed-day behavior use synthetic state only; they do not access hosts.
+`tests/test_techtree_viewer.py::test_tokens_day_summary_renders_incomplete_only_for_validated_invalid_date` runs synthetic producer output through `split_render_inputs` and local Playwright Chromium, verifies the visible category total/call count/incomplete marker, rejects a private canary, and saves the rendered detail at `C:/Temp/433-evidence/tokens-day-summary.png`. `test_token_heatmap_local_and_embedded_reader_parity` executes the embedded reader script on synthetic local state without SSH; `test_token_heatmap_invalid_rows_excluded_and_day_marked_incomplete` verifies an invalid-only day is observed, incomplete, and does not expose a canary. `tests/test_two_sinks.py::test_token_heatmap_invalid_days_projection_accepts_retained_sorted_dates` and `...::test_token_heatmap_invalid_days_projection_rejects_bad_shape_and_out_of_window_values` cover the typed projection's Gregorian/ordered/contiguous/62-date bounds and invalid metadata. Projection version is now `d1.1-typed-3` so the output-domain change changes the publish digest. Existing tests cover known zero vs missing days and the 20:59 UTC / 22:00 UTC MSK transition. All fixtures are synthetic and local; this is not host/publication evidence.
+
 ## Continuous Integration (GitHub Actions)
 - **Workflow**: `.github/workflows/test.yml`
 - **Environment**: Ubuntu (Python 3.12)

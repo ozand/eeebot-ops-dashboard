@@ -36,12 +36,19 @@ def _deep_chain_pages(depth: int = 40) -> dict[str, str]:
     """A chain deeper than any viewport: height grows 54px per generation."""
     rows = []
     for i in range(depth):
+        ts = f'2026-01-02T00:{i % 60:02d}:{i % 60:02d}Z'
         rows.append({
             'phase': 'evolution_tree',
             'cycle_id': f'cycle-{i}',
             'sha': f'sha-{i}',
             'parent_sha': f'sha-{i - 1}' if i else '',
-            'ts': f'2026-01-02T00:{i % 60:02d}:{i % 60:02d}Z',
+            'ts': ts,
+        })
+        rows.append({
+            'phase': 'outcome',
+            'cycle_id': f'cycle-{i}',
+            'outcome': 'integrated',
+            'ts': ts,
         })
     data = _fixture()
     data['evolution_tree'] = {'nodes': {}, 'current_sha': f'sha-{depth - 1}'}
@@ -93,6 +100,69 @@ def test_zoom_controls_are_published_on_the_lineage_page() -> None:
     for action in ('in', 'out', 'fit', 'reset'):
         assert f'data-lineage-zoom="{action}"' in html, f'missing zoom control: {action}'
     assert 'data-lineage-zoom-level' in html
+
+
+@pytest.mark.parametrize('viewport', [(320, 568), (390, 667), (390, 844)])
+def test_mobile_lineage_graph_and_zoom_targets_have_usable_geometry(viewport) -> None:
+    pages = _deep_chain_pages()
+    page, close = _open(pages, *viewport)
+    try:
+        graph = page.locator('[data-lineage-graph-scroll]')
+        toolbar = page.locator('.lineage-zoom-controls')
+        day_controls = page.locator('.lineage-day-controls button')
+        for index in range(day_controls.count()):
+            box = day_controls.nth(index).bounding_box()
+            assert box and box['width'] >= 44 and box['height'] >= 44, (viewport, 'day filter', index, box)
+        page.locator('[data-lineage-filter="all"]').click(timeout=1500)
+        assert page.locator('[data-lineage-filter="all"].active').count() == 1
+        page.locator('[data-lineage-filter="today"]').click(timeout=1500)
+        assert page.locator('[data-lineage-filter="today"].active').count() == 1
+        fit = page.locator('[data-lineage-zoom="fit"]')
+        fit.click()
+        assert graph.evaluate('(e) => e.clientHeight >= 100'), (viewport, graph.bounding_box())
+        controls = page.locator('.lineage-zoom-controls button')
+        boxes = [controls.nth(i).bounding_box() for i in range(controls.count())]
+        for index, box in enumerate(boxes):
+            assert box and box['width'] >= 44 and box['height'] >= 44, (viewport, index, box)
+        for left_index, left in enumerate(boxes):
+            for right_index in range(left_index + 1, len(boxes)):
+                right = boxes[right_index]
+                assert left and right and (
+                    left['x'] + left['width'] <= right['x'] or right['x'] + right['width'] <= left['x']
+                    or left['y'] + left['height'] <= right['y'] or right['y'] + right['height'] <= left['y']
+                ), (viewport, left_index, left, right_index, right)
+        plus = page.locator('[data-lineage-zoom="in"]')
+        before = page.locator('#lineage-svg').bounding_box()
+        plus.click()
+        after = page.locator('#lineage-svg').bounding_box()
+        assert before and after and after['width'] > before['width'], (viewport, before, after)
+        fit.click()
+        assert graph.evaluate('(e) => e.clientHeight >= 100'), (viewport, graph.bounding_box())
+        assert page.evaluate('document.documentElement.scrollWidth <= innerWidth && document.documentElement.scrollHeight <= innerHeight')
+        assert toolbar.is_visible()
+    finally:
+        close()
+
+
+@pytest.mark.parametrize('viewport', [(320, 568), (390, 667)])
+def test_short_phone_lineage_graph_preserves_usable_viewport(tmp_path: Path, viewport) -> None:
+    page, close = _open(_deep_chain_pages(), *viewport)
+    try:
+        graph = page.locator('[data-lineage-graph-scroll]')
+        zoom_in = page.locator('[data-lineage-zoom="in"]')
+        zoom_in.click()
+        zoom_in.click()
+        assert graph.evaluate('(e) => e.scrollHeight > e.clientHeight'), (viewport, graph.bounding_box())
+        graph_box = graph.bounding_box()
+        assert graph_box and graph_box['height'] >= 100 and graph_box['y'] + graph_box['height'] <= viewport[1], (viewport, graph_box)
+        controls = page.locator('.lineage-zoom-controls button')
+        for index in range(controls.count()):
+            box = controls.nth(index).bounding_box()
+            assert box and box['width'] >= 44 and box['height'] >= 44, (viewport, index, box)
+        assert page.evaluate('document.documentElement.scrollWidth <= innerWidth && document.documentElement.scrollHeight <= innerHeight')
+        page.screenshot(path=str(tmp_path / f'lineage-scroll-{viewport[0]}x{viewport[1]}.png'), full_page=True)
+    finally:
+        close()
 
 
 # --- browser half -----------------------------------------------------------

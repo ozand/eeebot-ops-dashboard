@@ -103,7 +103,7 @@ _FULL: dict[str, Any] = {
         ],
         "sort": "provenance(operator<self-derived), then vector(V1<V2), as demand._priority_items",
     },
-    "reflections": [{"cycle_id": "cycle-1", "summary": "private reflection", "findings": ["f"],
+    "reflections": [{"cycle_id": "cycle-1", "summary": "own reflection", "findings": ["f"],
                      "recommendations": ["r"]}],
     "bridge_exit_streak": {"consecutive_failures": 0, "last_ts": 1_790_000_000},
     "bridge_exits": [{"ts": "2026-09-29T09:10:00Z", "cycle_id": "cycle-1", "outcome": "success", "exit_status": 0}],

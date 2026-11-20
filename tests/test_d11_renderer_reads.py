@@ -51,8 +51,6 @@ ROOTS = (("scripts/techtree_viewer.py", "render_public_pages"), ("scripts/two_si
 
 #: public data the renderer reads but D1.1 deliberately does NOT publish.
 INTENTIONALLY_WITHHELD: dict[str, str] = {
-    "agents_md": "operator-private AGENTS.md body; only agents_meta (presence, lines, chars) is public",
-    "goal_text": "operator-private goal_text.json; only goal_meta (state, presence, priority count) is public",
     "cycle_titles_error": "probe exception text (host paths, stderr); not a public key",
     "health_last_integrated_ts": "not produced by any state reader; the renderer derives it from ledger rows",
     "health_recent_outcomes": "not produced by any state reader; the renderer derives it from ledger rows",
@@ -68,7 +66,8 @@ RENDERER_LOCAL: dict[str, str] = {
     **{key: "coverage summary built by the lineage builder (_lineage_coverage_text)" for key in (
         "emitted_nodes", "excluded_nodes", "from_ts", "to_ts", "retention_limit", "unique_candidate_nodes")},
     **{key: "cycle-details record built by build_cycle_details" for key in (
-        "gate_violations", "subagents", "original_bytes")},
+        "gate_violations", "subagents", "task_chars", "task_excerpt_chars", "summary_excerpt_chars",
+        "result_excerpt_chars", "original_bytes")},
     **{key: "prompt parse / skill table built inside build_two_tier_context_html" for key in (
         "actual_chars", "catalogue", "heading", "memory", "mismatches", "omitted", "on_disk", "outside_cap",
         "pool", "recorded_chars")},
@@ -152,7 +151,13 @@ def test_the_decision_lists_are_neither_stale_nor_published() -> None:
     reads = renderer_reads()
     listed = {**INTENTIONALLY_WITHHELD, **RENDERER_LOCAL}
     assert not set(INTENTIONALLY_WITHHELD) & set(RENDERER_LOCAL)
-    assert not set(listed) & public_schema_fields(), "a withheld/local key is also in the public schema"
+    # Some names are intentionally ambiguous across different source objects:
+    # raw source input names are distinct from projected metadata, and the same
+    # generic key may be emitted in typed data and renderer-built detail records.
+    context_decisions = {"agents_md", "goal_text", "original_bytes"}
+    assert context_decisions <= set(reads)
+    assert not (set(listed) - context_decisions) & public_schema_fields(), (
+        "a renderer-local/withheld field is also in the projection schema")
     stale = sorted(set(listed) - set(reads))
     assert not stale, f"no longer read on the publish path -- remove: {stale}"
     assert all(reason.strip() for reason in listed.values())

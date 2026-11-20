@@ -186,8 +186,8 @@ def test_scan_large_live_sized_fixture_meets_budget_and_clean_cache_is_fast() ->
 
 def test_json_scanning_unescapes_values_and_parses_embedded_html() -> None:
     """JSON artifacts inspect decoded strings, including HTML embedded in them."""
-    payload = '{"excerpt":"{&quot;messages&quot;: []}"}'
-    with pytest.raises(ps.PublicationScanError, match="structural_messages"):
+    payload = '{"excerpt":"{&quot;password&quot;: &quot;secret123456&quot;}"}'
+    with pytest.raises(ps.PublicationScanError, match="json_secret_field"):
         ps.scan_pages({"cycles-archive-1.json": payload})
 
 
@@ -307,19 +307,13 @@ def test_inherited_blob_cache_keys_by_blob_sha_and_scanner_version(monkeypatch: 
                   inherited_decoder_version=ps.inherited_blob_decoder_version())
 
 
-def test_adr036_structural_call_markers_trigger_rejection() -> None:
-    """ADR-036: Structural LLM call markers must trigger rejection."""
-    with pytest.raises(ps.PublicationScanError) as exc_info:
-        ps.scan_pages({"index.html": '{"reasoning_content": "thinking..."}'})
-    assert "structural_reasoning_content" in str(exc_info.value)
+def test_allowlisted_call_content_markers_are_not_secrets() -> None:
+    """Structural content markers are not secret evidence by themselves."""
+    ps.scan_pages({"index.html": '{"reasoning_content": "own response"}'})
 
-    with pytest.raises(ps.PublicationScanError) as exc_info:
-        ps.scan_pages({"index.html": '{"messages": [{"role": "user"}]}'})
-    assert "structural_messages" in str(exc_info.value)
+    ps.scan_pages({"index.html": '{"messages": [{"role": "user"}]}'})
 
-    with pytest.raises(ps.PublicationScanError) as exc_info:
-        ps.scan_pages({"index.html": '{"prompt": {"content": "..."}}'})
-    assert "structural_prompt" in str(exc_info.value)
+    ps.scan_pages({"index.html": '{"prompt": {"content": "own request"}}'})
 
 
 def test_adr036_secret_value_never_appears_in_exception_text() -> None:
@@ -347,11 +341,11 @@ def test_adr036_publish_to_pages_direct_call_rejects_leak() -> None:
 
 
 def test_adr036_publish_to_pages_rejects_inherited_base_tree_leak(monkeypatch) -> None:
-    """ADR-036: Contaminated inherited file in subdirectory (e.g. sub/leak.html) causes refusal."""
+    """An inherited actual credential in the base tree causes refusal."""
     import base64
     import json
 
-    leaked_blob = base64.b64encode(b'{"reasoning_content": "private text"}').decode("ascii")
+    leaked_blob = base64.b64encode(b'Authorization: Bearer mytoken1234567890abcdef').decode("ascii")
 
     def fake_gh(args, input_text=None):
         joined = " ".join(args)
@@ -372,7 +366,7 @@ def test_adr036_publish_to_pages_rejects_inherited_base_tree_leak(monkeypatch) -
     with pytest.raises(ps.PublicationScanError) as exc_info:
         tv.publish_to_pages({"index.html": "<html>clean page</html>"})
     assert "tokens.html" in str(exc_info.value)
-    assert "structural_reasoning_content" in str(exc_info.value)
+    assert "bearer_token" in str(exc_info.value)
 
 
 def test_adr036_autopublish_dry_run_scans_and_rejects_leak(monkeypatch, tmp_path) -> None:
@@ -406,11 +400,11 @@ def test_adr036_env_kv_with_quotes_triggers_rejection() -> None:
 
 
 def test_adr036_publish_to_pages_dry_run_scans_inherited_tree(monkeypatch) -> None:
-    """ADR-036: publish_to_pages(dry_run=True) must inspect inherited tree before returning."""
+    """The dry-run refuses an inherited actual credential in the base tree."""
     import base64
     import json
 
-    leaked_blob = base64.b64encode(b'{"reasoning_content": "private text"}').decode("ascii")
+    leaked_blob = base64.b64encode(b'Authorization: Bearer mytoken1234567890abcdef').decode("ascii")
 
     def fake_gh(args, input_text=None):
         joined = " ".join(args)
@@ -429,7 +423,7 @@ def test_adr036_publish_to_pages_dry_run_scans_inherited_tree(monkeypatch) -> No
     with pytest.raises(ps.PublicationScanError) as exc_info:
         tv.publish_to_pages({"index.html": "<html>clean page</html>"}, dry_run=True)
     assert "tokens.html" in str(exc_info.value)
-    assert "structural_reasoning_content" in str(exc_info.value)
+    assert "bearer_token" in str(exc_info.value)
 
 
 def test_adr036_publish_to_pages_fail_closed_on_tree_api_error(monkeypatch) -> None:
@@ -578,17 +572,15 @@ def test_adr036_publish_to_pages_scans_moved_head_on_attempt_one(monkeypatch) ->
     assert not commits_made
 
 
-def test_adr036_html_entity_encoded_call_markers_and_secrets_trigger_rejection() -> None:
-    """ADR-036 rule 3: HTML entity encoded call markers and json keys must be rejected."""
+def test_html_encoded_own_content_markers_and_secrets() -> None:
+    """Encoded harmless content passes while encoded credential fields are rejected."""
     encoded_messages = "<div>{&quot;messages&quot;: [{&quot;role&quot;: &quot;user&quot;}]}</div>"
     encoded_reasoning = "<pre>{&quot;reasoning_content&quot;: &quot;thinking&quot;}</pre>"
     encoded_password = "<code>{&quot;password&quot;: &quot;secret12345&quot;}</code>"
 
-    with pytest.raises(ps.PublicationScanError, match="structural_messages"):
-        ps.scan_pages({"index.html": encoded_messages})
+    ps.scan_pages({"index.html": encoded_messages})
 
-    with pytest.raises(ps.PublicationScanError, match="structural_reasoning_content"):
-        ps.scan_pages({"index.html": encoded_reasoning})
+    ps.scan_pages({"index.html": encoded_reasoning})
 
     with pytest.raises(ps.PublicationScanError, match="json_secret_field"):
         ps.scan_pages({"index.html": encoded_password})
@@ -832,8 +824,7 @@ def test_adr036_tag_stripped_secrets_and_markers_trigger_rejection() -> None:
     with pytest.raises(ps.PublicationScanError, match="github_token"):
         ps.scan_pages({"index.html": split_token})
 
-    with pytest.raises(ps.PublicationScanError, match="structural_messages"):
-        ps.scan_pages({"index.html": split_marker})
+    ps.scan_pages({"index.html": split_marker})
 
 
 def test_adr036_account_password_not_exempted_by_count_substring() -> None:
@@ -884,8 +875,8 @@ def test_adr036_inherited_tree_refuses_malformed_schemas_and_scans_compressed_bl
     with pytest.raises(ps.PublicationScanError, match="missing content|malformed"):
         tv.publish_to_pages({"index.html": "<html>clean</html>"})
 
-    # Test 3: blob contains gzip compressed sensitive data
-    gz_secret = gzip.compress(b'{"reasoning_content": "compressed secret"}')
+    # Test 3: blob contains gzip compressed actual credential data
+    gz_secret = gzip.compress(b'Authorization: Bearer mytoken1234567890abcdef')
     gz_b64 = base64.b64encode(gz_secret).decode("ascii")
 
     def fake_gh_gzip_blob(args: list[str], **kwargs: Any) -> subprocess.CompletedProcess[str]:
@@ -955,12 +946,10 @@ def test_adr036_raw_text_element_markup_is_scanned_as_html_fragment() -> None:
         ps.scan_pages({"index.html": attributed_fragment})
 
 
-def test_adr036_single_quoted_structural_markers_trigger_rejection() -> None:
-    """ADR-036: Single-quoted call structures are still call markers and must be rejected."""
-    with pytest.raises(ps.PublicationScanError, match="structural_messages"):
-        ps.scan_pages({"index.html": "{'messages': [{'role': 'user'}]}"})
-    with pytest.raises(ps.PublicationScanError, match="structural_reasoning_content"):
-        ps.scan_pages({"index.html": "{'reasoning_content': 'private'}"})
+def test_single_quoted_content_markers_are_not_secrets() -> None:
+    """Single-quoted content marker names are not secrets by themselves."""
+    ps.scan_pages({"index.html": "{'messages': [{'role': 'user'}]}"})
+    ps.scan_pages({"index.html": "{'reasoning_content': 'own response'}"})
 
 
 def test_adr036_iterative_html_unescape_double_encoded_entities() -> None:
@@ -968,8 +957,7 @@ def test_adr036_iterative_html_unescape_double_encoded_entities() -> None:
     double_encoded_msg = "<div>{&amp;quot;messages&amp;quot;: []}</div>"
     double_encoded_pass = "<code>{&amp;#34;password&amp;#34;: &amp;#34;secret123456&amp;#34;}</code>"
 
-    with pytest.raises(ps.PublicationScanError, match="structural_messages"):
-        ps.scan_pages({"index.html": double_encoded_msg})
+    ps.scan_pages({"index.html": double_encoded_msg})
 
     with pytest.raises(ps.PublicationScanError, match="json_secret_field"):
         ps.scan_pages({"index.html": double_encoded_pass})

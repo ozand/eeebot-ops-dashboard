@@ -142,8 +142,11 @@ Derived/measured counts and capacity labels require valid data and never use pri
 as the capped-load fallback. The capacity meter distinguishes an unavailable load from an
 unavailable cap. For empty sections, reconciliation compares the known empty-section sum (0)
 against recorded or derived totals and reports exact match or discrepancy, including overflow
-rows whose total derives from cap + over_by. Public and private projections must render the same
-load state without changing their text-redaction boundary.
+rows whose total derives from cap + over_by. Public and private projections must render the same load state and truthful telemetry
+without affecting the separate bounded, escaped own-context content path. Own prompt/task
+text is rendered only from the explicitly selected agent-context reader fields; unmeasured
+text must never be used as a substitute for recorded or derived section/capacity values.
+Actual credentials and unrelated private content remain subject to scanner/redaction policy.
 
 ## Amendment — Issue #385 follow-up (2026-10-03): Remove unsupported pre-#1379 historical claim
 
