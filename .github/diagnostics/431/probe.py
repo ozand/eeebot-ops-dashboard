@@ -1,4 +1,6 @@
 """Run only on the disposable systemd CI runner; never target host units."""
+from contextlib import redirect_stdout
+from io import StringIO
 import os
 from pathlib import Path
 import runpy
@@ -20,7 +22,7 @@ def main():
     helper = runpy.run_path(str(Path(__file__).with_name('hold-431.py')))
     operate = helper['operate']
     units = Path('/run/systemd/system')
-    with tempfile.TemporaryDirectory(prefix='431-probe-', dir='/root') as dirname:
+    with tempfile.TemporaryDirectory(prefix='capture431-probe-', dir='/root') as dirname:
         root = Path(dirname)
         service, timer = root.name + '.service', root.name + '.timer'
         fragment, timerfile = units / service, units / timer
@@ -30,6 +32,7 @@ def main():
         require(all(not os.path.lexists(p) for p in (fragment, timerfile, dropdir, marker)))
         operate.__globals__.update(UNITS=units, SVC=service, TIMER=timer)
         ran = root / 'ran'
+
         def step(action):
             operate(action, root, 20)
 
@@ -53,7 +56,9 @@ def main():
             # Reproduce the partial-release filesystem/manager state, not a killed reload.
             drop.unlink()
             require(marker.is_file() and not drop.exists())
-            step('inspect')
+            with redirect_stdout(StringIO()) as observed:
+                step('inspect')
+            require('MATCHED; marker=1 drop_in=0 loaded_condition=1' in observed.getvalue())
             step('release-verified-baseline')
             require(not marker.exists() and not drop.exists())
             require(systemctl('is-active', timer).strip() == 'active')

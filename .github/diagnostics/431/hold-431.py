@@ -120,6 +120,7 @@ def config(service, timer, drop, marker, guarded, pending_ok=False):
         count = includes.count(str(drop))
         require(count in (0, 1))
         require(count == expected if expected is not None else (unit == service or count == 0))
+        # A loaded copy of our now-unlinked drop-in is not a baseline file.
         p['DropInPaths'] = [path for path in includes if path != str(drop)]
         paths = [p['FragmentPath'], *p['DropInPaths']]
         require(all(Path(path).is_absolute() for path in paths))
@@ -144,10 +145,10 @@ def remove(path, expected):
     sync_dir(path.parent)
 
 
-def quiet(service):
+def quiet(service, timer):
     p = properties(service, 'ActiveState', 'MainPID', 'ControlPID')
     require(p['ActiveState'] in ('inactive', 'failed') and p['MainPID'] == p['ControlPID'] == '0')
-    jobs = call('systemctl', 'list-jobs', '--no-pager', '--no-legend', '--full', service)
+    jobs = call('systemctl', 'list-jobs', '--no-pager', '--no-legend', '--full', service, timer)
     require(not jobs.strip())
 
 
@@ -196,7 +197,7 @@ def operate(action, scratch, seconds):
         require(not have_drop or contents(drop, len(drop_bytes)) == drop_bytes)
         if action == 'check':
             require(have_marker and have_drop and check(True) == baseline)
-            quiet(SVC)
+            quiet(SVC, TIMER)
             print('UNIT QUIET; verify independent writers and baseline separately', flush=True)
         elif action in ('inspect', 'release-verified-baseline'):
             PHASE = 'inspect'
