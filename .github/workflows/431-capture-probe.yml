@@ -1,0 +1,29 @@
+name: '#431 capture hold transaction probe'
+
+on:
+  push:
+    branches: [diag/431-capture-probe]
+    paths: [.github/workflows/431-capture-probe.yml, '.github/diagnostics/431/**']
+
+permissions:
+  contents: read
+
+jobs:
+  probe:
+    if: github.repository == 'ozand/eeebot-ops-dashboard' && github.ref == 'refs/heads/diag/431-capture-probe'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 3
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Probe a temporary service and timer only
+        env:
+          RUNNER_KIND: ${{ runner.environment }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$RUNNER_KIND" = github-hosted
+          test "$(ps -p 1 -o comm=)" = systemd
+          sudo -n systemctl show -p Version --value
+          sudo -n /usr/bin/python3 -I .github/diagnostics/431/probe.py
