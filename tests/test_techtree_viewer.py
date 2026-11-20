@@ -5412,13 +5412,16 @@ def test_issue109_every_day_svg_geometry_stays_inside_its_viewbox() -> None:
 
 def test_issue72_gz_archives_render(tmp_path) -> None:
     import gzip as gz
+    today = datetime.now(timezone.utc).date()
+    archive_day = today - timedelta(days=5)
     ledger = tmp_path / 'ledger'
     ledger.mkdir(parents=True)
-    (ledger / 'cycles.jsonl').write_text(
-        '{"phase":"started","cycle_id":"cycle-live1","ts":"2026-08-25T00:00:00Z"}\n', encoding='utf-8')
-    gz_row = '{"phase":"outcome","outcome":"failed","reason":"gate_failed","cycle_id":"cycle-gz1","ts":"2026-08-20T00:00:00Z"}\n'
-    with gz.open(ledger / 'cycles-2026-08-20.jsonl.gz', 'wt', encoding='utf-8') as fh:
-        fh.write(gz_row)
+    live_row = {'phase': 'started', 'cycle_id': 'cycle-live1', 'ts': f'{today}T00:00:00Z'}
+    (ledger / 'cycles.jsonl').write_text(json.dumps(live_row) + '\n', encoding='utf-8')
+    gz_row = {'phase': 'outcome', 'outcome': 'failed', 'reason': 'gate_failed',
+              'cycle_id': 'cycle-gz1', 'ts': f'{archive_day}T00:00:00Z'}
+    with gz.open(ledger / f'cycles-{archive_day}.jsonl.gz', 'wt', encoding='utf-8') as fh:
+        fh.write(json.dumps(gz_row) + '\n')
     state = tv.read_local_state(str(tmp_path))
     hist = state.get('ledger_history') or []
     assert any(r.get('cycle_id') == 'cycle-gz1' for r in hist)
