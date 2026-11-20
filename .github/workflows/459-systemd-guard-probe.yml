@@ -65,8 +65,10 @@ jobs:
             return 1
           }
           checked_skip() {
+            local observed
             wait_for_quiet
-            test "$(get "$service" ConditionTimestampMonotonic)" != "$before"
+            observed=$(get "$service" ConditionTimestampMonotonic)
+            [[ -n $observed && $observed != "$before" ]]
             test "$(get "$service" ConditionResult)" = no
             test ! -e "$dir/pre" && test ! -e "$dir/start" || return 1
             echo "PASS: guarded $1 did not execute either command"
@@ -87,9 +89,10 @@ jobs:
           systemctl start "$dependency"
           checked_skip dependency
           wait_for_change() {
-            local unit=$1 property=$2 old=$3
+            local unit=$1 property=$2 old=$3 observed
             for ((i = 0; i < 50; i++)); do
-              if [[ $(get "$unit" "$property") != "$old" ]]; then return 0; fi
+              observed=$(get "$unit" "$property")
+              if [[ -n $observed && $observed != "$old" ]]; then return 0; fi
               sleep 0.2
             done
             echo "FAIL: $unit $property did not change" >&2
