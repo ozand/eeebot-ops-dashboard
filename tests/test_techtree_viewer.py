@@ -5829,7 +5829,20 @@ _LESSON_YAML = '''lessons:
 '''
 
 
-def test_issue73_parses_live_and_archive_newest_first(tmp_path) -> None:
+@pytest.fixture
+def lesson_archive_clock(monkeypatch):
+    """Keep all fixture dates inside retention, including retired archives."""
+    class ArchiveClock(datetime):
+        @classmethod
+        def now(cls, tz=None):
+            fixed = cls(2026, 9, 15, tzinfo=timezone.utc)
+            return fixed.astimezone(tz) if tz is not None else fixed.replace(tzinfo=None)
+
+    monkeypatch.setattr(tv, 'datetime', ArchiveClock)
+    return ArchiveClock
+
+
+def test_issue73_parses_live_and_archive_newest_first(tmp_path, lesson_archive_clock) -> None:
     import gzip as gz
     repo = tmp_path / 'eeebot-self-evolving'
     lessons_dir = repo / 'lessons'
@@ -5874,7 +5887,7 @@ def _issue1564_archive_fixture(tmp_path: Path) -> Path:
     return repo
 
 
-def test_issue1564_excludes_retired_v1_archives_from_local_reader(tmp_path: Path) -> None:
+def test_issue1564_excludes_retired_v1_archives_from_local_reader(tmp_path: Path, lesson_archive_clock) -> None:
     repo = _issue1564_archive_fixture(tmp_path)
     data = tv.read_local_state(str(tmp_path), instance_repo=str(repo))
     ids = {str(item.get('id')) for item in data.get('lessons') or []}
@@ -5886,7 +5899,7 @@ def test_issue1564_excludes_retired_v1_archives_from_local_reader(tmp_path: Path
     assert 'LESS-RETIRED-1564-B' not in ids
 
 
-def test_issue1564_excludes_retired_v1_archives_from_published_reader(tmp_path: Path) -> None:
+def test_issue1564_excludes_retired_v1_archives_from_published_reader(tmp_path: Path, lesson_archive_clock) -> None:
     import contextlib
     import io
 
@@ -5901,6 +5914,7 @@ def test_issue1564_excludes_retired_v1_archives_from_published_reader(tmp_path: 
     namespace: dict[str, object] = {}
     with contextlib.redirect_stdout(io.StringIO()):
         exec(script, namespace)
+    namespace['datetime'] = lesson_archive_clock
     rows = namespace['read_lessons']()
     if not ac._MEMORY_FD_WALK_SUPPORTED:
         assert rows == []
@@ -6226,7 +6240,7 @@ def test_issue73_entries_render_with_cycle_links() -> None:
     assert 'validators pay off' in les
 
 
-def test_issue73_rotation_archive_truncated_head_parsed(tmp_path) -> None:
+def test_issue73_rotation_archive_truncated_head_parsed(tmp_path, lesson_archive_clock) -> None:
     # Live rotation artifact: archive starts mid-entry (truncated tail of the
     # previous file) and entries sit at top level -> PyYAML raises, the flat
     # fallback must still yield all entries (issue #73 follow-up).
