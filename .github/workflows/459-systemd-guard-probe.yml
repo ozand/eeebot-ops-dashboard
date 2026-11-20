@@ -1,0 +1,117 @@
+name: '#459 systemd guard probe'
+
+on:
+  push:
+    branches: [diag/459-systemd-probe]
+    paths: [.github/workflows/459-systemd-guard-probe.yml]
+
+permissions: {}
+
+jobs:
+  probe:
+    if: github.repository == 'ozand/eeebot-ops-dashboard'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 3
+    steps:
+      - name: Probe temporary units only
+        shell: bash
+        env:
+          RUNNER_KIND: ${{ runner.environment }}
+        run: |
+          set -euo pipefail
+          test "$RUNNER_KIND" = github-hosted
+          printf 'Runner: %s %s; image: %s %s\n' "$RUNNER_OS" "$RUNNER_ARCH" "${ImageOS:-unknown}" "${ImageVersion:-unknown}"
+          if [[ $(ps -p 1 -o comm=) != systemd ]] ||
+             ! timeout 5s sudo -n systemctl show -p Version --value; then
+            echo 'UNAVAILABLE: no accessible systemd manager'
+            exit 1
+          fi
+          sudo -n bash -s <<'PROBE'
+          set -euo pipefail
+          dir=$(mktemp -d /run/eeebot-459.XXXXXXXX)
+          name=${dir##*/}
+          service=$name.service
+          timer=$name.timer
+          dependency=$name-dependency.service
+          units=/run/systemd/system
+          cleanup() {
+            systemctl stop "$timer" "$dependency" "$service" || true
+            rm -f "$units/$service" "$units/$timer" "$units/$dependency"
+            rm -rf -- "$dir"
+            systemctl daemon-reload
+          }
+          trap cleanup EXIT
+          # Each command can only create its own local marker.
+          printf '[Unit]\nConditionPathExists=!%s/hold\n[Service]\nType=oneshot\nExecStartPre=/usr/bin/touch %s/pre\nExecStart=/usr/bin/touch %s/start\n' \
+            "$dir" "$dir" "$dir" > "$units/$service"
+          printf '[Timer]\nOnActiveSec=2s\nAccuracySec=100ms\nUnit=%s\n' \
+            "$service" > "$units/$timer"
+          printf '[Unit]\nWants=%s\nAfter=%s\n[Service]\nType=oneshot\nRemainAfterExit=yes\nExecStart=/usr/bin/true\n' \
+            "$service" "$service" > "$units/$dependency"
+          systemctl daemon-reload
+          get() { systemctl show "$1" -p "$2" --value; }
+          quiet() {
+            [[ $(get "$service" ActiveState) == inactive ]] || return 1
+            systemctl list-jobs --no-legend --no-pager |
+              awk -v s="$service" -v d="$dependency" -v t="$timer" '
+                $2 == s || $2 == d || $2 == t { busy=1 } END { exit busy }'
+          }
+          wait_for_quiet() {
+            for ((i = 0; i < 50; i++)); do
+              if quiet; then return 0; fi
+              sleep 0.2
+            done
+            echo 'FAIL: synthetic unit still active or queued' >&2
+            return 1
+          }
+          checked_skip() {
+            wait_for_quiet
+            test "$(get "$service" ConditionTimestampMonotonic)" != "$before"
+            test "$(get "$service" ConditionResult)" = no
+            test ! -e "$dir/pre" && test ! -e "$dir/start" || return 1
+            echo "PASS: guarded $1 did not execute either command"
+          }
+          systemctl start "$dependency"
+          test -f "$dir/pre" && test -f "$dir/start" || exit 1
+          quiet
+          echo 'PASS: unguarded dependency executed both commands; no active/queued probe publisher'
+          rm "$dir/pre" "$dir/start"
+          touch "$dir/hold"
+          test "$(get "$service" FragmentPath)" = "$units/$service"
+          wait_for_quiet
+          before=$(get "$service" ConditionTimestampMonotonic)
+          systemctl start "$service"
+          checked_skip manual
+          systemctl stop "$dependency"
+          before=$(get "$service" ConditionTimestampMonotonic)
+          systemctl start "$dependency"
+          checked_skip dependency
+          wait_for_change() {
+            local unit=$1 property=$2 old=$3
+            for ((i = 0; i < 50; i++)); do
+              if [[ $(get "$unit" "$property") != "$old" ]]; then return 0; fi
+              sleep 0.2
+            done
+            echo "FAIL: $unit $property did not change" >&2
+            return 1
+          }
+          systemctl stop "$dependency"
+          before=$(get "$service" ConditionTimestampMonotonic)
+          tick=$(get "$timer" LastTriggerUSecMonotonic)
+          systemctl start "$timer"
+          wait_for_change "$timer" LastTriggerUSecMonotonic "$tick"
+          wait_for_change "$service" ConditionTimestampMonotonic "$before"
+          checked_skip timer
+          systemctl stop "$timer"
+          rm "$dir/hold"
+          tick=$(get "$timer" LastTriggerUSecMonotonic)
+          systemctl start "$timer"
+          wait_for_change "$timer" LastTriggerUSecMonotonic "$tick"
+          for ((i = 0; i < 50; i++)); do
+            if [[ -f $dir/pre && -f $dir/start ]] && quiet; then break; fi
+            sleep 0.2
+          done
+          test -f "$dir/pre" && test -f "$dir/start" || exit 1
+          quiet
+          echo 'PASS: next scheduled start executed both commands; missed ticks were not tested for replay'
+          PROBE
