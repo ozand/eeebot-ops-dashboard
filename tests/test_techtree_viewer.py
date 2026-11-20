@@ -5412,13 +5412,16 @@ def test_issue109_every_day_svg_geometry_stays_inside_its_viewbox() -> None:
 
 def test_issue72_gz_archives_render(tmp_path) -> None:
     import gzip as gz
+    today = datetime.now(timezone.utc).date()
+    archive_day = today - timedelta(days=5)
     ledger = tmp_path / 'ledger'
     ledger.mkdir(parents=True)
-    (ledger / 'cycles.jsonl').write_text(
-        '{"phase":"started","cycle_id":"cycle-live1","ts":"2026-08-25T00:00:00Z"}\n', encoding='utf-8')
-    gz_row = '{"phase":"outcome","outcome":"failed","reason":"gate_failed","cycle_id":"cycle-gz1","ts":"2026-08-20T00:00:00Z"}\n'
-    with gz.open(ledger / 'cycles-2026-08-20.jsonl.gz', 'wt', encoding='utf-8') as fh:
-        fh.write(gz_row)
+    live_row = {'phase': 'started', 'cycle_id': 'cycle-live1', 'ts': f'{today}T00:00:00Z'}
+    (ledger / 'cycles.jsonl').write_text(json.dumps(live_row) + '\n', encoding='utf-8')
+    gz_row = {'phase': 'outcome', 'outcome': 'failed', 'reason': 'gate_failed',
+              'cycle_id': 'cycle-gz1', 'ts': f'{archive_day}T00:00:00Z'}
+    with gz.open(ledger / f'cycles-{archive_day}.jsonl.gz', 'wt', encoding='utf-8') as fh:
+        fh.write(json.dumps(gz_row) + '\n')
     state = tv.read_local_state(str(tmp_path))
     hist = state.get('ledger_history') or []
     assert any(r.get('cycle_id') == 'cycle-gz1' for r in hist)
@@ -5586,6 +5589,87 @@ def test_278_publish_to_pages_skips_unchanged_pages(monkeypatch) -> None:
     assert fingerprints['cycles.html'] != previous_fp['cycles.html']
 
 
+def test_369_cached_publication_pages_are_not_scanned_again_after_allowlist(monkeypatch) -> None:
+    from scripts import publish_scan
+
+    pages = {'index.html': '<!doctype html><p>safe public page</p>'}
+    names = publish_scan.rule_names()
+    cache: dict[str, bool] = {}
+    # Establish approvals through the real scanner so the test exercises the
+    # same cache entries the publisher persists between runs.
+    publish_scan.scan_pages(pages, clean_cache=cache)
+    assert len(cache) == len(names)
+    gh_calls: list = []
+    events: list[str] = []
+    monkeypatch.setattr(tv, '_gh', _fake_gh_publish_factory(gh_calls))
+
+    original_scan_pages = publish_scan.scan_pages
+    original_scan_text = publish_scan.scan_text
+    scan_calls = []
+    text_scans = []
+    import importlib
+    try:
+        two_sinks = importlib.import_module('two_sinks')
+    except ModuleNotFoundError:
+        two_sinks = importlib.import_module('scripts.two_sinks')
+    original_allowlist = two_sinks.validate_publish_allowlist
+
+    def observe_allowlist(page_set):
+        events.append('allowlist')
+        return original_allowlist(page_set)
+
+    def observe_scan(page_set, **kwargs):
+        scan_calls.append(dict(kwargs))
+        events.append('scan_pages')
+        return original_scan_pages(page_set, **kwargs)
+
+    def observe_text(text, **kwargs):
+        text_scans.append((text, kwargs.get('rules')))
+        events.append('scan_text')
+        return original_scan_text(text, **kwargs)
+
+    monkeypatch.setattr(two_sinks, 'validate_publish_allowlist', observe_allowlist)
+    monkeypatch.setattr(publish_scan, 'scan_pages', observe_scan)
+    monkeypatch.setattr(publish_scan, 'scan_text', observe_text)
+    rc, _, _ = tv.publish_to_pages(pages, scan_cache=cache)
+
+    assert rc == 0
+    # The cache-aware scan hits all approvals. Allowlist still validates names,
+    # while content is not needlessly scanned again.
+    assert scan_calls[0].get('clean_cache') is cache
+    assert 'allowlist' in events
+    assert events.count('scan_pages') == 1  # inherited scans use the decoder path separately
+    outgoing_scans = [entry for entry in text_scans if entry[0] == pages['index.html']]
+    assert not outgoing_scans
+    assert cache and len(gh_calls) > 0
+
+
+def test_369_changed_publication_content_bypasses_old_cache_and_fails_closed(monkeypatch) -> None:
+    import hashlib
+
+    from scripts import publish_scan
+
+    old_page = {'index.html': '<!doctype html><p>previous clean page</p>'}
+    cache: dict[str, bool] = {}
+    publish_scan.scan_pages(old_page, clean_cache=cache)
+    assert cache
+    changed_page = {'index.html': '<!doctype html><p>/etc/eeepc-agent/private</p>'}
+    old_key_sha = hashlib.sha256(old_page['index.html'].encode()).hexdigest()
+    new_key_sha = hashlib.sha256(changed_page['index.html'].encode()).hexdigest()
+    assert old_key_sha != new_key_sha
+    mutations: list = []
+
+    def fake_gh(args, **kwargs):
+        mutations.append(args)
+        return subprocess.CompletedProcess(args=args, returncode=1, stdout='', stderr='')
+    monkeypatch.setattr(tv, '_gh', fake_gh)
+
+    with pytest.raises(publish_scan.PublicationScanError, match='eeepc_agent_path'):
+        tv.publish_to_pages(changed_page, scan_cache=cache)
+
+    assert mutations == []
+
+
 def test_278_publish_to_pages_all_unchanged_skips_tree_commit_ref(monkeypatch) -> None:
     calls: list = []
     monkeypatch.setattr(tv, '_gh', _fake_gh_publish_factory(calls))
@@ -5745,7 +5829,20 @@ _LESSON_YAML = '''lessons:
 '''
 
 
-def test_issue73_parses_live_and_archive_newest_first(tmp_path) -> None:
+@pytest.fixture
+def lesson_archive_clock(monkeypatch):
+    """Keep all fixture dates inside retention, including retired archives."""
+    class ArchiveClock(datetime):
+        @classmethod
+        def now(cls, tz=None):
+            fixed = cls(2026, 9, 15, tzinfo=timezone.utc)
+            return fixed.astimezone(tz) if tz is not None else fixed.replace(tzinfo=None)
+
+    monkeypatch.setattr(tv, 'datetime', ArchiveClock)
+    return ArchiveClock
+
+
+def test_issue73_parses_live_and_archive_newest_first(tmp_path, lesson_archive_clock) -> None:
     import gzip as gz
     repo = tmp_path / 'eeebot-self-evolving'
     lessons_dir = repo / 'lessons'
@@ -5790,7 +5887,7 @@ def _issue1564_archive_fixture(tmp_path: Path) -> Path:
     return repo
 
 
-def test_issue1564_excludes_retired_v1_archives_from_local_reader(tmp_path: Path) -> None:
+def test_issue1564_excludes_retired_v1_archives_from_local_reader(tmp_path: Path, lesson_archive_clock) -> None:
     repo = _issue1564_archive_fixture(tmp_path)
     data = tv.read_local_state(str(tmp_path), instance_repo=str(repo))
     ids = {str(item.get('id')) for item in data.get('lessons') or []}
@@ -5802,7 +5899,7 @@ def test_issue1564_excludes_retired_v1_archives_from_local_reader(tmp_path: Path
     assert 'LESS-RETIRED-1564-B' not in ids
 
 
-def test_issue1564_excludes_retired_v1_archives_from_published_reader(tmp_path: Path) -> None:
+def test_issue1564_excludes_retired_v1_archives_from_published_reader(tmp_path: Path, lesson_archive_clock) -> None:
     import contextlib
     import io
 
@@ -5817,6 +5914,7 @@ def test_issue1564_excludes_retired_v1_archives_from_published_reader(tmp_path: 
     namespace: dict[str, object] = {}
     with contextlib.redirect_stdout(io.StringIO()):
         exec(script, namespace)
+    namespace['datetime'] = lesson_archive_clock
     rows = namespace['read_lessons']()
     if not ac._MEMORY_FD_WALK_SUPPORTED:
         assert rows == []
@@ -6142,7 +6240,7 @@ def test_issue73_entries_render_with_cycle_links() -> None:
     assert 'validators pay off' in les
 
 
-def test_issue73_rotation_archive_truncated_head_parsed(tmp_path) -> None:
+def test_issue73_rotation_archive_truncated_head_parsed(tmp_path, lesson_archive_clock) -> None:
     # Live rotation artifact: archive starts mid-entry (truncated tail of the
     # previous file) and entries sit at top level -> PyYAML raises, the flat
     # fallback must still yield all entries (issue #73 follow-up).
